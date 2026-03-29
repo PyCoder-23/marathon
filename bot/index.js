@@ -1,3 +1,15 @@
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('MARATHON_BOT_STATUS: ACTIVE');
+});
+
+app.listen(port, () => {
+  console.log(`📡 Keep-alive server running on port ${port}`);
+});
+
 require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
 const fs = require('fs');
