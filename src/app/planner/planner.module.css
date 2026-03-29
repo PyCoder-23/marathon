@@ -1,0 +1,196 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calendarWrapper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.daysHeader {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-hover);
+}
+
+.timeColHead {
+  border-right: 1px solid var(--border);
+}
+
+.dayHead {
+  text-align: center;
+  padding: 1rem 0;
+  font-weight: 800;
+  color: var(--text-muted);
+  border-right: 1px solid var(--border);
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+}
+
+.dayHead:last-child {
+  border-right: none;
+}
+
+.calendarBody {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  height: 700px;
+  overflow-y: auto;
+  position: relative;
+  padding-top: 1rem; /* Added space before 4:00 AM */
+}
+
+.timeCol {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.timeSlot {
+  height: 60px; /* 1 hour = 60px */
+  border-bottom: 1px solid var(--border);
+  padding-right: 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-family: 'Courier New', Courier, monospace;
+  box-sizing: border-box;
+}
+
+.dayCol {
+  border-right: 1px solid var(--border);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.dayCol:last-child {
+  border-right: none;
+}
+
+.gridCell {
+  height: 60px;
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.gridCell:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Event Blocks */
+.eventBlock {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #000;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: transform 0.2s;
+  z-index: 10;
+}
+
+.eventBlock:hover {
+  transform: scale(1.02);
+  z-index: 20;
+}
+
+.eventTitle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eventTime {
+  font-size: 0.65rem;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.modal h3 {
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+}
+
+.modal input, .modal select {
+  width: 100%;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.8rem;
+  border-radius: var(--radius-md);
+  outline: none;
+}
+
+.colorPicker {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.colorCircle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.colorCircle.active {
+  border-color: #fff;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}

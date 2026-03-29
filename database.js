@@ -1,0 +1,109 @@
+const mongoose = require('mongoose');
+
+// Need to safely check environment variables depending on context (Bot vs Next.js)
+// For Next.js runtimes, typically process.env handles it automatically via .env.local
+// For Bot, dotenv handles it. Let's make sure it's present.
+const MONGODB_URI = process.env.MONGODB_URI;
+
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function connectDB() {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!MONGODB_URI) {
+    throw new Error('Please define the MONGODB_URI environment variable (Next.js .env.local or Bot .env)');
+  }
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+    };
+
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log("Connected to MongoDB Atlas!");
+      return mongoose;
+    });
+  }
+  
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    throw e;
+  }
+
+  return cached.conn;
+}
+
+// Schemas
+const userSchema = new mongoose.Schema({
+  discordId: { type: String, required: true, unique: true },
+  username: { type: String, required: true },
+  avatar: String,
+  xp: { type: Number, default: 0 },
+  weeklyXp: { type: Number, default: 0 },
+  streak: { type: Number, default: 0 },
+  lastActive: { type: Date },
+  hasLinked: { type: Boolean, default: false },
+  joinedAt: { type: Date, default: Date.now },
+});
+
+const authCodeSchema = new mongoose.Schema({
+  code: { type: String, required: true, unique: true },
+  discordId: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now, expires: '30m' }, // Auto expires if not used
+});
+
+const taskSchema = new mongoose.Schema({
+  discordId: { type: String, required: true },
+  title: { type: String, required: true },
+  category: { type: String, default: 'General' },
+  time: String,
+  color: String,
+  day: String,
+  isCompleted: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }, // Used for auto-deletion
+});
+
+
+const journalSchema = new mongoose.Schema({
+  discordId: { type: String, required: true },
+  title: String,
+  content: { type: String, required: true },
+  mood: { type: String, default: 'Great' },
+  date: String,
+  createdAt: { type: Date, default: Date.now },
+});
+
+const sessionSchema = new mongoose.Schema({
+  discordId: { type: String, required: true },
+  duration: { type: Number, required: true },
+  xpGranted: { type: Number, default: 0 },
+  proofUrl: String,
+  createdAt: { type: Date, default: Date.now },
+});
+
+const eventSchema = new mongoose.Schema({
+  discordId: { type: String, required: true },
+  title: { type: String, required: true },
+  day: { type: String, required: true }, // 'Monday', 'Tuesday', etc.
+  startTime: { type: String, required: true }, // '09:00'
+  endTime: { type: String, required: true }, // '10:00'
+  color: { type: String, default: 'var(--accent)' }
+});
+
+// Models (Singleton check for Next.js fast-refresh)
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+const AuthCode = mongoose.models.AuthCode || mongoose.model('AuthCode', authCodeSchema);
+const Task = mongoose.models.Task || mongoose.model('Task', taskSchema);
+const JournalEntry = mongoose.models.JournalEntry || mongoose.model('JournalEntry', journalSchema);
+const Session = mongoose.models.Session || mongoose.model('Session', sessionSchema);
+const EventModel = mongoose.models.Event || mongoose.model('Event', eventSchema);
+
+module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, EventModel };
