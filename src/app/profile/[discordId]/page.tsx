@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import styles from "./profile.module.css";
-import { Zap, Target, Star, Calendar, ArrowLeft } from "lucide-react";
+import { Zap, Target, Star, Calendar, ArrowLeft, Trophy, Flame } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -12,8 +12,10 @@ interface ProfileData {
     username: string;
     avatar: string;
     xp: number;
-    joinedAt: string;
+    weeklyXp: number;
     streak: number;
+    joinedAt: string;
+    rank: number;
   };
   stats: {
     totalSessions: number;
@@ -113,9 +115,14 @@ export default function ProfilePage({ params }: { params: Promise<{ discordId: s
 
         <div className={styles.statsGrid}>
           <div className={styles.statBox}>
+            <Trophy size={22} color="#ffd700" />
+            <span className={styles.statValue}>#{data.user.rank}</span>
+            <span className={styles.statLabel}>Current Rank</span>
+          </div>
+          <div className={styles.statBox}>
             <Zap size={22} color="var(--accent)" />
-            <span className={styles.statValue}>{data.user.xp.toLocaleString()}</span>
-            <span className={styles.statLabel}>Total XP</span>
+            <span className={styles.statValue}>{data.user.weeklyXp.toLocaleString()}</span>
+            <span className={styles.statLabel}>Weekly XP</span>
           </div>
           <div className={styles.statBox}>
             <Star size={22} color="#fcd34d" />
@@ -126,11 +133,6 @@ export default function ProfilePage({ params }: { params: Promise<{ discordId: s
             <Target size={22} color="#f87171" />
             <span className={styles.statValue}>{data.stats.completedTasks}</span>
             <span className={styles.statLabel}>Tasks Done</span>
-          </div>
-          <div className={styles.statBox}>
-            <Calendar size={22} color="#60a5fa" />
-            <span className={styles.statValue}>{data.stats.totalSessions}</span>
-            <span className={styles.statLabel}>Sessions</span>
           </div>
         </div>
       </motion.div>

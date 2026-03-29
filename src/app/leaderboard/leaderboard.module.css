@@ -1,0 +1,171 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 2rem;
+  margin-top: 2rem;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--accent);
+  letter-spacing: 0.2em;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.myRankBadge {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.loadingState, .emptyState {
+  text-align: center;
+  padding: 5rem;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.boardList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  gap: 1.5rem;
+}
+
+.row:hover {
+  border-color: var(--accent);
+  transform: translateX(5px);
+  background: var(--surface-hover);
+}
+
+.topRow {
+  background: linear-gradient(90deg, var(--surface), rgba(0, 255, 159, 0.05));
+  border-left-width: 4px;
+}
+
+.rankNum {
+  width: 40px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 1.1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
+.username {
+  flex: 1;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.username:hover {
+  color: var(--accent);
+}
+
+.streak {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+  background: rgba(249, 115, 22, 0.1);
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+}
+
+.xpArea {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  min-width: 120px;
+}
+
+.weeklyXp {
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 1.1rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.xpUnit {
+  font-size: 0.6rem;
+  opacity: 0.7;
+}
+
+.totalXp {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 640px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  
+  .row {
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+  }
+  
+  .rankNum {
+    width: 30px;
+  }
+  
+  .xpArea {
+    min-width: 80px;
+  }
+}

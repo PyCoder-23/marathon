@@ -12,6 +12,7 @@ const navLinks = [
   { label: "Journal", href: "/journal" },
   { label: "Tasks", href: "/tasks" },
   { label: "Planner", href: "/planner" },
+  { label: "Leaderboard", href: "/leaderboard" },
 ];
 
 export default function Navbar() {

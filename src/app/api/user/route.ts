@@ -20,6 +20,10 @@ export async function GET(request: Request) {
     const totalSessionsCount = await Session.countDocuments({ discordId });
     const completedTasksCount = await Task.countDocuments({ discordId, isCompleted: true });
 
+    // Calculate Rank
+    const allUsers = await User.find({}).sort({ weeklyXp: -1 });
+    const rank = allUsers.findIndex(u => u.discordId === discordId) + 1;
+
     return NextResponse.json({
       user: {
         discordId: user.discordId,
@@ -28,7 +32,8 @@ export async function GET(request: Request) {
         xp: user.xp,
         weeklyXp: user.weeklyXp,
         streak: user.streak,
-        joinedAt: user.joinedAt
+        joinedAt: user.joinedAt,
+        rank: rank
       },
       stats: {
         totalSessions: totalSessionsCount,
