@@ -26,5 +26,19 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "typescript": "^5"
-  }
+  },
+  "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).",
+  "main": "database.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PyCoder-23/marathon.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/PyCoder-23/marathon/issues"
+  },
+  "homepage": "https://github.com/PyCoder-23/marathon#readme"
 }
