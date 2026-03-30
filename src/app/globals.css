@@ -207,6 +207,11 @@ h1, h2, h3 {
   letter-spacing: -0.03em;
 }
 
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.min-h-screen { min-height: 100vh; }
+.flex-grow { flex-grow: 1; }
+
 .section-label {
   font-family: 'JetBrains Mono', monospace;
   color: var(--accent);
