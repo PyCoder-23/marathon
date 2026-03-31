@@ -32,6 +32,8 @@ const MOODS = [
   { name: 'Angry', icon: AlertCircle, color: '#ef4444' }
 ];
 
+const MAX_CH_LIMIT = 12000; // ~1500-1800 words
+
 const getMoodConfig = (moodString: string) => {
   return MOODS.find(m => m.name === moodString) || MOODS[0];
 };
@@ -45,7 +47,8 @@ export default function JournalPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
   
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const wordCount = newEntry.text.trim() ? newEntry.text.trim().split(/\s+/).length : 0;
+  const charCount = newEntry.text.length;
 
   useEffect(() => {
     const saved = localStorage.getItem("user");
@@ -222,7 +225,7 @@ export default function JournalPage() {
               <header className={styles.editorHeader}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <Cloud size={18} color="var(--accent)" />
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-muted)', fontFamily: 'monospace' }}>AUTO_SYNC_PROTOCOL_V4.2</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-muted)', fontFamily: 'monospace' }}>AUTO_SYNC_PROTOCOL_V5.1</span>
                 </div>
                 <div style={{ display: 'flex', gap: '1.5rem' }}>
                   <button className="button button-secondary" onClick={() => setIsWriting(false)}>DISCARD</button>
@@ -257,8 +260,18 @@ export default function JournalPage() {
                   className={styles.editorTextArea}
                   placeholder="Record your progress, thoughts, and reflections for the archive..."
                   value={newEntry.text}
+                  maxLength={MAX_CH_LIMIT}
                   onChange={(e) => setNewEntry({...newEntry, text: e.target.value})}
                 />
+
+                <div className={styles.counter}>
+                  <div className={styles.counterItem}>
+                    <Book size={14} /> <span>{wordCount} Words</span>
+                  </div>
+                  <div className={`${styles.counterItem} ${charCount > MAX_CH_LIMIT * 0.9 ? styles.critical : ''}`}>
+                    <AlertCircle size={14} /> <span>{charCount} / {MAX_CH_LIMIT} Characters</span>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -275,32 +288,54 @@ export default function JournalPage() {
             exit={{ opacity: 0 }}
             style={{ padding: '0' }}
           >
-            <div style={{ position: 'absolute', top: '2rem', left: '2rem' }}>
+            <div style={{ position: 'fixed', top: '2rem', left: '2rem' }}>
                <button className="button button-secondary" onClick={() => setIsReading(null)}>
                  <ChevronLeft size={18} /> BACK_TO_ARCHIVES
                </button>
             </div>
-            <div style={{ position: 'absolute', top: '2rem', right: '2rem' }}>
+            <div style={{ position: 'fixed', top: '2rem', right: '2rem' }}>
                <button className="button button-secondary" onClick={() => removeEntry(isReading.id)} style={{ color: '#ef4444', borderColor: '#ef444420' }}>
                  <Trash size={18} /> PURGE_RECORD
                </button>
             </div>
 
-            <div className={styles.readingView}>
+            <motion.div 
+              className={styles.readingView}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
               <div className={styles.readingHeader}>
                 <div className={styles.readingMeta}>
-                  <p style={{ color: 'var(--text-muted)', fontFamily: 'monospace' }}>{isReading.date}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
+                    <Calendar size={14} />
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{isReading.date}</span>
+                  </div>
                   <div className={styles.moodBadge} style={{ color: isReading.color, backgroundColor: `${isReading.color}15`, border: `1px solid ${isReading.color}30` }}>
                     <isReading.icon size={14} />
                     <span>{isReading.mood}</span>
                   </div>
                 </div>
                 <h1 className={styles.readingTitle}>{isReading.title}</h1>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', opacity: 0.6, fontSize: '0.85rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Book size={14} /> {isReading.text.split(/\s+/).length} Words
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Moon size={14} /> {isReading.text.length} Characters
+                  </div>
+                </div>
               </div>
               <div className={styles.readingContent}>
                 {isReading.text}
               </div>
-            </div>
+              
+              <div style={{ marginTop: '4rem', opacity: 0.3, display: 'flex', justifyContent: 'center' }}>
+                <div style={{ width: '40px', height: '1px', background: 'var(--accent)' }}></div>
+                <div style={{ margin: '0 1rem', fontSize: '0.6rem', letterSpacing: '0.4em' }}>END_OF_RECORD</div>
+                <div style={{ width: '40px', height: '1px', background: 'var(--accent)' }}></div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

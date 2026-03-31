@@ -7,26 +7,36 @@
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 400px 200px;
   align-items: center;
+  gap: 2rem;
+  margin-bottom: 4rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .controls {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
+  display: contents;
 }
 
 .searchBar {
+  grid-column: 2;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 1rem;
-  background: var(--surface);
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  width: 300px;
+  border-radius: var(--radius-full);
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.searchBar:focus-within {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 20px rgba(0, 255, 159, 0.1);
 }
 
 .searchBar input {
@@ -136,6 +146,7 @@
   display: flex;
   flex-direction: column;
   padding: 2rem;
+  overflow-y: auto;
 }
 
 .editorContainer {
@@ -214,19 +225,22 @@
 
 .editorBody {
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .editorTextArea {
   width: 100%;
-  height: 100%;
+  flex: 1;
   background: transparent;
   border: none;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   line-height: 1.8;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   resize: none;
   outline: none;
   font-family: inherit;
+  margin-top: 2rem;
 }
 
 .editorTextArea::placeholder {
@@ -244,10 +258,25 @@
 
 /* Reading View */
 .readingView {
-  max-width: 800px;
+  max-width: 850px;
   width: 100%;
-  margin: 0 auto;
-  padding: 4rem 2rem;
+  margin: 6rem auto;
+  padding: 3rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  position: relative;
+}
+
+.readingView::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--radius-full) 0 0 var(--radius-full);
 }
 
 .readingHeader {
@@ -258,8 +287,9 @@
 .readingMeta {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
-  margin-bottom: 1rem;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
 }
 
 .readingTitle {
@@ -269,8 +299,43 @@
 }
 
 .readingContent {
-  font-size: 1.25rem;
-  line-height: 1.8;
-  color: var(--text-secondary);
+  font-size: 1.2rem;
+  line-height: 2;
+  color: #e2e8f0;
   white-space: pre-wrap;
+  padding-top: 2rem;
+  border-top: 1px dashed var(--border);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.counter {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.counterItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.critical {
+  color: #ef4444;
+}
+
+/* Custom Scrollbar for Editor */
+.writingOverlay::-webkit-scrollbar {
+  width: 6px;
+}
+
+.writingOverlay::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
 }

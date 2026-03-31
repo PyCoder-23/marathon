@@ -92,7 +92,8 @@ const sessionSchema = new mongoose.Schema({
 const eventSchema = new mongoose.Schema({
   discordId: { type: String, required: true },
   title: { type: String, required: true },
-  day: { type: String, required: true }, // 'Monday', 'Tuesday', etc.
+  description: { type: String, default: "" },
+  date: { type: String, required: true }, // 'YYYY-MM-DD'
   startTime: { type: String, required: true }, // '09:00'
   endTime: { type: String, required: true }, // '10:00'
   color: { type: String, default: 'var(--accent)' }
@@ -104,6 +105,6 @@ const AuthCode = mongoose.models.AuthCode || mongoose.model('AuthCode', authCode
 const Task = mongoose.models.Task || mongoose.model('Task', taskSchema);
 const JournalEntry = mongoose.models.JournalEntry || mongoose.model('JournalEntry', journalSchema);
 const Session = mongoose.models.Session || mongoose.model('Session', sessionSchema);
-const EventModel = mongoose.models.Event || mongoose.model('Event', eventSchema);
+const CalendarEvent = mongoose.models.CalendarEvent || mongoose.model('CalendarEvent', eventSchema);
 
-module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, EventModel };
+module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, CalendarEvent };
