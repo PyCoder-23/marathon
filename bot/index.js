@@ -103,15 +103,30 @@ process.on('uncaughtException', (error) => {
 
 client.on(Events.MessageCreate, async message => {
   if (message.author.bot) return;
-  if (!client.user || !message.mentions.has(client.user)) return;
+  
+  // Debug: Log every message received (ignore bots)
+  console.log(`📩 Message from ${message.author.username}: "${message.content}"`);
+
+  if (!client.user || !message.mentions.has(client.user)) {
+    // Debug: Log if bot was NOT mentioned
+    if (client.user && message.content.includes(client.user.id)) {
+        console.log("❓ Bot ID found in message but mentions.has() returned false.");
+    }
+    return;
+  }
+
+  console.log(`🤖 Kairo mentioned in ${message.channel.name}! Processing...`);
 
   try {
     // Remove mention tokens like <@123...> and clean prompt
     let prompt = message.content.replace(new RegExp(`<@!?${client.user.id}>`, 'g'), '').trim();
     
     if (!prompt) {
+      console.log("空 prompt received.");
       return message.reply("👋 Hey there! Mention me and say something to start chatting.");
     }
+
+    console.log(`🧠 Sending prompt to Gemini: "${prompt}"`);
 
     // Indicate typing status
     await message.channel.sendTyping();
@@ -119,7 +134,9 @@ client.on(Events.MessageCreate, async message => {
     // Get response from Kairo
     const response = await kairo.chat(message.channel.id, message.author.username, prompt);
 
-    // Discord message length limit check (although system instructions attempt to keep it short)
+    console.log(`✅ Kairo response generated (${response.length} chars)`);
+
+    // Discord message length limit check
     if (response.length > 2000) {
       const chunks = response.match(/[\s\S]{1,1900}/g) || [];
       for (const chunk of chunks) {
@@ -130,7 +147,7 @@ client.on(Events.MessageCreate, async message => {
     }
 
   } catch (error) {
-    console.error('[Kairo Chat Error]', error);
+    console.error('❌ [Kairo Chat Error]', error);
     message.reply("⚠️ **KAIRA_ERROR:** I'm having a bit of trouble processing that, but I'm still here for you. Take a breath and let's keep going.");
   }
 });
