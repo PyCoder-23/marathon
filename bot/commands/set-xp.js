@@ -30,7 +30,7 @@ module.exports = {
     const amount = interaction.options.getInteger('amount');
 
     try {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply(); // Removed ephemeral: true to make it public
       await connectDB();
 
       // Find user in database
@@ -55,7 +55,7 @@ module.exports = {
         .setTitle('⚡ XP Update Synchronized')
         .setDescription(`Successfully modified XP profile for <@${targetUser.id}>.`)
         .addFields(
-          { name: 'User', value: `${targetUser.tag}`, inline: true },
+          { name: 'User', value: `<@${targetUser.id}>`, inline: true }, // Changed to mention for visibility
           { name: 'Previous XP', value: `${oldXp}`, inline: true },
           { name: 'New XP', value: `${amount}`, inline: true },
           { name: 'Status', value: '✅ Synced with Database & Web', inline: false }

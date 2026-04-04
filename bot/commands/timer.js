@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { connectDB, Session, User, ActiveSession } = require('../../database.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -19,18 +20,23 @@ module.exports = {
 
     const sub = interaction.options.getSubcommand();
     const userId = interaction.user.id;
-    const { client } = interaction;
     
-    // Ensure activeTimers Map exists on client
-    if (!client.activeTimers) client.activeTimers = new Map();
-    
-    const session = client.activeTimers.get(userId);
+    await connectDB();
+    const session = await ActiveSession.findOne({ discordId: userId });
 
     const embed = new EmbedBuilder().setColor('#00ff9f');
 
     if (sub === 'start') {
       if (session) return interaction.reply({ content: '🔋 A session is already active!', ephemeral: true });
-      client.activeTimers.set(userId, { startTime: Date.now(), totalMs: 0, paused: false, pauseTime: null });
+      
+      await ActiveSession.create({ 
+        discordId: userId, 
+        startTime: Date.now(), 
+        totalMs: 0, 
+        paused: false, 
+        pauseTime: null 
+      });
+
       return interaction.reply({ 
         embeds: [embed.setTitle('🚀 Session Initialized')
           .setDescription('Your marathon has started! Good luck with your focus.')
@@ -42,17 +48,23 @@ module.exports = {
 
     if (sub === 'pause') {
       if (session.paused) return interaction.reply({ content: '⏸️ Timer is already paused.', ephemeral: true });
+      
       session.totalMs += (Date.now() - session.startTime);
       session.paused = true;
       session.pauseTime = Date.now();
+      await session.save();
+
       return interaction.reply({ embeds: [embed.setTitle('⏸️ Session Paused').setDescription('Take a break. Timer stopped.')] });
     }
 
     if (sub === 'resume') {
       if (!session.paused) return interaction.reply({ content: '▶️ Timer is already running.', ephemeral: true });
+      
       session.startTime = Date.now();
       session.paused = false;
       session.pauseTime = null;
+      await session.save();
+
       return interaction.reply({ embeds: [embed.setTitle('▶️ Session Resumed').setDescription('Marathon continues...')] });
     }
 
@@ -65,7 +77,7 @@ module.exports = {
     }
 
     if (sub === 'quit') {
-      client.activeTimers.delete(userId);
+      await ActiveSession.deleteOne({ discordId: userId });
       return interaction.reply({ embeds: [embed.setTitle('🛑 Session Abandoned').setDescription('Your timer was canceled. No XP was awarded.')] });
     }
 
@@ -74,6 +86,8 @@ module.exports = {
       if (!proof.contentType?.startsWith('image/')) {
         return interaction.reply({ content: 'Please upload an image for verification.', ephemeral: true });
       }
+
+      await interaction.deferReply(); // Defer to avoid timeout
 
       let finalMs = session.totalMs;
       if (!session.paused) finalMs += (Date.now() - session.startTime);
@@ -91,16 +105,13 @@ module.exports = {
         .setImage(proof.url)
         .setTimestamp();
 
-      await interaction.reply({ embeds: [sessionEmbed] });
+      await interaction.editReply({ embeds: [sessionEmbed] });
 
       // Clean up session
-      client.activeTimers.delete(userId);
+      await ActiveSession.deleteOne({ discordId: userId });
 
       // Save to database
       try {
-        const { connectDB, Session, User } = require('../../database.js');
-        await connectDB();
-        
         // Log Session
         await Session.create({
           discordId: userId,
@@ -115,17 +126,14 @@ module.exports = {
           const now = new Date();
           const lastActive = user.lastActive ? new Date(user.lastActive) : null;
           
-          // Reset check: if more than 48 hours passed since last session, break streak
           if (lastActive) {
             const hoursSinceLast = (now.getTime() - lastActive.getTime()) / (1000 * 60 * 60);
             if (hoursSinceLast > 48) {
               user.streak = 1;
             } else if (now.toDateString() !== lastActive.toDateString()) {
-              // It's a new day, increment streak
               user.streak += 1;
             }
           } else {
-            // First time ever
             user.streak = 1;
           }
 
@@ -138,20 +146,25 @@ module.exports = {
         console.error('Failed to log session in DB:', dbErr);
       }
 
-
       // Log to proof channel
-      const proofChannel = interaction.guild.channels.cache.find(c => c.name === 'proof-of-work');
-      if (proofChannel) {
-        const logEmbed = new EmbedBuilder()
-          .setTitle(`📝 Session Log: ${interaction.user.tag}`)
-          .addFields(
-            { name: 'Duration', value: `${finalH}h ${finalM}m`, inline: true },
-            { name: 'ID', value: userId, inline: true }
-          )
-          .setImage(proof.url)
-          .setColor('#00ff9f')
-          .setTimestamp();
-        await proofChannel.send({ embeds: [logEmbed] });
+      try {
+        const proofChannel = interaction.guild.channels.cache.find(c => c.name === 'proof-of-work') || 
+                             await interaction.guild.channels.fetch().then(cs => cs.find(c => c.name === 'proof-of-work'));
+        
+        if (proofChannel) {
+          const logEmbed = new EmbedBuilder()
+            .setTitle(`📝 Session Log: ${interaction.user.tag}`)
+            .addFields(
+              { name: 'Duration', value: `${finalH}h ${finalM}m`, inline: true },
+              { name: 'ID', value: userId, inline: true }
+            )
+            .setImage(proof.url)
+            .setColor('#00ff9f')
+            .setTimestamp();
+          await proofChannel.send({ embeds: [logEmbed] });
+        }
+      } catch (logErr) {
+        console.error('Failed to log proof to channel:', logErr);
       }
     }
   },

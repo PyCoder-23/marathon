@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { connectDB, User, Session, Task } = require('../../database.js');
+const { connectDB, User, Session, Task, ActiveSession } = require('../../database.js');
 
 const HEAD_ADMIN_ID = '857145663947014164';
 
@@ -25,16 +25,12 @@ module.exports = {
       // 2. Clear all activity-related documents
       const sessionRes = await Session.deleteMany({});
       const taskRes = await Task.deleteMany({});
-
-      // 3. Global Wipe: Clear all currently active in-memory timers
-      let activeTimersCount = 0;
-      if (interaction.client.activeTimers) {
-        activeTimersCount = interaction.client.activeTimers.size;
-        interaction.client.activeTimers.clear();
-      }
+      
+      // 3. Clear all active sessions in DB
+      const activeRes = await ActiveSession.deleteMany({});
 
       return interaction.editReply({ 
-        content: `✅ **SYSTEM_WIPE_COMPLETE**\n- **Xp Resets:** ${userRes.modifiedCount}\n- **Sessions Purged:** ${sessionRes.deletedCount}\n- **Tasks Purged:** ${taskRes.deletedCount}\n- **Active Timers Terminated:** ${activeTimersCount}\n\nThe new cycle has been manually initialized.`
+        content: `✅ **SYSTEM_WIPE_COMPLETE**\n- **Xp Resets:** ${userRes.modifiedCount}\n- **Sessions Purged:** ${sessionRes.deletedCount}\n- **Tasks Purged:** ${taskRes.deletedCount}\n- **Active Timers Terminated:** ${activeRes.deletedCount}\n\nThe new cycle has been manually initialized.`
       });
 
     } catch (error) {

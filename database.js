@@ -99,6 +99,15 @@ const eventSchema = new mongoose.Schema({
   color: { type: String, default: 'var(--accent)' }
 });
 
+const activeSessionSchema = new mongoose.Schema({
+  discordId: { type: String, required: true, unique: true },
+  startTime: { type: Number, required: true },
+  totalMs: { type: Number, default: 0 },
+  paused: { type: Boolean, default: false },
+  pauseTime: { type: Number, default: null },
+  createdAt: { type: Date, default: Date.now }
+});
+
 // Models (Singleton check for Next.js fast-refresh)
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 const AuthCode = mongoose.models.AuthCode || mongoose.model('AuthCode', authCodeSchema);
@@ -106,5 +115,6 @@ const Task = mongoose.models.Task || mongoose.model('Task', taskSchema);
 const JournalEntry = mongoose.models.JournalEntry || mongoose.model('JournalEntry', journalSchema);
 const Session = mongoose.models.Session || mongoose.model('Session', sessionSchema);
 const CalendarEvent = mongoose.models.CalendarEvent || mongoose.model('CalendarEvent', eventSchema);
+const ActiveSession = mongoose.models.ActiveSession || mongoose.model('ActiveSession', activeSessionSchema);
 
-module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, CalendarEvent };
+module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, CalendarEvent, ActiveSession };
