@@ -148,7 +148,7 @@ client.on(Events.MessageCreate, async message => {
 
   } catch (error) {
     console.error('❌ [Kairo Chat Error]', error);
-    message.reply("⚠️ **KAIRA_ERROR:** I'm having a bit of trouble processing that, but I'm still here for you. Take a breath and let's keep going.");
+    message.reply("⚠️ **KAIRO_ERROR:** I'm having a bit of trouble processing that, but I'm still here for you. Take a breath and let's keep going.");
   }
 });
 

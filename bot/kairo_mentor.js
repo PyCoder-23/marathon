@@ -10,7 +10,7 @@ class KairoMentor {
         }
         this.genAI = new GoogleGenerativeAI(apiKey);
         this.model = this.genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash-lite",
             systemInstruction: `
 You are Kairo, a gentle, motivational, and supportive mentor for students in the Marathon Server.
 Your goal is to help students stay consistent, disciplined, and focused on their goals.
