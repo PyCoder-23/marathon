@@ -14,6 +14,9 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const KairoMentor = require('./kairo_mentor.js');
+
+const kairo = new KairoMentor(process.env.kairo_key);
 
 const client = new Client({
   intents: [
@@ -95,6 +98,41 @@ process.on('unhandledRejection', (error) => {
 });
 process.on('uncaughtException', (error) => {
   console.error('[Uncaught Exception]', error);
+});
+
+
+client.on(Events.MessageCreate, async message => {
+  if (message.author.bot) return;
+  if (!client.user || !message.mentions.has(client.user)) return;
+
+  try {
+    // Remove mention tokens like <@123...> and clean prompt
+    let prompt = message.content.replace(new RegExp(`<@!?${client.user.id}>`, 'g'), '').trim();
+    
+    if (!prompt) {
+      return message.reply("👋 Hey there! Mention me and say something to start chatting.");
+    }
+
+    // Indicate typing status
+    await message.channel.sendTyping();
+
+    // Get response from Kairo
+    const response = await kairo.chat(message.channel.id, message.author.username, prompt);
+
+    // Discord message length limit check (although system instructions attempt to keep it short)
+    if (response.length > 2000) {
+      const chunks = response.match(/[\s\S]{1,1900}/g) || [];
+      for (const chunk of chunks) {
+        await message.channel.send(chunk);
+      }
+    } else {
+      await message.reply(response);
+    }
+
+  } catch (error) {
+    console.error('[Kairo Chat Error]', error);
+    message.reply("⚠️ **KAIRA_ERROR:** I'm having a bit of trouble processing that, but I'm still here for you. Take a breath and let's keep going.");
+  }
 });
 
 client.login(process.env.DISCORD_TOKEN);
