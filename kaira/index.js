@@ -2,6 +2,16 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Partials, Events } = require('discord.js');
 const Groq = require('groq-sdk');
 
+// Boot checklist
+if (!process.env.KAIRA_TOKEN) {
+    console.error("❌ ERROR: Missing KAIRA_TOKEN in .env file!");
+    process.exit(1);
+}
+if (!process.env.KAIRA_KEY) {
+    console.error("❌ ERROR: Missing KAIRA_KEY (Groq API Key) in .env file!");
+    process.exit(1);
+}
+
 const groq = new Groq({
     apiKey: process.env.KAIRA_KEY
 });
@@ -46,7 +56,7 @@ client.on(Events.MessageCreate, async (message) => {
                 ],
                 model: 'openai/gpt-oss-120b', 
                 temperature: 1,
-                max_completion_tokens: 8192,
+                max_completion_tokens: 1500,
                 top_p: 1,
                 reasoning_effort: 'medium',
                 stream: false // Streaming in Discord bots can lead to severe rate limiting; keeping off for stability.
