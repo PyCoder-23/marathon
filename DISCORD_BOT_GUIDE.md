@@ -1,105 +1,117 @@
-# 🤖 Marathon Discord Bot: Comprehensive Setup Guide
+# 🤖 Marathon Twin-Bot Protocol: Setup Guide
 
-This guide will walk you through the entire process of setting up, configuring, and running the **Marathon Discord Bot** to work in tandem with your futuristic website.
-
----
-
-## 🏗️ Phase 1: Create your Discord Application
-
-### 1.1: Initialize via Developer Portal
-1.  Navigate to the **[Discord Developer Portal](https://discord.com/developers/applications)**.
-2.  Log in and click the **"New Application"** button (top-right).
-3.  **Name**: `Marathon Bot` (or your preferred name) and click **Create**.
-
-### 1.2: Configure the Bot User
-1.  Go to the **"Bot"** tab on the left sidebar.
-2.  **Reset Token** (or **Copy Token**) and save it safely. This is your `DISCORD_TOKEN`.
-3.  **Privileged Gateway Intents**: Scroll down and enable these three (CRITICAL):
-    -   `Presence Intent`
-    -   `Server Members Intent`
-    -   `Message Content Intent`
-4.  Click **Save Changes**.
+This guide will walk you through setting up both **KAIRO** (The Disciplined Mentor) and **KAIRA** (The Sarcastic Teenager).
 
 ---
 
-## 🔗 Phase 2: Invite Bot to your Server
+## 🏗️ Phase 1: Create your Discord Applications
 
-### 2.1: Generate Invite URL
-1.  Go to **"OAuth2"** -> **"URL Generator"**.
-2.  **Scopes**: Check `bot` and `applications.commands`.
-3.  **Bot Permissions**: Check `Administrator` (for testing convenience) or manually select:
-    -   `Send Messages`
-    -   `Embed Links`
-    -   `Attach Files`
-    -   `Manage Channels`
-4.  **Copy the URL** generated at the bottom.
+You need to create **two** separate applications in the [Discord Developer Portal](https://discord.com/developers/applications).
 
-### 2.2: Authorize
-1.  Paste the URL into your browser.
-2.  Select the server you want the bot to join and click **Authorize**.
+### 1.1: Initialize KAIRO (Main Bot)
+1.  **New Application** -> Name: `KAIRO`.
+2.  Go to **Bot** tab -> **Reset Token** -> Copy this as `DISCORD_TOKEN`.
+3.  **Enable Intents** (CRITICAL):
+    - `Presence Intent`
+    - `Server Members Intent`
+    - `Message Content Intent`
+4.  **Invite Scopes**: `OAuth2` -> `URL Generator`. Select `bot` and `applications.commands`.
+5.  **Permissions**: `Administrator` (or `Manage Roles`, `Manage Channels`, `Send Messages`, `Embed Links`, `Attach Files`).
+
+### 1.2: Initialize KAIRA (AI Bot)
+1.  **New Application** -> Name: `KAIRA`.
+2.  Go to **Bot** tab -> **Reset Token** -> Copy this as `KAIRA_TOKEN`.
+3.  **Enable Intents**:
+    - `Message Content Intent`
+4.  **Invite Scopes**: Same as above (only `bot` scope needed if she has no slash commands).
 
 ---
 
-## ⚙️ Phase 3: Local Configuration
+## ⚙️ Phase 2: Configuration & Environment
 
-### 3.1: Environment Variables
-1.  Open your project directory and navigate to the `/bot` folder.
-2.  Create a file named **`.env`**.
-3.  Add the following keys (replace with your actual data):
-    ```env
-    DISCORD_TOKEN=your_bot_token_from_portal
-    CLIENT_ID=your_application_id (Found under "General Information")
-    GUILD_ID=your_discord_server_id
-    ```
-    > [!TIP]
-    > To get your **GUILD_ID**, right-click your server icon in Discord and select **"Copy Server ID"** (Requires Discord Developer Mode enabled in Settings -> Advanced).
+You need to set up your `.env` variables to bridge the bots to the servers.
 
-### 3.2: Install Dependencies
-Run the following in your terminal:
+### 2.1: Main Project Variables
+In your root `.env` or `/bot/.env`, ensure these are present:
+```env
+# KAIRO (Main Bot)
+DISCORD_TOKEN=your_kairo_token
+CLIENT_ID=kairo_application_id
+GUILD_ID=your_server_id
+kairo_key=your_gemini_api_key
+MEMBER_ROLE_NAME=member
+
+# KAIRA (AI Bot)
+KAIRA_TOKEN=your_kaira_token
+KAIRA_KEY=your_groq_api_key
+```
+
+> [!TIP]
+> To get your **GUILD_ID**, right-click your server icon in Discord and select **"Copy Server ID"**.
+
+---
+
+## 🚀 Phase 3: Deployment
+
+### 3.1: Deploy KAIRO (Functional Bot)
+KAIRO uses slash commands which must be registered with Discord.
 ```bash
 cd bot
+npm install
+node deploy-commands.js
+```
+
+### 3.2: Deploy KAIRA (Responsive Bot)
+KAIRA is purely responsive and uses the Groq Llama 3 model to talk.
+```bash
+cd kaira
 npm install
 ```
 
 ---
 
-## 🚀 Phase 4: Launch & Deploy
+## 🏃‍♂️ Phase 4: Running the Bots (PM2)
 
-### 4.1: Register Slash Commands
-Slash commands like `/start`, `/end`, and `/signup` must be "deployed" to Discord before they appear in your server:
-```bash
-node deploy-commands.js
-```
+To keep both bots running 24/7 on your server, use **PM2**.
 
-### 4.2: Start the Bot
-Now, launch the bot's heart:
 ```bash
-node index.js
+# Start KAIRO
+cd bot
+pm2 start index.js --name "kairo"
+
+# Start KAIRA
+cd ../kaira
+pm2 start index.js --name "kaira"
+
+# Save the processes for server reboots
+pm2 save
 ```
-The bot should now show a "System Online" message in your terminal and appear as **online** in your Discord server.
 
 ---
 
-## 🧪 Phase 5: Testing the Integration
+## 🧪 Phase 5: Testing the Operations
 
-### Sign-Up Verification
-1.  Run `/signup` in your Discord server.
-2.  The bot will send you a **Direct Message (DM)** with a **6-digit code**.
-3.  Open [Signup Page](http://localhost:3000/signup) on the website and enter the code to verify your identity.
+### 🔗 Linking your Account
+1.  Run `/link` in Discord.
+2.  Check your **DMs** for the 8-character code.
+3.  Enter the code on the **Marathon Website** to sync your profile.
 
-### Session Lifecycle
-1.  Run `/start` to begin your study session.
-2.  Run `/end` when you're done. The bot will prompt you to **upload an image attachment** as proof of work.
-3.  Submissions will be automatically logged in the `#proof-of-work` channel.
+### ⏱️ Using the Timer (KAIRO)
+- `/timer start`: Start your focus clock.
+- `/timer view`: Check elapsed time and **potential XP**.
+- `/timer end`: Finish and upload proof (Required).
+
+### 🏆 Checking Rankings
+- `/rank`: See your own standing.
+- `/leaderboard`: Interactive list of top 10 agents.
+- `/active`: Live list of who is currently working.
+
+### 🙄 Talking to KAIRA
+- Simply **ping @KAIRA** in any channel and ask her something. Be prepared for attitude.
 
 ---
 
 ### ⚠️ Troubleshooting
--   **Commands aren't appearing?** Ensure you ran `node deploy-commands.js` and wait up to 5 minutes for Discord to globalize them.
--   **Bot isn't responding?** Check if `Message Content Intent` is enabled in the Developer Portal.
--   **Website won't let you in?** Ensure the **Username** on the website exactly matches your **Discord Username** (it's case-sensitive!).
-
----
-
-> [!NOTE]
-> For any design refinements or logic tweaks, please reach out to the project admin.
+- **Commands missing?** Wait 5 mins after running `node deploy-commands.js` and restart your Discord client (`Cmd+R`).
+- **KAIRA not responding?** Ensure your `KAIRA_KEY` (Groq) is valid and she has `Message Content Intent` enabled in the portal.
+- **XP not counting?** Remember: Sessions under 25 minutes grant **0 XP**. Stay disciplined!
