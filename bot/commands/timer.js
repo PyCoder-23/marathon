@@ -94,7 +94,11 @@ module.exports = {
       const finalH = Math.floor(finalMs / 3600000);
       const finalM = Math.floor((finalMs % 3600000) / 60000);
       const totalMinutes = finalH * 60 + finalM;
-      const xpEarned = Math.floor(totalMinutes / 25) * 20;
+      
+      let xpEarned = 0;
+      if (totalMinutes >= 25) {
+        xpEarned = Math.round(totalMinutes * 0.8);
+      }
 
       const sessionEmbed = embed.setTitle('🏆 Session Concluded')
         .setDescription(`**${interaction.user.username}**, well done! Your work has been submitted.`)

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectDB, AuthCode, User } from '@/../database.js';
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
@@ -132,13 +133,14 @@ export async function POST(request: Request) {
 
     // Mark user as officially linked
     user.hasLinked = true;
+    user.sessionToken = crypto.randomUUID();
     await user.save();
 
     // Code is valid and one-time use, remove it
     await AuthCode.deleteOne({ code });
 
     // Return the user data to be stored securely on the client
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
         discordId: user.discordId,
@@ -149,6 +151,18 @@ export async function POST(request: Request) {
         streak: user.streak
       }
     });
+
+    response.cookies.set({
+      name: 'sessionToken',
+      value: user.sessionToken,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: '/'
+    });
+
+    return response;
 
   } catch (error) {
     console.error('API Error /auth:', error);

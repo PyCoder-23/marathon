@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
-const { connectDB, Task } = require('../../../../database.js');
+import { cookies } from 'next/headers';
+const { connectDB, Task, User } = require('../../../../database.js');
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const discordId = searchParams.get('discordId');
-
-  if (!discordId) return NextResponse.json({ error: 'No discord ID' }, { status: 400 });
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('sessionToken')?.value;
+  if (!sessionToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
     await connectDB();
-    const tasks = await Task.find({ discordId }).sort({ createdAt: -1 });
+    const user = await User.findOne({ sessionToken });
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const tasks = await Task.find({ discordId: user.discordId }).sort({ createdAt: -1 });
 
     return NextResponse.json({
       tasks: tasks.map((t: any) => ({
@@ -25,12 +28,19 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  try {
-    const { discordId, title } = await req.json();
-    if (!discordId || !title) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('sessionToken')?.value;
+  if (!sessionToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  try {
     await connectDB();
-    const newTask = await Task.create({ discordId, title });
+    const user = await User.findOne({ sessionToken });
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { title } = await req.json();
+    if (!title) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+
+    const newTask = await Task.create({ discordId: user.discordId, title });
 
     return NextResponse.json({ success: true, task: newTask });
   } catch (error) {
@@ -40,12 +50,19 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('sessionToken')?.value;
+  if (!sessionToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
+    await connectDB();
+    const user = await User.findOne({ sessionToken });
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { id, isCompleted } = await req.json();
     if (!id) return NextResponse.json({ error: 'Missing task ID' }, { status: 400 });
 
-    await connectDB();
-    await Task.findByIdAndUpdate(id, { isCompleted });
+    await Task.findOneAndUpdate({ _id: id, discordId: user.discordId }, { isCompleted });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -55,6 +72,10 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('sessionToken')?.value;
+  if (!sessionToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 
@@ -62,7 +83,10 @@ export async function DELETE(req: Request) {
 
   try {
     await connectDB();
-    await Task.findByIdAndDelete(id);
+    const user = await User.findOne({ sessionToken });
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    await Task.findOneAndDelete({ _id: id, discordId: user.discordId });
 
     return NextResponse.json({ success: true });
   } catch (error) {

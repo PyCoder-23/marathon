@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
-import { connectDB, CalendarEvent } from '@/../database.js';
+import { cookies } from 'next/headers';
+import { connectDB, CalendarEvent, User } from '@/../database.js';
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const discordId = searchParams.get('discordId');
-
-  if (!discordId) return NextResponse.json({ error: 'Missing discordId' }, { status: 400 });
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('sessionToken')?.value;
+  if (!sessionToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
     await connectDB();
-    const events = await CalendarEvent.find({ discordId });
+    const user = await User.findOne({ sessionToken });
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const events = await CalendarEvent.find({ discordId: user.discordId });
     return NextResponse.json({ events: events.map((e: any) => ({ ...e.toObject(), id: e._id.toString() })) });
   } catch (error) {
     console.error(error);
@@ -18,16 +21,24 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('sessionToken')?.value;
+  if (!sessionToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
-    const { id, discordId, title, description, date, startTime, endTime, color } = await req.json();
-    if (!discordId || !title || !date || !startTime || !endTime) {
+    await connectDB();
+    const user = await User.findOne({ sessionToken });
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { id, title, description, date, startTime, endTime, color } = await req.json();
+    if (!title || !date || !startTime || !endTime) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
  
-    await connectDB();
     if (id) {
-      // Update existing
-      const updated = await CalendarEvent.findByIdAndUpdate(id, 
+      // Update existing. Ensure we only update if it belongs to this user!
+      const updated = await CalendarEvent.findOneAndUpdate(
+        { _id: id, discordId: user.discordId },
         { title, description, date, startTime, endTime, color }, 
         { new: true }
       );
@@ -37,7 +48,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, event: { ...updated.toObject(), id: updated._id.toString() } });
     } else {
       // Create new
-      const newEvent = await CalendarEvent.create({ discordId, title, description, date, startTime, endTime, color });
+      const newEvent = await CalendarEvent.create({ discordId: user.discordId, title, description, date, startTime, endTime, color });
       return NextResponse.json({ success: true, event: { ...newEvent.toObject(), id: newEvent._id.toString() } });
     }
   } catch (error: any) {
@@ -47,6 +58,10 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('sessionToken')?.value;
+  if (!sessionToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 
@@ -54,7 +69,11 @@ export async function DELETE(req: Request) {
 
   try {
     await connectDB();
-    await CalendarEvent.findByIdAndDelete(id);
+    const user = await User.findOne({ sessionToken });
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    // Ensure they can only delete their own
+    await CalendarEvent.findOneAndDelete({ _id: id, discordId: user.discordId });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(error);

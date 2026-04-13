@@ -52,6 +52,7 @@ const userSchema = new mongoose.Schema({
   lastActive: { type: Date },
   hasLinked: { type: Boolean, default: false },
   joinedAt: { type: Date, default: Date.now },
+  sessionToken: { type: String },
 });
 
 const authCodeSchema = new mongoose.Schema({

@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server';
-import { connectDB, JournalEntry } from '@/../database.js';
+import { cookies } from 'next/headers';
+import { connectDB, JournalEntry, User } from '@/../database.js';
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const discordId = searchParams.get('discordId');
-
-  if (!discordId) {
-    return NextResponse.json({ error: 'Missing discordId' }, { status: 400 });
-  }
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('sessionToken')?.value;
+  if (!sessionToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
     await connectDB();
+    const user = await User.findOne({ sessionToken });
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const discordId = user.discordId;
+
     const entries = await JournalEntry.find({ discordId }).sort({ createdAt: -1 });
     // Map _id back to id for frontend compatibility
     const mapped = entries.map(e => ({ ...e.toObject(), id: e._id.toString() }));
@@ -21,11 +23,19 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('sessionToken')?.value;
+  if (!sessionToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   try {
     await connectDB();
-    const { discordId, title, content, mood, date } = await request.json();
+    const user = await User.findOne({ sessionToken });
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const discordId = user.discordId;
 
-    if (!discordId || !content) {
+    const { title, content, mood, date } = await request.json();
+
+    if (!content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -45,16 +55,23 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('sessionToken')?.value;
+  if (!sessionToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
-  const discordId = searchParams.get('discordId');
 
-  if (!id || !discordId) {
-    return NextResponse.json({ error: 'Missing id or discordId' }, { status: 400 });
+  if (!id) {
+    return NextResponse.json({ error: 'Missing id' }, { status: 400 });
   }
 
   try {
     await connectDB();
+    const user = await User.findOne({ sessionToken });
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const discordId = user.discordId;
+
     await JournalEntry.findOneAndDelete({ _id: id, discordId });
     return NextResponse.json({ success: true });
   } catch (error) {
