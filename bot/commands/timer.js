@@ -73,7 +73,14 @@ module.exports = {
       if (!session.paused) currentMs += (Date.now() - session.startTime);
       const hours = Math.floor(currentMs / 3600000);
       const minutes = Math.floor((currentMs % 3600000) / 60000);
-      return interaction.reply({ embeds: [embed.setTitle('👀 Current Status').setDescription(`Elapsed: **${hours}h ${minutes}m**`)] });
+      const totalMinutes = hours * 60 + minutes;
+      
+      let potentialXp = 0;
+      if (totalMinutes >= 25) {
+        potentialXp = Math.round(totalMinutes * 0.8);
+      }
+
+      return interaction.reply({ embeds: [embed.setTitle('👀 Current Status').setDescription(`Elapsed: **${hours}h ${minutes}m**\nPotential XP: **+${potentialXp} XP**`)] });
     }
 
     if (sub === 'quit') {
