@@ -139,6 +139,26 @@ export async function POST(request: Request) {
     // Code is valid and one-time use, remove it
     await AuthCode.deleteOne({ code });
 
+    // Send DM confirming sync
+    try {
+      const dmChannelRes = await discordFetch('/users/@me/channels', {
+        method: 'POST',
+        body: JSON.stringify({ recipient_id: discordId })
+      });
+      const dmChannel = await dmChannelRes.json();
+      
+      if (dmChannel.id) {
+        await discordFetch(`/channels/${dmChannel.id}/messages`, {
+          method: 'POST',
+          body: JSON.stringify({ 
+            content: `✅ **Identity Synced:** Your Discord account is now securely linked to your Marathon Web Dashboard.` 
+          })
+        });
+      }
+    } catch (err) {
+      console.log('Failed to send linkage confirmation DM', err);
+    }
+
     // Return the user data to be stored securely on the client
     const response = NextResponse.json({
       success: true,

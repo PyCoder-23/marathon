@@ -40,7 +40,7 @@ export default function JoinCampPage() {
       }));
       
       setStatus("success");
-      setTimeout(() => router.push("/"), 800);
+      setTimeout(() => window.location.href = "/", 800);
     } catch (err) {
       console.error(err);
       setStatus("error");
