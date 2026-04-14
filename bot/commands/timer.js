@@ -2,19 +2,29 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const { connectDB, Session, User, ActiveSession } = require('../../database.js');
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('timer')
-    .setDescription('Session tracking commands.')
-    .addSubcommand(sub => sub.setName('start').setDescription('Initialize your study session.'))
-    .addSubcommand(sub => sub.setName('pause').setDescription('Temporarily stop elapsed time.'))
-    .addSubcommand(sub => sub.setName('resume').setDescription('Continue from last paused state.'))
-    .addSubcommand(sub => sub.setName('view').setDescription('Check your current elapsed time.'))
-    .addSubcommand(sub => sub.setName('quit').setDescription('Abandon the current timer without gaining XP.'))
-    .addSubcommand(sub => sub.setName('end').setDescription('Finalize your session and submit proof.')
-      .addAttachmentOption(option => 
-        option.setName('proof')
-          .setDescription('Upload an image of your work.')
-          .setRequired(true))),
+  data: (() => {
+    const builder = new SlashCommandBuilder()
+      .setName('timer')
+      .setDescription('Session tracking commands.')
+      .addSubcommand(sub => sub.setName('start').setDescription('Initialize your study session.'))
+      .addSubcommand(sub => sub.setName('pause').setDescription('Temporarily stop elapsed time.'))
+      .addSubcommand(sub => sub.setName('resume').setDescription('Continue from last paused state.'))
+      .addSubcommand(sub => sub.setName('view').setDescription('Check your current elapsed time.'))
+      .addSubcommand(sub => sub.setName('quit').setDescription('Abandon the current timer without gaining XP.'))
+      .addSubcommand(sub => {
+        sub.setName('end').setDescription('Finalize your session and submit proof.');
+        // Add 25 attachment options
+        for (let i = 1; i <= 25; i++) {
+          sub.addAttachmentOption(option => 
+            option.setName(`proof${i}`)
+              .setDescription(`Upload proof image #${i}${i === 1 ? ' (Required)' : ' (Optional)'}`)
+              .setRequired(i === 1)
+          );
+        }
+        return sub;
+      });
+    return builder;
+  })(),
 
   async execute(interaction) {
 
@@ -89,9 +99,20 @@ module.exports = {
     }
 
     if (sub === 'end') {
-      const proof = interaction.options.getAttachment('proof');
-      if (!proof.contentType?.startsWith('image/')) {
-        return interaction.reply({ content: 'Please upload an image for verification.', ephemeral: true });
+      // Gather all proof attachments
+      const proofs = [];
+      for (let i = 1; i <= 25; i++) {
+        const attachment = interaction.options.getAttachment(`proof${i}`);
+        if (attachment) {
+          if (!attachment.contentType?.startsWith('image/')) {
+            return interaction.reply({ content: `File #${i} is not an image. Please only upload images for verification.`, ephemeral: true });
+          }
+          proofs.push(attachment);
+        }
+      }
+
+      if (proofs.length === 0) {
+        return interaction.reply({ content: 'Please upload at least one image for verification.', ephemeral: true });
       }
 
       await interaction.deferReply(); // Defer to avoid timeout
@@ -111,9 +132,10 @@ module.exports = {
         .setDescription(`**${interaction.user.username}**, well done! Your work has been submitted.`)
         .addFields(
           { name: 'Total Duration', value: `\`${finalH}h ${finalM}m\``, inline: true },
-          { name: 'XP Granted', value: `\`+${xpEarned} XP\``, inline: true }
+          { name: 'XP Granted', value: `\`+${xpEarned} XP\``, inline: true },
+          { name: 'Proof Count', value: `\`${proofs.length} Images\``, inline: true }
         )
-        .setImage(proof.url)
+        .setImage(proofs[0].url) // Show primary image in result
         .setTimestamp();
 
       await interaction.editReply({ embeds: [sessionEmbed] });
@@ -121,14 +143,14 @@ module.exports = {
       // Clean up session
       await ActiveSession.deleteOne({ discordId: userId });
 
-      // Save to database
+      // Save to database (NO IMAGE DATA SAVED)
       try {
         // Log Session
         await Session.create({
           discordId: userId,
           duration: finalMs,
-          xpGranted: xpEarned,
-          proofUrl: proof.url
+          xpGranted: xpEarned
+          // proofUrl removed as per strict privacy requirements
         });
 
         // Update User stats & Streak
@@ -157,22 +179,38 @@ module.exports = {
         console.error('Failed to log session in DB:', dbErr);
       }
 
-      // Log to proof channel
+      // Log to proof channel (All proof images shown here)
       try {
         const proofChannel = interaction.guild.channels.cache.find(c => c.name === 'proof-of-work') || 
                              await interaction.guild.channels.fetch().then(cs => cs.find(c => c.name === 'proof-of-work'));
         
         if (proofChannel) {
-          const logEmbed = new EmbedBuilder()
-            .setTitle(`📝 Session Log: ${interaction.user.tag}`)
-            .addFields(
-              { name: 'Duration', value: `${finalH}h ${finalM}m`, inline: true },
-              { name: 'ID', value: userId, inline: true }
-            )
-            .setImage(proof.url)
-            .setColor('#00ff9f')
-            .setTimestamp();
-          await proofChannel.send({ embeds: [logEmbed] });
+          const logEmbeds = proofs.map((p, idx) => {
+            const logEmbed = new EmbedBuilder()
+              .setColor('#00ff9f')
+              .setImage(p.url);
+            
+            if (idx === 0) {
+              logEmbed.setTitle(`📝 Session Log: ${interaction.user.tag}`)
+                .addFields(
+                  { name: 'Duration', value: `${finalH}h ${finalM}m`, inline: true },
+                  { name: 'ID', value: userId, inline: true },
+                  { name: 'Proof Submitted', value: `${proofs.length} Images`, inline: true }
+                )
+                .setTimestamp();
+            }
+            return logEmbed;
+          });
+
+          // Discord allows 10 embeds per message. If more than 10, we'll send multiple messages.
+          const chunks = [];
+          for (let i = 0; i < logEmbeds.length; i += 10) {
+            chunks.push(logEmbeds.slice(i, i + 10));
+          }
+
+          for (const chunk of chunks) {
+            await proofChannel.send({ embeds: chunk });
+          }
         }
       } catch (logErr) {
         console.error('Failed to log proof to channel:', logErr);

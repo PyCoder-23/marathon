@@ -86,7 +86,6 @@ const sessionSchema = new mongoose.Schema({
   discordId: { type: String, required: true },
   duration: { type: Number, required: true },
   xpGranted: { type: Number, default: 0 },
-  proofUrl: String,
   createdAt: { type: Date, default: Date.now },
 });
 
