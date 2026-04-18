@@ -576,3 +576,59 @@
     grid-template-columns: repeat(7, minmax(100px, 1fr));
   }
 }
+
+.printableCTA {
+  margin-top: 4rem;
+  margin-bottom: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  background-image: radial-gradient(circle at top right, var(--accent-soft), transparent);
+}
+
+.ctaContent h3 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.ctaContent p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.ctaBtn {
+  background: var(--accent);
+  color: var(--background);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  white-space: nowrap;
+  box-shadow: 0 4px 15px var(--accent-glow);
+}
+
+.ctaBtn:hover {
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 8px 25px var(--accent-glow);
+}
+
+@media (max-width: 768px) {
+  .printableCTA {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem 1.5rem;
+  }
+  
+  .ctaBtn {
+    width: 100%;
+  }
+}

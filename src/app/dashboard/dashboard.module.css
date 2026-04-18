@@ -7,6 +7,84 @@
   padding: 0.5rem 0 3rem 0;
 }
 
+.syncLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+}
+
+.sleepState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+  padding: 2rem;
+}
+
+.sleepCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 3rem;
+  max-width: 500px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.sleepCard h2 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  color: var(--accent);
+  letter-spacing: 3px;
+}
+
+.sleepCard p {
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-size: 1.1rem;
+}
+
+.sleepCard .subText {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.sleepCard code {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  color: var(--accent);
+}
+
+.disconnectBtn {
+  margin-top: 1rem;
+  background: transparent;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  padding: 0.75rem 2rem;
+  border-radius: var(--radius-md);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.disconnectBtn:hover {
+  background: #ef4444;
+  color: white;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
 /* Header Section */
 .header {
   display: flex;

@@ -55,6 +55,10 @@ const userSchema = new mongoose.Schema({
   sessionToken: { type: String },
 });
 
+userSchema.index({ weeklyXp: -1 });
+userSchema.index({ xp: -1 });
+userSchema.index({ sessionToken: 1 });
+
 const authCodeSchema = new mongoose.Schema({
   code: { type: String, required: true, unique: true },
   discordId: { type: String, required: true },
@@ -72,6 +76,8 @@ const taskSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }, // Used for auto-deletion
 });
 
+taskSchema.index({ discordId: 1 });
+
 
 const journalSchema = new mongoose.Schema({
   discordId: { type: String, required: true },
@@ -88,6 +94,8 @@ const sessionSchema = new mongoose.Schema({
   xpGranted: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
 });
+
+sessionSchema.index({ discordId: 1, createdAt: -1 });
 
 const eventSchema = new mongoose.Schema({
   discordId: { type: String, required: true },

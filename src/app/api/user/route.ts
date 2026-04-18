@@ -11,6 +11,7 @@ export async function GET(request: Request) {
     await connectDB();
     const user = await User.findOne({ sessionToken });
     if (!user) {
+      console.log(`[API/USER] 404: No user found for token suffix ...${sessionToken?.slice(-6)}`);
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
     const discordId = user.discordId;
@@ -19,9 +20,8 @@ export async function GET(request: Request) {
     const totalSessionsCount = await Session.countDocuments({ discordId });
     const completedTasksCount = await Task.countDocuments({ discordId, isCompleted: true });
 
-    // Calculate Rank
-    const allUsers = await User.find({}).sort({ weeklyXp: -1 });
-    const rank = allUsers.findIndex(u => u.discordId === discordId) + 1;
+    // Calculate Rank efficiently
+    const rank = await User.countDocuments({ weeklyXp: { $gt: user.weeklyXp } }) + 1;
 
     return NextResponse.json({
       user: {

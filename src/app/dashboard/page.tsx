@@ -26,6 +26,7 @@ interface DashboardData {
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [currentTime, setCurrentTime] = useState("");
+  const [isAsleep, setIsAsleep] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -38,11 +39,11 @@ export default function Dashboard() {
     fetchDashboard(usr.discordId);
 
     const timer = setInterval(() => {
-      setCurrentTime(new Date().toLocaleTimeString('en-US', { 
-        hour12: false, 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit' 
+      setCurrentTime(new Date().toLocaleTimeString('en-US', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
       }));
     }, 1000);
 
@@ -55,20 +56,50 @@ export default function Dashboard() {
       if (res.ok) {
         const d = await res.json();
         setData(d);
+      } else if (res.status === 401 || res.status === 404) {
+        setIsAsleep(true);
       }
     } catch (e) {
       console.error(e);
     }
   };
 
+  const handleDisconnect = () => {
+    localStorage.removeItem("user");
+    router.push("/join");
+  };
+
+  if (isAsleep) return (
+    <div className={styles.sleepState}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className={styles.sleepCard}
+      >
+        <Clock size={48} color="var(--accent)" />
+        <h2>DASHBOARD_SLEEP_MODE</h2>
+        <p>Your account is being used after a long time and the dashboard has gone to sleep.</p>
+        <p className={styles.subText}>Please disconnect and then re-login via <code>/link</code> in Marathon server.</p>
+        <button onClick={handleDisconnect} className={styles.disconnectBtn}>
+          DISCONNECT_SYSTEM
+        </button>
+      </motion.div>
+    </div>
+  );
+
   if (!data) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>
-      SYNCING_USER_CHANNELS...
+    <div className={styles.syncLoading}>
+      <motion.div
+        animate={{ opacity: [0.4, 1, 0.4] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+      >
+        SYNCING_USER_RECORDS...
+      </motion.div>
     </div>
   );
 
   return (
-    <motion.div 
+    <motion.div
       className={styles.container}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -96,7 +127,7 @@ export default function Dashboard() {
 
       {/* Primary Analytics */}
       <div className={styles.statsGrid}>
-        <motion.div 
+        <motion.div
           className={styles.statCard}
           whileHover={{ y: -5 }}
         >
@@ -113,7 +144,7 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           className={styles.statCard}
           whileHover={{ y: -5 }}
         >
@@ -140,7 +171,7 @@ export default function Dashboard() {
               <div className={styles.dot} /> MONITORING_ACTIVE
             </div>
           </div>
-          
+
           <div className={styles.cardInner}>
             <div className={styles.progressLabelArea}>
               <span className={styles.progressLabel}>WEEKLY_OBJECTIVE_STATUS</span>
@@ -149,12 +180,12 @@ export default function Dashboard() {
               </span>
             </div>
             <div className={styles.progressBar}>
-              <div 
-                className={styles.progressFill} 
-                style={{ width: `${Math.min(100, Math.floor(((data.user.weeklyXp || 0) / 1000) * 100))}%` }} 
+              <div
+                className={styles.progressFill}
+                style={{ width: `${Math.min(100, Math.floor(((data.user.weeklyXp || 0) / 1000) * 100))}%` }}
               />
             </div>
-            
+
             <div className={styles.sessionArchives}>
               <h4 className={styles.archivesTitle}>RECENT_TRANSMISSIONS</h4>
               {data.stats.recentSessions.map((session) => (

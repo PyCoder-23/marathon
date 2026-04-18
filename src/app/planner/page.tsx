@@ -468,6 +468,19 @@ export default function PlannerPage() {
           </div>
         )}
       </AnimatePresence>
+
+      <section className={styles.printableCTA}>
+        <div className={styles.ctaContent}>
+          <h3>Prefer planning on paper?</h3>
+          <p>Get distraction-free, high-quality A4 planner templates designed for deep focus.</p>
+        </div>
+        <button 
+          className={styles.ctaBtn}
+          onClick={() => router.push("/planners")}
+        >
+          Check out Planner Printouts!
+        </button>
+      </section>
     </div>
   );
 }
