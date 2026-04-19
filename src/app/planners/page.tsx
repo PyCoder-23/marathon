@@ -119,7 +119,9 @@ export default function PlannersPage() {
   );
 
   const renderWeeklyPlanner = () => {
-    const start = new Date(startDate);
+    let start = new Date(startDate);
+    if (isNaN(start.getTime())) start = new Date();
+    
     const days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
@@ -133,12 +135,12 @@ export default function PlannersPage() {
       <div className={styles.plannerContent}>
         <div className={styles.plannerTitle}>
           <h1 contentEditable suppressContentEditableWarning>WEEKLY PLANNER</h1>
-          <p contentEditable suppressContentEditableWarning>Week Beginning: {startDate}</p>
+          <p>Week Beginning: {startDate}</p>
         </div>
 
         <div className={styles.weeklyGrid}>
-          {days.map(day => (
-            <div key={day.name} className={styles.dayBox}>
+          {days.map((day, i) => (
+            <div key={i} className={styles.dayBox}>
               <div className={styles.dayHeader}>
                 <div className={styles.dayName}>{day.name}</div>
                 <div className={styles.dayDate} contentEditable suppressContentEditableWarning>{day.date}</div>
