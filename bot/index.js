@@ -11,7 +11,7 @@ app.listen(port, () => {
 });
 
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Events, Partials } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const KairoMentor = require('./kairo_mentor.js');
@@ -24,7 +24,9 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessageReactions,
   ],
+  partials: [Partials.Message, Partials.Reaction, Partials.User],
 });
 
 client.commands = new Collection();
@@ -149,6 +151,109 @@ client.on(Events.MessageCreate, async message => {
   } catch (error) {
     console.error('❌ [Kairo Chat Error]', error);
     message.reply("⚠️ **KAIRO_ERROR:** I'm having a bit of trouble processing that, but I'm still here for you. Take a breath and let's keep going.");
+  }
+});
+
+// --- REACTION ROLE LOGIC ---
+
+// Configuration: Mapping emojis to Role IDs and DM Messages
+// To use this, fill in the Message ID and the Emoji/Role mappings.
+const REACTION_ROLES_CONFIG = {
+  messageId: '1495600062796009583',
+  roles: {
+    '🎮': {
+      roleId: '1491359226784645150',
+      dmMessage: "✅ You now have access to the **Off-Topic** channels! Feel free to discuss gaming, music, memes, and more."
+    },
+    '🧑‍🎓': {
+      roleId: '1491359288956944424',
+      dmMessage: "✅ Welcome to the **College Hub**! You can now access channels for college applications and peer advice."
+    },
+    '🎉': {
+      roleId: '1491868129381453976',
+      dmMessage: "✅ You've joined the **Events** category! I'll ping you about upcoming server competitions and giveaways."
+    },
+    '🌟': {
+      roleId: '1491868186101157948',
+      dmMessage: "✅ You are now tracking **Opportunities**! You'll be notified of sharable opportunities in the #opportunities channel."
+    }
+  }
+};
+
+client.on(Events.MessageReactionAdd, async (reaction, user) => {
+  if (user.bot) return;
+
+  // Handle partials (ensure we can see reactions on old messages)
+  if (reaction.partial) {
+    try {
+      await reaction.fetch();
+    } catch (error) {
+      console.error('Failed to fetch reaction during add:', error);
+      return;
+    }
+  }
+
+  // Check if we are monitoring this specific message (if configured)
+  if (REACTION_ROLES_CONFIG.messageId && reaction.message.id !== REACTION_ROLES_CONFIG.messageId) return;
+
+  const config = REACTION_ROLES_CONFIG.roles[reaction.emoji.name] || REACTION_ROLES_CONFIG.roles[reaction.emoji.id];
+  if (!config) return;
+
+  try {
+    const member = await reaction.message.guild.members.fetch(user.id);
+    const role = reaction.message.guild.roles.cache.get(config.roleId);
+
+    if (role && !member.roles.cache.has(config.roleId)) {
+      await member.roles.add(role);
+      console.log(`✅ Assigned ${role.name} to ${user.username}`);
+
+      // Send custom DM
+      if (config.dmMessage) {
+        try {
+          await user.send(config.dmMessage);
+        } catch (dmError) {
+          console.log(`Could not send DM to ${user.username}:`, dmError.message);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in ReactionRoleAdd:', error);
+  }
+});
+
+client.on(Events.MessageReactionRemove, async (reaction, user) => {
+  if (user.bot) return;
+
+  if (reaction.partial) {
+    try {
+      await reaction.fetch();
+    } catch (error) {
+      console.error('Failed to fetch reaction during remove:', error);
+      return;
+    }
+  }
+
+  if (REACTION_ROLES_CONFIG.messageId && reaction.message.id !== REACTION_ROLES_CONFIG.messageId) return;
+
+  const config = REACTION_ROLES_CONFIG.roles[reaction.emoji.name] || REACTION_ROLES_CONFIG.roles[reaction.emoji.id];
+  if (!config) return;
+
+  try {
+    const member = await reaction.message.guild.members.fetch(user.id);
+    const role = reaction.message.guild.roles.cache.get(config.roleId);
+
+    if (role && member.roles.cache.has(config.roleId)) {
+      await member.roles.remove(role);
+      console.log(`❌ Removed ${role.name} from ${user.username}`);
+      
+      try {
+        await user.send(`The **${role.name}** role has been removed as you removed your reaction.`);
+      } catch (dmError) {
+          // Ignore DM errors on removal
+      }
+    }
+  } catch (error) {
+    console.error('Error in ReactionRoleRemove:', error);
   }
 });
 
