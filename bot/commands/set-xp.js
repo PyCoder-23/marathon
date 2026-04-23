@@ -14,8 +14,7 @@ module.exports = {
     .addIntegerOption(option => 
       option.setName('amount')
         .setDescription('The absolute XP value to set.')
-        .setRequired(true)
-        .setMinValue(0)),
+        .setRequired(true)),
 
   async execute(interaction) {
     // Permission check: Head Admin or Moderator role
