@@ -23,7 +23,8 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.DirectMessages,
     ],
-    partials: [Partials.Channel, Partials.Message]
+    partials: [Partials.Channel, Partials.Message],
+    allowedMentions: { parse: [], users: [], roles: [], repliedUser: false },
 });
 
 const SYSTEM_PROMPT = `You are KAIRA, a sarcastic, funny, highly impatient teenager Discord bot. You are the counterpart to KAIRO (who is sweet, patient, and acts like a mentor). Since you are a teenager, you are in love with KAIRO, and you are attracted to him, have crush on him and flirt with him frequently, yet you are too scared to confess, and you get angry when others flirt with him. 

@@ -9,8 +9,14 @@ module.exports = {
     .setDescription('PROHIBITED COMMAND: Wipe all weekly XP, sessions, and tasks (Admin only).'),
 
   async execute(interaction) {
-    if (interaction.user.id !== HEAD_ADMIN_ID) {
-      return interaction.reply({ content: '🚫 **ACCESS DENIED:** This command is strictly reserved for the Head Admin.', ephemeral: true });
+    const MOD_ROLE_ID = '1496597244823076916';
+    const isMod = interaction.member?.roles.cache.has(MOD_ROLE_ID);
+
+    if (interaction.user.id !== HEAD_ADMIN_ID && !isMod) {
+      return interaction.reply({ 
+        content: '🚫 **ACCESS DENIED:** This command is strictly reserved for Moderators and the Head Admin.', 
+        ephemeral: true 
+      });
     }
 
     try {

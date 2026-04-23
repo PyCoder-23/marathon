@@ -18,10 +18,13 @@ module.exports = {
         .setMinValue(0)),
 
   async execute(interaction) {
-    // Permission check: only head admin can run this
-    if (interaction.user.id !== HEAD_ADMIN_ID) {
+    // Permission check: Head Admin or Moderator role
+    const MOD_ROLE_ID = '1496597244823076916';
+    const isMod = interaction.member?.roles.cache.has(MOD_ROLE_ID);
+    
+    if (interaction.user.id !== HEAD_ADMIN_ID && !isMod) {
       return interaction.reply({ 
-        content: '🚫 **ACCESS DENIED:** This command is strictly reserved for the Head Admin.', 
+        content: '🚫 **ACCESS DENIED:** This command is strictly reserved for Moderators and the Head Admin.', 
         ephemeral: true 
       });
     }

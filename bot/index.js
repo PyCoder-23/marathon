@@ -27,6 +27,7 @@ const client = new Client({
     GatewayIntentBits.GuildMessageReactions,
   ],
   partials: [Partials.Message, Partials.Reaction, Partials.User],
+  allowedMentions: { parse: [], users: [], roles: [], repliedUser: false },
 });
 
 client.commands = new Collection();
