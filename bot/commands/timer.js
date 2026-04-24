@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { connectDB, Session, User, ActiveSession } = require('../../database.js');
+const { connectDB, Session, User, ActiveSession, GlobalConfig } = require('../../database.js');
 
 module.exports = {
   data: (() => {
@@ -87,7 +87,9 @@ module.exports = {
       
       let potentialXp = 0;
       if (totalMinutes >= 25) {
-        potentialXp = Math.round(totalMinutes * 0.8);
+        const config = await GlobalConfig.findOne({ key: 'xp_multiplier' });
+        const multiplier = config ? config.value : 1;
+        potentialXp = Math.round(totalMinutes * 0.8 * multiplier);
       }
 
       return interaction.reply({ embeds: [embed.setTitle('👀 Current Status').setDescription(`Elapsed: **${hours}h ${minutes}m**\nPotential XP: **+${potentialXp} XP**`)] });
@@ -125,7 +127,9 @@ module.exports = {
       
       let xpEarned = 0;
       if (totalMinutes >= 25) {
-        xpEarned = Math.round(totalMinutes * 0.8);
+        const config = await GlobalConfig.findOne({ key: 'xp_multiplier' });
+        const multiplier = config ? config.value : 1;
+        xpEarned = Math.round(totalMinutes * 0.8 * multiplier);
       }
 
       const sessionEmbed = embed.setTitle('🏆 Session Concluded')

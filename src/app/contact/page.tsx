@@ -21,9 +21,9 @@ const contactMethods = [
     id: "discord",
     title: "Join Discord",
     description: "Connect with the community, get real-time support, and participate in events on our Discord server.",
-    value: "discord.com/invite/N72xXtZtGS",
+    value: "discord.gg/FEKt8rADQu",
     btnText: "Join Server",
-    link: "https://discord.com/invite/N72xXtZtGS",
+    link: "https://discord.gg/FEKt8rADQu",
     icon: <MessageSquare className={styles.discordIcon} />,
     color: "#7289da",
     type: "social"

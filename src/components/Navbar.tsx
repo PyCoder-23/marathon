@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Zap, LogOut, Calendar, ChevronDown } from "lucide-react";
+import { Zap, LogOut, Calendar, ChevronDown, Heart } from "lucide-react";
 import styles from "./Navbar.module.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -99,6 +99,15 @@ export default function Navbar() {
                       >
                         <Calendar size={16} className={styles.itemIcon} />
                         <span>Printable Planners</span>
+                      </Link>
+
+                      <Link 
+                        href="/donate" 
+                        className={styles.dropdownItem}
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <Heart size={16} className={styles.itemIcon} />
+                        <span>Donate to Server</span>
                       </Link>
 
                       <div className={styles.dropdownDivider} />

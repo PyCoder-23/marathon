@@ -68,8 +68,8 @@ export default function JoinCampPage() {
             <div className={styles.stepContent}>
               <h3>Join Discord</h3>
               <p>Enter our base of operations to start your marathon journey.</p>
-              <a href="https://discord.com/invite/N72xXtZtGS" target="_blank" className={styles.discordLink}>
-                discord.com/invite/N72xXtZtGS <ExternalLink size={14} />
+              <a href="https://discord.gg/FEKt8rADQu" target="_blank" className={styles.discordLink}>
+                discord.gg/FEKt8rADQu <ExternalLink size={14} />
               </a>
             </div>
           </div>

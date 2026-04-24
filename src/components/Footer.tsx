@@ -19,7 +19,7 @@ const Footer = () => {
               Transform your productivity into a game. Join the elite rank of consistent achievers.
             </p>
             <div className={styles.socials}>
-              <a href="https://discord.com/invite/N72xXtZtGS" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
+              <a href="https://discord.gg/FEKt8rADQu" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
                 <MessageSquare size={18} />
               </a>
               <a href="https://www.youtube.com/@marathon-server" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
@@ -54,6 +54,7 @@ const Footer = () => {
               <h3 className={styles.groupTitle}>Support</h3>
               <ul className={styles.links}>
                 <li><Link href="/contact">Contact Us</Link></li>
+                <li><Link href="/donate">Donate</Link></li>
               </ul>
             </div>
           </div>
