@@ -15,6 +15,7 @@ const { Client, GatewayIntentBits, Collection, Events, Partials } = require('dis
 const fs = require('fs');
 const path = require('path');
 const KairoMentor = require('./kairo_mentor.js');
+const cron = require('node-cron');
 
 const kairo = new KairoMentor(process.env.kairo_key);
 
@@ -89,7 +90,7 @@ client.on(Events.InteractionCreate, async interaction => {
   }
 });
 
-const { connectDB, User, Session, Task } = require('../database.js');
+const { connectDB, User, Session, Task, ActiveSession } = require('../database.js');
 
 // HEAD_ADMIN_ID: 857145663947014164
 
@@ -106,14 +107,14 @@ process.on('uncaughtException', (error) => {
 
 client.on(Events.MessageCreate, async message => {
   if (message.author.bot) return;
-  
+
   // Debug: Log every message received (ignore bots)
   console.log(`📩 Message from ${message.author.username}: "${message.content}"`);
 
   if (!client.user || !message.mentions.has(client.user)) {
     // Debug: Log if bot was NOT mentioned
     if (client.user && message.content.includes(client.user.id)) {
-        console.log("❓ Bot ID found in message but mentions.has() returned false.");
+      console.log("❓ Bot ID found in message but mentions.has() returned false.");
     }
     return;
   }
@@ -123,7 +124,7 @@ client.on(Events.MessageCreate, async message => {
   try {
     // Remove mention tokens like <@123...> and clean prompt
     let prompt = message.content.replace(new RegExp(`<@!?${client.user.id}>`, 'g'), '').trim();
-    
+
     if (!prompt) {
       console.log("空 prompt received.");
       return message.reply("👋 Hey there! Mention me and say something to start chatting.");
@@ -177,6 +178,10 @@ const REACTION_ROLES_CONFIG = {
     '🌟': {
       roleId: '1491868186101157948',
       dmMessage: "✅ You are now tracking **Opportunities**! You'll be notified of sharable opportunities in the #opportunities channel."
+    },
+    '🔔': {
+      roleId: '1491868582684917962',
+      dmMessage: "🔔 You've enabled **Reset Reminders**! I'll ping you before daily session terminations and the weekly hard reset."
     }
   }
 };
@@ -246,16 +251,86 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
     if (role && member.roles.cache.has(config.roleId)) {
       await member.roles.remove(role);
       console.log(`❌ Removed ${role.name} from ${user.username}`);
-      
+
       try {
         await user.send(`The **${role.name}** role has been removed as you removed your reaction.`);
       } catch (dmError) {
-          // Ignore DM errors on removal
+        // Ignore DM errors on removal
       }
     }
   } catch (error) {
     console.error('Error in ReactionRoleRemove:', error);
   }
+});
+
+// --- SCHEDULED TASKS ---
+
+const REMINDER_CHANNEL_ID = '1500504969684455464';
+const NOTIFICATION_ROLE_ID = '1491868582684917962';
+
+/**
+ * Helper to send scheduled pings to the reminder channel
+ */
+async function sendReminder(message) {
+  try {
+    const channel = await client.channels.fetch(REMINDER_CHANNEL_ID);
+    if (channel) {
+      await channel.send(`<@&${NOTIFICATION_ROLE_ID}> ${message}`);
+    }
+  } catch (error) {
+    console.error('❌ [Scheduled Task Error] Failed to send reminder:', error);
+  }
+}
+
+/**
+ * Terminate all active sessions every day at 4:30 AM IST (except Monday).
+ * 0: Sunday, 1: Monday, 2: Tuesday, 3: Wednesday, 4: Thursday, 5: Friday, 6: Saturday
+ */
+cron.schedule('30 4 * * 0,2,3,4,5,6', async () => {
+  console.log('⏰ [Scheduled Task] Terminating all active sessions (4:30 AM IST)...');
+  try {
+    await connectDB();
+    const result = await ActiveSession.deleteMany({});
+    console.log(`✅ [Scheduled Task] Successfully terminated ${result.deletedCount} sessions.`);
+  } catch (error) {
+    console.error('❌ [Scheduled Task Error] Failed to terminate sessions:', error);
+  }
+}, {
+  scheduled: true,
+  timezone: "Asia/Kolkata"
+});
+
+/**
+ * Daily Reset Warning: 30 minutes before termination (4:00 AM IST)
+ */
+cron.schedule('0 4 * * 0,2,3,4,5,6', () => {
+  console.log('⏰ [Scheduled Task] Sending Daily Reset Warning...');
+  sendReminder("⚠️ **DAILY_RESET_WARNING:** All active sessions will be terminated in **30 minutes** (at 4:30 AM IST). Please wrap up your sessions and submit proof!");
+}, {
+  scheduled: true,
+  timezone: "Asia/Kolkata"
+});
+
+/**
+ * Weekly Reset Warning: 30 minutes before hard reset (Sunday 7:00 PM IST)
+ */
+cron.schedule('0 19 * * 0', () => {
+  console.log('⏰ [Scheduled Task] Sending Weekly Reset Warning (30m)...');
+  sendReminder("⏳ **WEEKLY_WIPE_PROTOCOL:** 30 minutes remaining until the weekly hard reset! All weekly XP, sessions, and tasks will be cleared at 7:30 PM IST.");
+}, {
+  scheduled: true,
+  timezone: "Asia/Kolkata"
+});
+
+/**
+ * Weekly Reset Warning: 10 minutes before hard reset (Sunday 7:20 PM IST)
+ */
+cron.schedule('20 19 * * 0', () => {
+  console.log('⏰ [Scheduled Task] Sending Weekly Reset Warning (10m)...');
+  sendReminder("🚨 **CRITICAL_REMINDER:** Only 10 minutes left before the system wipe! This is your final chance to submit your work.");
+}, {
+  scheduled: true,
+  timezone: "Asia/Kolkata"
 });
 
 client.login(process.env.DISCORD_TOKEN);
