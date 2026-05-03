@@ -13,8 +13,6 @@ interface SquadStats {
   activeMembers: number;
   totalMembers: number;
   rank: number;
-  winStreak: number;
-  allTimeWins: number;
 }
 
 export default function SquadsOverview() {
@@ -115,12 +113,6 @@ export default function SquadsOverview() {
                     <div className={styles.squadStats}>
                       <div className={styles.statItem}>
                         Active: <span>{squad.activeMembers}</span>/{squad.totalMembers}
-                      </div>
-                      <div className={styles.statItem}>
-                        Win Streak: <span>{squad.winStreak}</span>
-                      </div>
-                      <div className={styles.statItem}>
-                        All-Time Wins: <span>{squad.allTimeWins}</span>
                       </div>
                     </div>
                   </div>

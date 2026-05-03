@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectDB, User, SquadHistory } from '@/../database.js';
+import { connectDB, User } from '@/../database.js';
 
 export async function GET() {
   try {
@@ -38,15 +38,9 @@ export async function GET() {
 
     filledStats.sort((a, b) => b.squadXp - a.squadXp);
 
-    // Fetch history
-    const history = await SquadHistory.find({});
-    const historyMap = new Map(history.map(h => [h.squadName, h]));
-
     const result = filledStats.map((squad, index) => ({
       ...squad,
-      rank: index + 1,
-      winStreak: historyMap.get(squad.name)?.winStreak || 0,
-      allTimeWins: historyMap.get(squad.name)?.allTimeWins || 0
+      rank: index + 1
     }));
 
     return NextResponse.json({ success: true, squads: result });

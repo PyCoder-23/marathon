@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectDB, User, SquadHistory } from '@/../database.js';
+import { connectDB, User } from '@/../database.js';
 
 export async function GET(request: Request, { params }: { params: Promise<{ squadName: string }> }) {
   try {
@@ -52,9 +52,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ squa
       rivalry = { type: 'ahead', target: behind.name, diff: totalXp - behind.xp };
     }
 
-    // Get History
-    const history = await SquadHistory.findOne({ squadName: decodedName });
-
     return NextResponse.json({
       success: true,
       data: {
@@ -66,11 +63,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ squa
         mvp,
         top3,
         members: members.map((m, i) => ({ ...m, rank: i + 1 })),
-        rivalry,
-        history: {
-          winStreak: history?.winStreak || 0,
-          allTimeWins: history?.allTimeWins || 0
-        }
+        rivalry
       }
     });
 

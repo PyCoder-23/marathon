@@ -27,7 +27,6 @@ interface SquadData {
   top3: Member[];
   members: Member[];
   rivalry: { type: 'ahead' | 'behind', target: string, diff: number } | null;
-  history: { winStreak: number, allTimeWins: number };
 }
 
 export default function SquadDetail({ params }: { params: Promise<{ squadName: string }> }) {
