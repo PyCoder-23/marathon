@@ -22,6 +22,16 @@
   --radius-lg: 24px;
   --radius-full: 9999px;
   
+  /* Squad Themes */
+  --squad-zenith: #8B5CF6;
+  --squad-zenith-glow: rgba(139, 92, 246, 0.4);
+  --squad-apex: #06B6D4;
+  --squad-apex-glow: rgba(6, 182, 212, 0.4);
+  --squad-meridian: #22C55E;
+  --squad-meridian-glow: rgba(34, 197, 94, 0.4);
+  --squad-horizon: #F97316;
+  --squad-horizon-glow: rgba(249, 115, 22, 0.4);
+
   --glass-bg: rgba(5, 5, 5, 0.75);
   --glass-border: rgba(255, 255, 255, 0.04);
   --glass-blur: blur(24px);

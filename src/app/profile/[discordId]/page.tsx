@@ -16,6 +16,8 @@ interface ProfileData {
     streak: number;
     joinedAt: string;
     rank: number;
+    squad: string;
+    squadRank: number | null;
   };
   stats: {
     totalSessions: number;
@@ -112,6 +114,12 @@ export default function ProfilePage({ params }: { params: Promise<{ discordId: s
         <h1 className={styles.username}>{data.user.username}</h1>
         <div className={styles.discordId}>ID: {data.user.discordId}</div>
         <div className={styles.joinDate}>Member since {joinDate}</div>
+
+        {data.user.squad && data.user.squad !== 'Unassigned' && (
+          <div style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', display: 'inline-block', fontFamily: 'JetBrains Mono', color: 'var(--accent)', fontSize: '0.9rem' }}>
+            🛡️ {data.user.squad} • Rank #{data.user.squadRank}
+          </div>
+        )}
 
         <div className={styles.statsGrid}>
           <div className={styles.statBox}>

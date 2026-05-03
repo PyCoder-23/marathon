@@ -13,6 +13,7 @@ const navLinks = [
   { label: "Tasks", href: "/tasks" },
   { label: "Planner", href: "/planner" },
   { label: "Leaderboard", href: "/leaderboard" },
+  { label: "Squads", href: "/squads" },
 ];
 
 export default function Navbar() {

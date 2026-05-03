@@ -22,6 +22,12 @@ export async function GET(request: Request) {
 
     // Calculate Rank efficiently
     const rank = await User.countDocuments({ weeklyXp: { $gt: user.weeklyXp } }) + 1;
+    
+    // Calculate Squad Rank efficiently
+    let squadRank = null;
+    if (user.squad && user.squad !== 'Unassigned') {
+      squadRank = await User.countDocuments({ squad: user.squad, weeklyXp: { $gt: user.weeklyXp } }) + 1;
+    }
 
     return NextResponse.json({
       user: {
@@ -32,7 +38,9 @@ export async function GET(request: Request) {
         weeklyXp: user.weeklyXp,
         streak: user.streak,
         joinedAt: user.joinedAt,
-        rank: rank
+        rank: rank,
+        squad: user.squad || 'Unassigned',
+        squadRank: squadRank
       },
       stats: {
         totalSessions: totalSessionsCount,

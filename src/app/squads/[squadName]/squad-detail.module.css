@@ -1,0 +1,303 @@
+.main {
+  min-height: 100vh;
+  padding: 100px 20px 60px;
+}
+
+.container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.banner {
+  border: 1px solid var(--squad-color);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5), inset 0 0 40px var(--squad-glow);
+  border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--squad-color);
+  z-index: 3;
+}
+
+.bannerImageWrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.bannerImage {
+  object-fit: cover;
+  opacity: 0.45;
+  mix-blend-mode: luminosity;
+  transition: transform 1s ease;
+}
+
+.banner:hover .bannerImage {
+  transform: scale(1.05);
+}
+
+.bannerOverlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, var(--squad-glow) 0%, transparent 80%), linear-gradient(135deg, rgba(10,10,10,0.85) 0%, rgba(0,0,0,0.95) 100%);
+  z-index: 1;
+}
+
+.bannerContentWrapper {
+  position: relative;
+  z-index: 2;
+  padding: 4rem 3rem;
+}
+
+.bannerContent {
+  margin-bottom: 4rem;
+  text-align: center;
+}
+
+.bannerText {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 4rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 30px var(--squad-glow), 0 0 10px var(--squad-color);
+  line-height: 1.1;
+}
+
+.motto {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--squad-color);
+  font-size: 1.25rem;
+  font-style: italic;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.05em;
+}
+
+.vibe {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.statValue {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.rivalryBanner {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 3rem;
+  font-size: 0.875rem;
+}
+
+.rivalryAhead { color: #22C55E; }
+.rivalryBehind { color: #EF4444; }
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+.topContributors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.contributorCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.mvpCard {
+  border-color: #FFD700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.1);
+}
+
+.mvpBadge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #FFD700;
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  border-bottom-left-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border);
+}
+
+.userInfo {
+  flex-grow: 1;
+}
+
+.username {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.2rem;
+}
+
+.userXp {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--squad-color);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.rosterTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+}
+
+.rosterTable th {
+  text-align: left;
+  padding: 1rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.rosterRow {
+  background: var(--surface);
+  transition: background 0.2s;
+}
+
+.rosterRow:hover {
+  background: var(--surface-hover);
+}
+
+.rosterRow td {
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.rosterRow td:first-child {
+  border-left: 1px solid var(--border);
+  border-top-left-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+}
+
+.rosterRow td:last-child {
+  border-right: 1px solid var(--border);
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
+.inactiveRow {
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
+
+.rankCell {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--text-secondary);
+  width: 60px;
+}
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 600;
+}
+
+.smallAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.xpCell {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+@media (max-width: 900px) {
+  .bannerContentWrapper {
+    padding: 3rem 2rem;
+  }
+  .bannerContent {
+    flex-direction: column;
+    text-align: center;
+    gap: 2rem;
+  }
+  .title { font-size: 2.5rem; }
+  .statsGrid { grid-template-columns: 1fr 1fr; }
+  .rosterTable th:nth-child(4),
+  .rosterRow td:nth-child(4) {
+    display: none; /* Hide streak on mobile */
+  }
+}

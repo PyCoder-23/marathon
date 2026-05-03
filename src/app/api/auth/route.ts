@@ -131,6 +131,55 @@ export async function POST(request: Request) {
 
     // --- End Discord Algorithm ---
 
+    // --- Squad Assignment Logic ---
+    if (!user.squad || user.squad === 'Unassigned') {
+      const SQUADS = [
+        { name: 'Zenith Sentinels', roleId: '1500526060146790642' },
+        { name: 'Apex Titans', roleId: '1500525530993131621' },
+        { name: 'Meridian Arbiters', roleId: '1500525923097645312' },
+        { name: 'Horizon Vanguards', roleId: '1500526258302357666' }
+      ];
+
+      const squadStats = await User.aggregate([
+        { $match: { squad: { $in: SQUADS.map(s => s.name) } } },
+        { 
+          $group: {
+            _id: '$squad',
+            totalMembers: { $sum: 1 },
+            squadXp: { $sum: { $cond: [{ $gte: ['$weeklyXp', 100] }, '$weeklyXp', 0] } }
+          }
+        }
+      ]);
+
+      const statsMap = new Map(squadStats.map(s => [s._id, s]));
+      const filledStats = SQUADS.map(s => ({
+        name: s.name,
+        roleId: s.roleId,
+        squadXp: statsMap.get(s.name)?.squadXp || 0,
+        totalMembers: statsMap.get(s.name)?.totalMembers || 0
+      }));
+
+      // Sort by squadXp ASC, then totalMembers ASC, then random
+      filledStats.sort((a, b) => {
+        if (a.squadXp !== b.squadXp) return a.squadXp - b.squadXp;
+        if (a.totalMembers !== b.totalMembers) return a.totalMembers - b.totalMembers;
+        return Math.random() - 0.5;
+      });
+
+      const assignedSquad = filledStats[0];
+      user.squad = assignedSquad.name;
+
+      // Assign Discord role
+      try {
+        await discordFetch(`/guilds/${GUILD_ID}/members/${discordId}/roles/${assignedSquad.roleId}`, {
+          method: 'PUT'
+        });
+      } catch (roleError) {
+        console.error('Failed to assign squad role on Discord:', roleError);
+      }
+    }
+    // --- End Squad Assignment Logic ---
+
     // Mark user as officially linked
     user.hasLinked = true;
     user.sessionToken = crypto.randomUUID();

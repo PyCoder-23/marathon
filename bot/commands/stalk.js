@@ -29,11 +29,20 @@ module.exports = {
       const allUsers = await User.find({}).sort({ weeklyXp: -1 });
       const rank = allUsers.findIndex(u => u.discordId === discordId) + 1;
 
+      // Calculate Squad Rank
+      let squadText = '`Unassigned`';
+      if (userDoc.squad && userDoc.squad !== 'Unassigned') {
+         const squadUsers = allUsers.filter(u => u.squad === userDoc.squad);
+         const squadRank = squadUsers.findIndex(u => u.discordId === discordId) + 1;
+         squadText = `**${userDoc.squad}** (#${squadRank} in squad)`;
+      }
+
       const embed = new EmbedBuilder()
         .setTitle(`👤 PROFILE: ${userDoc.username.toUpperCase()}`)
         .setDescription(`\`STATUS: RUNNING\` | \`ID: ${discordId}\``)
         .addFields(
-          { name: 'Rank', value: `#**${rank}**`, inline: true },
+          { name: 'Squad', value: squadText, inline: false },
+          { name: 'Global Rank', value: `#**${rank}**`, inline: true },
           { name: 'Weekly XP', value: `\`${(userDoc.weeklyXp || 0).toLocaleString()} XP\``, inline: true },
           { name: 'Streak', value: `\`${userDoc.streak} Days\``, inline: true },
           { name: 'Total XP', value: `\`${userDoc.xp.toLocaleString()} XP\``, inline: true },

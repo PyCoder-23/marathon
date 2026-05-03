@@ -11,6 +11,8 @@ interface DashboardData {
     username: string;
     xp: number;
     weeklyXp: number;
+    squad: string;
+    squadRank: number | null;
   };
   stats: {
     totalSessions: number;
@@ -112,6 +114,11 @@ export default function Dashboard() {
           <h1 className={styles.welcomeText}>
             Welcome back, <span className="text-gradient">{data.user.username.toUpperCase()}</span>
           </h1>
+          {data.user.squad && data.user.squad !== 'Unassigned' && (
+            <div style={{ marginTop: '0.5rem', fontFamily: 'JetBrains Mono', color: 'var(--accent)', fontSize: '0.9rem' }}>
+              🛡️ {data.user.squad} • Rank #{data.user.squadRank}
+            </div>
+          )}
         </div>
         <div className={styles.tickerArea}>
           <div className={styles.timeTicker}>

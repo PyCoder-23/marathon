@@ -53,6 +53,11 @@ const userSchema = new mongoose.Schema({
   hasLinked: { type: Boolean, default: false },
   joinedAt: { type: Date, default: Date.now },
   sessionToken: { type: String },
+  squad: { 
+    type: String, 
+    enum: ['Zenith Sentinels', 'Apex Titans', 'Meridian Arbiters', 'Horizon Vanguards', 'Unassigned'],
+    default: 'Unassigned' 
+  },
 });
 
 userSchema.index({ weeklyXp: -1 });
@@ -122,6 +127,13 @@ const globalConfigSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
+const squadHistorySchema = new mongoose.Schema({
+  squadName: { type: String, required: true, unique: true },
+  winStreak: { type: Number, default: 0 },
+  allTimeWins: { type: Number, default: 0 },
+  lastWinDate: { type: Date }
+});
+
 // Models (Singleton check for Next.js fast-refresh)
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 const AuthCode = mongoose.models.AuthCode || mongoose.model('AuthCode', authCodeSchema);
@@ -130,7 +142,7 @@ const JournalEntry = mongoose.models.JournalEntry || mongoose.model('JournalEntr
 const Session = mongoose.models.Session || mongoose.model('Session', sessionSchema);
 const CalendarEvent = mongoose.models.CalendarEvent || mongoose.model('CalendarEvent', eventSchema);
 const ActiveSession = mongoose.models.ActiveSession || mongoose.model('ActiveSession', activeSessionSchema);
-
 const GlobalConfig = mongoose.models.GlobalConfig || mongoose.model('GlobalConfig', globalConfigSchema);
+const SquadHistory = mongoose.models.SquadHistory || mongoose.model('SquadHistory', squadHistorySchema);
 
-module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, CalendarEvent, ActiveSession, GlobalConfig };
+module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, CalendarEvent, ActiveSession, GlobalConfig, SquadHistory };

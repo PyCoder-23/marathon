@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { connectDB, User, Session, Task, ActiveSession } = require('../../database.js');
+const { connectDB, User, Session, Task, ActiveSession, SquadHistory } = require('../../database.js');
 
 const HEAD_ADMIN_ID = '857145663947014164';
 
@@ -25,6 +25,43 @@ module.exports = {
 
       console.log('🧹 [ADMIN] Manual System Wipe initiated by', interaction.user.tag);
 
+      // 0. Calculate Winning Squad before reset
+      const squadStats = await User.aggregate([
+        { $match: { squad: { $ne: 'Unassigned', $exists: true } } },
+        { 
+          $group: {
+            _id: '$squad',
+            squadXp: { $sum: { $cond: [{ $gte: ['$weeklyXp', 100] }, '$weeklyXp', 0] } }
+          }
+        },
+        { $sort: { squadXp: -1 } }
+      ]);
+
+      let winnerText = 'No winner this week.';
+      if (squadStats.length > 0 && squadStats[0].squadXp > 0) {
+        const winningSquad = squadStats[0]._id;
+        winnerText = `🏆 **${winningSquad}** wins this cycle with ${squadStats[0].squadXp} XP!`;
+        
+        // Update winner
+        await SquadHistory.findOneAndUpdate(
+          { squadName: winningSquad },
+          { 
+            $inc: { winStreak: 1, allTimeWins: 1 },
+            $set: { lastWinDate: new Date() }
+          },
+          { upsert: true }
+        );
+
+        // Reset streaks for losers
+        const losingSquads = squadStats.slice(1).map(s => s._id);
+        if (losingSquads.length > 0) {
+          await SquadHistory.updateMany(
+            { squadName: { $in: losingSquads } },
+            { $set: { winStreak: 0 } }
+          );
+        }
+      }
+
       // 1. Reset all Weekly XP (Lifetime XP & streaks are preserved)
       const userRes = await User.updateMany({}, { $set: { weeklyXp: 0 } });
 
@@ -36,7 +73,7 @@ module.exports = {
       const activeRes = await ActiveSession.deleteMany({});
 
       return interaction.editReply({ 
-        content: `✅ **SYSTEM_WIPE_COMPLETE**\n- **Xp Resets:** ${userRes.modifiedCount}\n- **Sessions Purged:** ${sessionRes.deletedCount}\n- **Tasks Purged:** ${taskRes.deletedCount}\n- **Active Timers Terminated:** ${activeRes.deletedCount}\n\nThe new cycle has been manually initialized.`
+        content: `✅ **SYSTEM_WIPE_COMPLETE**\n\n${winnerText}\n\n- **Xp Resets:** ${userRes.modifiedCount}\n- **Sessions Purged:** ${sessionRes.deletedCount}\n- **Tasks Purged:** ${taskRes.deletedCount}\n- **Active Timers Terminated:** ${activeRes.deletedCount}\n\nThe new cycle has been manually initialized.`
       });
 
     } catch (error) {
