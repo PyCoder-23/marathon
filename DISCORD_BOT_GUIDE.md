@@ -1,6 +1,6 @@
 # 🤖 Marathon Twin-Bot Protocol: Setup Guide
 
-This guide will walk you through setting up both **KAIRO** (The Disciplined Mentor) and **KAIRA** (The Sarcastic Teenager).
+This guide will walk you through setting up both **KAIRO** (The Functional Bot) and **KAIRA** (The Sarcastic Teenager).
 
 ---
 
@@ -38,7 +38,6 @@ In your root `.env` or `/bot/.env`, ensure these are present:
 DISCORD_TOKEN=your_kairo_token
 CLIENT_ID=kairo_application_id
 GUILD_ID=your_server_id
-kairo_key=your_gemini_api_key
 MEMBER_ROLE_NAME=member
 
 # KAIRA (AI Bot)

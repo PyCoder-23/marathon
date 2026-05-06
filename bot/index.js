@@ -14,21 +14,17 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, Events, Partials } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const KairoMentor = require('./kairo_mentor.js');
 const cron = require('node-cron');
-
-const kairo = new KairoMentor(process.env.kairo_key);
 
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessageReactions,
   ],
   partials: [Partials.Message, Partials.Reaction, Partials.User],
-  allowedMentions: { parse: [], users: [], roles: [], repliedUser: false },
+  allowedMentions: { parse: ['users', 'roles'], repliedUser: false },
 });
 
 client.commands = new Collection();
@@ -104,57 +100,6 @@ process.on('uncaughtException', (error) => {
   console.error('[Uncaught Exception]', error);
 });
 
-
-client.on(Events.MessageCreate, async message => {
-  if (message.author.bot) return;
-
-  // Debug: Log every message received (ignore bots)
-  console.log(`📩 Message from ${message.author.username}: "${message.content}"`);
-
-  if (!client.user || !message.mentions.has(client.user)) {
-    // Debug: Log if bot was NOT mentioned
-    if (client.user && message.content.includes(client.user.id)) {
-      console.log("❓ Bot ID found in message but mentions.has() returned false.");
-    }
-    return;
-  }
-
-  console.log(`🤖 Kairo mentioned in ${message.channel.name}! Processing...`);
-
-  try {
-    // Remove mention tokens like <@123...> and clean prompt
-    let prompt = message.content.replace(new RegExp(`<@!?${client.user.id}>`, 'g'), '').trim();
-
-    if (!prompt) {
-      console.log("空 prompt received.");
-      return message.reply("👋 Hey there! Mention me and say something to start chatting.");
-    }
-
-    console.log(`🧠 Sending prompt to Gemini: "${prompt}"`);
-
-    // Indicate typing status
-    await message.channel.sendTyping();
-
-    // Get response from Kairo
-    const response = await kairo.chat(message.channel.id, message.author.username, prompt);
-
-    console.log(`✅ Kairo response generated (${response.length} chars)`);
-
-    // Discord message length limit check
-    if (response.length > 2000) {
-      const chunks = response.match(/[\s\S]{1,1900}/g) || [];
-      for (const chunk of chunks) {
-        await message.channel.send(chunk);
-      }
-    } else {
-      await message.reply(response);
-    }
-
-  } catch (error) {
-    console.error('❌ [Kairo Chat Error]', error);
-    message.reply("⚠️ **KAIRO_ERROR:** I'm having a bit of trouble processing that, but I'm still here for you. Take a breath and let's keep going.");
-  }
-});
 
 // --- REACTION ROLE LOGIC ---
 
