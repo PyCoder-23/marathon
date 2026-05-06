@@ -11,10 +11,11 @@ app.listen(port, () => {
 });
 
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, Events, Partials } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Events, Partials, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const cron = require('node-cron');
+const quotes = require('./quotes.js');
 
 const client = new Client({
   intents: [
@@ -103,11 +104,9 @@ process.on('uncaughtException', (error) => {
 
 // --- REACTION ROLE LOGIC ---
 
-// Configuration: Mapping emojis to Role IDs and DM Messages
-// To use this, fill in the Message ID and the Emoji/Role mappings.
+// Configuration: Mapping Message IDs -> Emojis -> Role IDs and DM Messages
 const REACTION_ROLES_CONFIG = {
-  messageId: '1495600062796009583',
-  roles: {
+  '1495600062796009583': {
     '🎮': {
       roleId: '1491359226784645150',
       dmMessage: "✅ You now have access to the **Off-Topic** channels! Feel free to discuss gaming, music, memes, and more."
@@ -128,6 +127,13 @@ const REACTION_ROLES_CONFIG = {
       roleId: '1491868582684917962',
       dmMessage: "🔔 You've enabled **Reset Reminders**! I'll ping you before daily session terminations and the weekly hard reset."
     }
+  },
+  '1501402879942983740': {
+    '💯': {
+      roleId: '1501403253043368066',
+      dmMessage: "💯 **MOTIVATION_SYNCED:** You are now enrolled in the daily motivational protocol. Get ready to crush your goals!",
+      unreactDmMessage: "💯 **MOTIVATION_UNSYNCED:** You have opted out of the daily motivation protocol. We'll be here when you're ready to sync back up!"
+    }
   }
 };
 
@@ -144,10 +150,11 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
     }
   }
 
-  // Check if we are monitoring this specific message (if configured)
-  if (REACTION_ROLES_CONFIG.messageId && reaction.message.id !== REACTION_ROLES_CONFIG.messageId) return;
+  // Check if we are monitoring this specific message
+  const messageConfig = REACTION_ROLES_CONFIG[reaction.message.id];
+  if (!messageConfig) return;
 
-  const config = REACTION_ROLES_CONFIG.roles[reaction.emoji.name] || REACTION_ROLES_CONFIG.roles[reaction.emoji.id];
+  const config = messageConfig[reaction.emoji.name] || messageConfig[reaction.emoji.id];
   if (!config) return;
 
   try {
@@ -184,9 +191,10 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
     }
   }
 
-  if (REACTION_ROLES_CONFIG.messageId && reaction.message.id !== REACTION_ROLES_CONFIG.messageId) return;
+  const messageConfig = REACTION_ROLES_CONFIG[reaction.message.id];
+  if (!messageConfig) return;
 
-  const config = REACTION_ROLES_CONFIG.roles[reaction.emoji.name] || REACTION_ROLES_CONFIG.roles[reaction.emoji.id];
+  const config = messageConfig[reaction.emoji.name] || messageConfig[reaction.emoji.id];
   if (!config) return;
 
   try {
@@ -198,7 +206,8 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
       console.log(`❌ Removed ${role.name} from ${user.username}`);
 
       try {
-        await user.send(`The **${role.name}** role has been removed as you removed your reaction.`);
+        const dm = config.unreactDmMessage || `The **${role.name}** role has been removed as you removed your reaction.`;
+        await user.send(dm);
       } catch (dmError) {
         // Ignore DM errors on removal
       }
@@ -273,6 +282,47 @@ cron.schedule('0 19 * * 0', () => {
 cron.schedule('20 19 * * 0', () => {
   console.log('⏰ [Scheduled Task] Sending Weekly Reset Warning (10m)...');
   sendReminder("🚨 **CRITICAL_REMINDER:** Only 10 minutes left before the system wipe! This is your final chance to submit your work.");
+}, {
+  scheduled: true,
+  timezone: "Asia/Kolkata"
+});
+
+/**
+ * Daily Motivation: Send a unique quote to the motivation channel every day at 8:00 AM IST
+ */
+cron.schedule('0 8 * * *', async () => {
+  console.log('⏰ [Scheduled Task] Sending Daily Motivation...');
+  const MOTIVATION_CHANNEL_ID = '1501403557897703574';
+  const MOTIVATION_ROLE_ID = '1501403253043368066';
+  
+  try {
+    const channel = await client.channels.fetch(MOTIVATION_CHANNEL_ID);
+    if (channel) {
+      // Pick a quote based on the day of the year to ensure uniqueness
+      const now = new Date();
+      const start = new Date(now.getFullYear(), 0, 0);
+      const diff = now - start;
+      const oneDay = 1000 * 60 * 60 * 24;
+      const dayOfYear = Math.floor(diff / oneDay);
+      
+      const quote = quotes[dayOfYear % quotes.length];
+      
+      const embed = new EmbedBuilder()
+        .setTitle('🌅 DAILY_MOTIVATION_PROTOCOL')
+        .setDescription(`*"${quote.text}"*`)
+        .addFields({ name: '— Author', value: `**${quote.author}**` })
+        .setColor('#ff0055')
+        .setTimestamp()
+        .setFooter({ text: 'Marathon System: Momentum' });
+
+      await channel.send({ 
+        content: `<@&${MOTIVATION_ROLE_ID}> **| SET THE TONE FOR THE DAY**`, 
+        embeds: [embed] 
+      });
+    }
+  } catch (error) {
+    console.error('❌ [Scheduled Task Error] Failed to send daily motivation:', error);
+  }
 }, {
   scheduled: true,
   timezone: "Asia/Kolkata"
