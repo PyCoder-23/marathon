@@ -159,17 +159,26 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
     }
   }
 
-  console.log(`🔍 Reaction: "${reaction.emoji.name}" (ID: ${reaction.emoji.id}) on Msg: ${reaction.message.id}`);
+  const emojiName = reaction.emoji.name;
+  const emojiHex = emojiName ? Buffer.from(emojiName).toString('hex') : 'null';
+  console.log(`🔍 Reaction: "${emojiName}" | Hex: ${emojiHex} | ID: ${reaction.emoji.id} | Msg: ${reaction.message.id}`);
 
   // Check if we are monitoring this specific message
   const messageConfig = REACTION_ROLES_CONFIG[reaction.message.id];
   if (!messageConfig) {
-    console.log(`ℹ️ Message ${reaction.message.id} not in config. Registered IDs: ${Object.keys(REACTION_ROLES_CONFIG).join(', ')}`);
+    console.log(`ℹ️ Message ${reaction.message.id} not in config. Registered: ${Object.keys(REACTION_ROLES_CONFIG).join(', ')}`);
     return;
   }
 
-  // Find config by name or ID
-  const config = messageConfig[reaction.emoji.name] || messageConfig[reaction.emoji.id];
+  // Find config by name, ID, or hex match (to be safe with unicode)
+  let config = messageConfig[emojiName] || messageConfig[reaction.emoji.id];
+  
+  if (!config && emojiName) {
+    // Fallback: check if any key in config matches the emoji name hex
+    const targetHex = Buffer.from(emojiName).toString('hex');
+    const matchKey = Object.keys(messageConfig).find(key => Buffer.from(key).toString('hex') === targetHex);
+    if (matchKey) config = messageConfig[matchKey];
+  }
   
   if (!config) {
     console.log(`ℹ️ Emoji "${reaction.emoji.name}" not found for msg ${reaction.message.id}. Configured: ${Object.keys(messageConfig).join(', ')}`);
@@ -227,7 +236,15 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
   const messageConfig = REACTION_ROLES_CONFIG[reaction.message.id];
   if (!messageConfig) return;
 
-  const config = messageConfig[reaction.emoji.name] || messageConfig[reaction.emoji.id];
+  const emojiName = reaction.emoji.name;
+  let config = messageConfig[emojiName] || messageConfig[reaction.emoji.id];
+
+  if (!config && emojiName) {
+    const targetHex = Buffer.from(emojiName).toString('hex');
+    const matchKey = Object.keys(messageConfig).find(key => Buffer.from(key).toString('hex') === targetHex);
+    if (matchKey) config = messageConfig[matchKey];
+  }
+
   if (!config) return;
 
   try {
