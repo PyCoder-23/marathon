@@ -139,8 +139,7 @@ const REACTION_ROLES_CONFIG = {
 
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
   if (user.bot) return;
-
-  // Handle partials (ensure we can see reactions on old messages)
+  console.log(`📡 Event: MessageReactionAdd | User: ${user.username} | Partial: ${reaction.partial}`);
   if (reaction.partial) {
     try {
       await reaction.fetch();
@@ -150,12 +149,34 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
     }
   }
 
+  // Ensure the message is also fetched if it's a partial
+  if (reaction.message.partial) {
+    try {
+      await reaction.message.fetch();
+    } catch (error) {
+      console.error('Failed to fetch message during reaction add:', error);
+      return;
+    }
+  }
+
+  console.log(`🔍 Reaction: "${reaction.emoji.name}" (ID: ${reaction.emoji.id}) on Msg: ${reaction.message.id}`);
+
   // Check if we are monitoring this specific message
   const messageConfig = REACTION_ROLES_CONFIG[reaction.message.id];
-  if (!messageConfig) return;
+  if (!messageConfig) {
+    console.log(`ℹ️ Message ${reaction.message.id} not in config. Registered IDs: ${Object.keys(REACTION_ROLES_CONFIG).join(', ')}`);
+    return;
+  }
 
+  // Find config by name or ID
   const config = messageConfig[reaction.emoji.name] || messageConfig[reaction.emoji.id];
-  if (!config) return;
+  
+  if (!config) {
+    console.log(`ℹ️ Emoji "${reaction.emoji.name}" not found for msg ${reaction.message.id}. Configured: ${Object.keys(messageConfig).join(', ')}`);
+    return;
+  }
+
+  console.log(`🎯 Match! Role: ${config.roleId} | Emoji Identifier: ${reaction.emoji.identifier}`);
 
   try {
     const member = await reaction.message.guild.members.fetch(user.id);
@@ -175,7 +196,10 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
       }
     }
   } catch (error) {
-    console.error('Error in ReactionRoleAdd:', error);
+    console.error('❌ [ReactionRoleAdd Error]:', error.message);
+    if (error.code === 50013) {
+      console.error('⚠️ PERMISSION_ERROR: Bot role might be below the target role in hierarchy.');
+    }
   }
 });
 
@@ -187,6 +211,15 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
       await reaction.fetch();
     } catch (error) {
       console.error('Failed to fetch reaction during remove:', error);
+      return;
+    }
+  }
+
+  if (reaction.message.partial) {
+    try {
+      await reaction.message.fetch();
+    } catch (error) {
+      console.error('Failed to fetch message during reaction remove:', error);
       return;
     }
   }
@@ -291,7 +324,7 @@ cron.schedule('20 19 * * 0', () => {
  * Daily Motivation: Send a unique quote to the motivation channel every day at 8:00 AM IST
  */
 cron.schedule('0 8 * * *', async () => {
-  console.log('⏰ [Scheduled Task] Sending Daily Motivation...');
+  console.log('⏰ [Scheduled Task] Daily Motivation triggered at 8:00 AM IST');
   const MOTIVATION_CHANNEL_ID = '1501403557897703574';
   const MOTIVATION_ROLE_ID = '1501403253043368066';
   

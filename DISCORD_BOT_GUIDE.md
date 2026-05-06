@@ -1,6 +1,6 @@
 # 🤖 Marathon Twin-Bot Protocol: Setup Guide
 
-This guide will walk you through setting up both **KAIRO** (The Functional Bot) and **KAIRA** (The Sarcastic Teenager).
+This guide will walk you through setting up both **KAIRO** (The Functional Bot) and **KAIRA** (The Ancient Sage).
 
 ---
 
@@ -105,8 +105,8 @@ pm2 save
 - `/leaderboard`: Interactive list of top 10 agents.
 - `/active`: Live list of who is currently working.
 
-### 🙄 Talking to KAIRA
-- Simply **ping @KAIRA** in any channel and ask her something. Be prepared for attitude.
+### 🏺 Talking to KAIRA
+- Simply **ping @KAIRA** in any channel and ask her for guidance. She speaks with the wisdom of the ancient world.
 
 ---
 
