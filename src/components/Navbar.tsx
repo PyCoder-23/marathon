@@ -2,15 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Zap, LogOut, Calendar, ChevronDown, Heart } from "lucide-react";
+import { Zap, LogOut, Calendar, ChevronDown, Heart, BookOpen, CheckSquare } from "lucide-react";
 import styles from "./Navbar.module.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
 const navLinks = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Journal", href: "/journal" },
-  { label: "Tasks", href: "/tasks" },
+  { label: "Shop", href: "/shop" },
   { label: "Planner", href: "/planner" },
   { label: "Leaderboard", href: "/leaderboard" },
   { label: "Squads", href: "/squads" },
@@ -103,6 +102,24 @@ export default function Navbar() {
                       </Link>
 
                       <Link 
+                        href="/journal" 
+                        className={styles.dropdownItem}
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <BookOpen size={16} className={styles.itemIcon} />
+                        <span>Journal</span>
+                      </Link>
+
+                      <Link 
+                        href="/tasks" 
+                        className={styles.dropdownItem}
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <CheckSquare size={16} className={styles.itemIcon} />
+                        <span>Tasks</span>
+                      </Link>
+
+                      <Link 
                         href="/donate" 
                         className={styles.dropdownItem}
                         onClick={() => setDropdownOpen(false)}
@@ -130,7 +147,7 @@ export default function Navbar() {
             </AnimatePresence>
           </div>
         ) : (
-          <Link href="/join" className={styles.joinBtn}>Join Camp</Link>
+          <Link href="/join" className={styles.joinBtn}>Access Community</Link>
         )}
       </div>
     </nav>

@@ -48,6 +48,7 @@ const userSchema = new mongoose.Schema({
   avatar: String,
   xp: { type: Number, default: 0 },
   weeklyXp: { type: Number, default: 0 },
+  coins: { type: Number, default: 0 },
   streak: { type: Number, default: 0 },
   lastActive: { type: Date },
   hasLinked: { type: Boolean, default: false },
@@ -58,6 +59,7 @@ const userSchema = new mongoose.Schema({
     enum: ['Zenith Sentinels', 'Apex Titans', 'Meridian Arbiters', 'Horizon Vanguards', 'Unassigned'],
     default: 'Unassigned' 
   },
+  inventory: [{ type: String }],
 });
 
 userSchema.index({ weeklyXp: -1 });
@@ -131,6 +133,7 @@ const squadHistorySchema = new mongoose.Schema({
   squadName: { type: String, required: true, unique: true },
   winStreak: { type: Number, default: 0 },
   allTimeWins: { type: Number, default: 0 },
+  coins: { type: Number, default: 0 },
   lastWinDate: { type: Date }
 });
 

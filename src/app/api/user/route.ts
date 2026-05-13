@@ -3,15 +3,22 @@ import { cookies } from 'next/headers';
 import { connectDB, User, Session, Task } from '@/../database.js';
 
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const targetDiscordId = searchParams.get('discordId');
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get('sessionToken')?.value;
-  if (!sessionToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
     await connectDB();
-    const user = await User.findOne({ sessionToken });
+    let user;
+
+    if (targetDiscordId) {
+      user = await User.findOne({ discordId: targetDiscordId });
+    } else if (sessionToken) {
+      user = await User.findOne({ sessionToken });
+    }
+
     if (!user) {
-      console.log(`[API/USER] 404: No user found for token suffix ...${sessionToken?.slice(-6)}`);
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
     const discordId = user.discordId;
@@ -37,6 +44,8 @@ export async function GET(request: Request) {
         xp: user.xp,
         weeklyXp: user.weeklyXp,
         streak: user.streak,
+        coins: user.coins || 0,
+        inventory: user.inventory || [],
         joinedAt: user.joinedAt,
         rank: rank,
         squad: user.squad || 'Unassigned',

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import styles from "./profile.module.css";
-import { Zap, Target, Star, Calendar, ArrowLeft, Trophy, Flame } from "lucide-react";
+import { Zap, Target, Star, Calendar, ArrowLeft, Trophy, Flame, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -14,6 +14,8 @@ interface ProfileData {
     xp: number;
     weeklyXp: number;
     streak: number;
+    coins: number;
+    inventory: string[];
     joinedAt: string;
     rank: number;
     squad: string;
@@ -141,6 +143,43 @@ export default function ProfilePage({ params }: { params: Promise<{ discordId: s
             <Target size={22} color="#f87171" />
             <span className={styles.statValue}>{data.stats.completedTasks}</span>
             <span className={styles.statLabel}>Tasks Done</span>
+          </div>
+          <div className={styles.statBox}>
+            <ShoppingBag size={22} color="#a855f7" />
+            <span className={styles.statValue}>{data.user.coins.toLocaleString()}</span>
+            <span className={styles.statLabel}>Coins</span>
+          </div>
+        </div>
+
+        {/* Inventory Section */}
+        <div className={styles.inventorySection}>
+          <h2 className={styles.inventoryTitle}>
+            <ShoppingBag size={20} /> AGENT_INVENTORY
+          </h2>
+          <div className={styles.inventoryGrid}>
+            {data.user.inventory && data.user.inventory.length > 0 ? (
+              (() => {
+                const itemCounts: Record<string, number> = {};
+                data.user.inventory.forEach(id => {
+                  itemCounts[id] = (itemCounts[id] || 0) + 1;
+                });
+
+                return Object.entries(itemCounts).map(([id, count]) => {
+                  const name = id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                  const isBoost = id.startsWith('bst-');
+                  
+                  return (
+                    <div key={id} className={`${styles.inventoryItem} ${isBoost ? styles.boostItem : ''}`}>
+                      {count > 1 && <span className={styles.itemCount}>x{count}</span>}
+                      <span className={styles.itemName}>{name}</span>
+                      <span className={styles.itemType}>{isBoost ? 'BOOST' : 'DECORATION'}</span>
+                    </div>
+                  );
+                });
+              })()
+            ) : (
+              <div className={styles.emptyInventory}>Inventory is currently empty.</div>
+            )}
           </div>
         </div>
       </motion.div>

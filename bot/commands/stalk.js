@@ -37,6 +37,36 @@ module.exports = {
          squadText = `**${userDoc.squad}** (#${squadRank} in squad)`;
       }
 
+      // Group inventory items
+      const inventory = userDoc.inventory || [];
+      const itemCounts = {};
+      inventory.forEach(id => {
+        itemCounts[id] = (itemCounts[id] || 0) + 1;
+      });
+
+      const formatItemName = (id) => {
+        // Simple mapping for common items to look better
+        const names = {
+          'np-default': 'Standard Nameplate',
+          'pfp-default': 'Basic PFP Border',
+          'fnt-default': 'Monospace Font',
+          'bst-2x-sess': '2x XP Boost (Session)',
+          'bst-1.5x-hour': '1.5x XP Boost (Hour)',
+          'bst-2x-day': '2x XP Daily Rush',
+          'bst-streak-prot': 'Streak Protection',
+          'bst-insurance': 'Session Insurance'
+        };
+        if (names[id]) return names[id];
+        
+        // Fallback: clean up the ID
+        return id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      };
+
+      const inventoryText = Object.entries(itemCounts).map(([id, count]) => {
+        const name = formatItemName(id);
+        return `• ${name}${count > 1 ? ` **(x${count})**` : ''}`;
+      }).join('\n') || '`Empty Inventory`';
+
       const embed = new EmbedBuilder()
         .setTitle(`👤 PROFILE: ${userDoc.username.toUpperCase()}`)
         .setDescription(`\`STATUS: RUNNING\` | \`ID: ${discordId}\``)
@@ -44,10 +74,12 @@ module.exports = {
           { name: 'Squad', value: squadText, inline: false },
           { name: 'Global Rank', value: `#**${rank}**`, inline: true },
           { name: 'Weekly XP', value: `\`${(userDoc.weeklyXp || 0).toLocaleString()} XP\``, inline: true },
-          { name: 'Streak', value: `\`${userDoc.streak} Days\``, inline: true },
+          { name: 'Personal Treasury', value: `\`${(userDoc.coins || 0).toLocaleString()} Coins\``, inline: true },
           { name: 'Total XP', value: `\`${userDoc.xp.toLocaleString()} XP\``, inline: true },
+          { name: 'Streak', value: `\`${userDoc.streak} Days\``, inline: true },
           { name: 'Tasks Completed', value: `\`${completedTasks}\``, inline: true },
-          { name: 'Sessions Done', value: `\`${totalSessions}\``, inline: true }
+          { name: 'Sessions Done', value: `\`${totalSessions}\``, inline: true },
+          { name: '🎒 Inventory', value: inventoryText, inline: false }
         )
         .setThumbnail(userDoc.avatar || targetUser.displayAvatarURL({ extension: 'png' }))
         .setColor('#00ff9f')
