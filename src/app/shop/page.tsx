@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, ShoppingBag, Palette, Rocket, Coins, ShieldCheck, Star, Sparkles, X, Check, Type } from "lucide-react";
+import { Zap, ShoppingBag, Palette, Rocket, Coins, ShieldCheck, Star, Sparkles, X, Check, Type, ArrowLeft } from "lucide-react";
 import styles from "./shop.module.css";
 import { SHOP_ITEMS, ShopItem, Rarity } from "@/lib/shopData";
 
@@ -36,6 +36,7 @@ export default function ShopPage() {
   const [userCoins, setUserCoins] = useState<number>(0);
   const [ownedItems, setOwnedItems] = useState<string[]>([]);
   const [equippedItems, setEquippedItems] = useState<string[]>([]);
+  const [equippedHistory, setEquippedHistory] = useState<string[]>([]);
   const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
@@ -68,13 +69,14 @@ export default function ShopPage() {
 
   const fetchUserData = async () => {
     try {
-      const res = await fetch('/api/user');
+      const res = await fetch('/api/user', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         console.log("[Shop] User data loaded:", data.user);
         setUser(data.user);
         setUserCoins(data.user.coins || 0);
         setOwnedItems(data.user.inventory || []);
+        setEquippedHistory(data.user.equippedHistory || []);
         // Keep localStorage in sync
         const localUser = localStorage.getItem("user");
         if (localUser) {
@@ -157,7 +159,22 @@ export default function ShopPage() {
       const newEquipped = [...otherEquipped, itemId];
       setEquippedItems(newEquipped);
       localStorage.setItem("equippedItems", JSON.stringify(newEquipped));
+
+      // Track history in DB
+      if (!equippedHistory.includes(itemId)) {
+        setEquippedHistory(prev => [...prev, itemId]);
+        fetch('/api/user/equip-history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemId })
+        });
+      }
     }
+  };
+
+  const handleReturn = async (itemId: string) => {
+    // Moved to dedicated returns page
+    router.push('/shop/returns');
   };
 
   if (isLoading) {
@@ -189,11 +206,16 @@ export default function ShopPage() {
           <p>Equip the Elite. Accelerate the Grind.</p>
         </div>
 
-        <div className={styles.wallet}>
-          <span className={styles.priceLabel}>PERSONAL_TREASURY</span>
-          <div className={styles.coinDisplay}>
-            <img src="/coin.png" alt="Coins" className={styles.coinImg} />
-            <span className={styles.coinCount}>{userCoins.toLocaleString()}</span>
+        <div className={styles.headerRight}>
+          <button className={styles.manageReturnsBtn} onClick={() => router.push('/shop/returns')}>
+            <ArrowLeft size={14} style={{ rotate: '180deg' }} /> Returns
+          </button>
+          <div className={styles.wallet}>
+            <span className={styles.priceLabel}>PERSONAL_TREASURY</span>
+            <div className={styles.coinDisplay}>
+              <img src="/coin.png" alt="Coins" className={styles.coinImg} />
+              <span className={styles.coinCount}>{userCoins.toLocaleString()}</span>
+            </div>
           </div>
         </div>
       </header>

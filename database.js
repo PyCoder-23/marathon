@@ -60,6 +60,7 @@ const userSchema = new mongoose.Schema({
     default: 'Unassigned' 
   },
   inventory: [{ type: String }],
+  equippedHistory: [{ type: String }],
 });
 
 userSchema.index({ weeklyXp: -1 });
