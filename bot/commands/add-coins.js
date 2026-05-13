@@ -7,6 +7,10 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('add-coins')
     .setDescription('Add or remove coins from a member or team treasury (Admin Only)')
+    .addIntegerOption(option =>
+      option.setName('amount')
+        .setDescription('Amount of coins to add (use negative to remove)')
+        .setRequired(true))
     .addUserOption(option => 
       option.setName('member')
         .setDescription('The member to add/remove coins from'))
@@ -18,11 +22,7 @@ module.exports = {
           { name: 'Apex Titans', value: 'Apex Titans' },
           { name: 'Meridian Arbiters', value: 'Meridian Arbiters' },
           { name: 'Horizon Vanguards', value: 'Horizon Vanguards' }
-        ))
-    .addIntegerOption(option =>
-      option.setName('amount')
-        .setDescription('Amount of coins to add (use negative to remove)')
-        .setRequired(true)),
+        )),
 
   async execute(interaction) {
     // Admin check
