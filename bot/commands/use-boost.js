@@ -10,7 +10,7 @@ module.exports = {
          .setDescription('Apply a 2x XP boost to your currently active session.')
     )
     .addSubcommand(sub =>
-      sub.setName('1.5x-hour')
+      sub.setName('1-5x-hour')
          .setDescription('Apply a 1.5x XP boost for the first hour of your active session.')
     )
     .addSubcommand(sub =>
@@ -89,7 +89,7 @@ module.exports = {
         return interaction.editReply({ embeds: [embed] });
       }
 
-      if (sub === '1.5x-hour') {
+      if (sub === '1-5x-hour') {
         const inventory = user.inventory || [];
         const itemIndex = inventory.indexOf('bst-1.5x-hour');
         if (itemIndex === -1) {
