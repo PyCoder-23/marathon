@@ -6,17 +6,25 @@ import { SHOP_ITEMS } from '@/lib/shopData';
 export async function POST(request: Request) {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get('sessionToken')?.value;
-  if (!sessionToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!sessionToken) {
+    // We will allow missing sessionToken if discordId is provided in body
+  }
 
   try {
-    const { itemId } = await request.json();
+    const { itemId, discordId } = await request.json();
     if (!itemId) return NextResponse.json({ error: 'Item ID required' }, { status: 400 });
 
     const item = SHOP_ITEMS.find(i => i.id === itemId);
     if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 404 });
 
     await connectDB();
-    const user = await User.findOne({ sessionToken });
+    let user;
+    if (discordId) {
+      user = await User.findOne({ discordId });
+    } else if (sessionToken) {
+      user = await User.findOne({ sessionToken });
+    }
+    
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     // Check if user already owns the decoration (boosts can be bought multiple times)

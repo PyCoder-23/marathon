@@ -14,7 +14,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ squa
 
     // Get members
     const members = await User.find({ squad: decodedName })
-      .select('username avatar xp weeklyXp streak lastActive')
+      .select('username avatar xp weeklyXp streak lastActive equippedItems')
       .sort({ weeklyXp: -1 })
       .lean();
 

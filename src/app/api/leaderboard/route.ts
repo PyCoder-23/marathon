@@ -9,7 +9,7 @@ export async function GET() {
     const users = await User.find({})
       .sort({ weeklyXp: -1 })
       .limit(25)
-      .select('discordId username avatar xp weeklyXp streak');
+      .select('discordId username avatar xp weeklyXp streak equippedItems');
 
     const leaderboard = users.map((u, index) => ({
       rank: index + 1,
@@ -19,6 +19,7 @@ export async function GET() {
       weeklyXp: u.weeklyXp || 0,
       totalXp: u.xp || 0,
       streak: u.streak || 0,
+      equippedItems: u.equippedItems || [],
     }));
 
     return NextResponse.json({ leaderboard });

@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { Zap, Trophy, Flame, Crown } from "lucide-react";
 import styles from "./leaderboard.module.css";
 import Link from "next/link";
+import DecoratedAvatar from "@/components/DecoratedAvatar";
+import DecoratedName from "@/components/DecoratedName";
+import DecoratedRow from "@/components/DecoratedRow";
 
 interface LeaderboardEntry {
   rank: number;
@@ -14,6 +17,7 @@ interface LeaderboardEntry {
   weeklyXp: number;
   totalXp: number;
   streak: number;
+  equippedItems: string[];
 }
 
 const RANK_ICONS: Record<number, { icon: React.ReactNode; color: string }> = {
@@ -79,46 +83,43 @@ export default function LeaderboardPage() {
             return (
               <motion.div
                 key={entry.discordId}
-                className={`${styles.row} ${isTop3 ? styles.topRow : ""}`}
-                style={isTop3 ? { borderColor: rankStyle.color + "44" } : {}}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04 }}
               >
-                {/* Rank */}
-                <div
-                  className={styles.rankNum}
-                  style={{ color: rankStyle ? rankStyle.color : "var(--text-muted)" }}
+                <DecoratedRow
+                  equippedItems={entry.equippedItems}
+                  className={`${styles.row} ${isTop3 ? styles.topRow : ""}`}
+                  style={isTop3 ? { borderColor: rankStyle.color + "44" } : {}}
                 >
-                  {rankStyle ? rankStyle.icon : `#${entry.rank}`}
-                </div>
+                  {/* Rank */}
+                  <div
+                    className={styles.rankNum}
+                    style={{ color: rankStyle ? rankStyle.color : "var(--text-muted)" }}
+                  >
+                    {rankStyle ? rankStyle.icon : `#${entry.rank}`}
+                  </div>
 
-                {/* Avatar + Name */}
-                <img
-                  src={
-                    entry.avatar ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(entry.username)}&background=00ff9f&color=000`
-                  }
-                  alt={entry.username}
-                  className={styles.avatar}
-                />
-                <Link href={`/profile/${entry.discordId}`} className={styles.username}>
-                  {entry.username}
-                </Link>
+                  {/* Avatar + Name */}
+                  <DecoratedAvatar avatar={entry.avatar} username={entry.username} equippedItems={entry.equippedItems} size={40} />
+                  <Link href={`/profile/${entry.discordId}`} className={styles.username} style={{ textDecoration: 'none' }}>
+                    <DecoratedName username={entry.username} equippedItems={entry.equippedItems} type="font-only" />
+                  </Link>
 
-                {/* Streak */}
-                <div className={styles.streak}>
-                  <Flame size={14} color="#f97316" />
-                  <span>{entry.streak}d</span>
-                </div>
+                  {/* Streak */}
+                  <div className={styles.streak}>
+                    <Flame size={14} color="#f97316" />
+                    <span>{entry.streak}d</span>
+                  </div>
 
-                {/* XP */}
-                <div className={styles.xpArea}>
-                  <span className={styles.weeklyXp}>
-                    {entry.weeklyXp.toLocaleString()} <span className={styles.xpUnit}>WK XP</span>
-                  </span>
-                  <span className={styles.totalXp}>{entry.totalXp.toLocaleString()} total</span>
-                </div>
+                  {/* XP */}
+                  <div className={styles.xpArea}>
+                    <span className={styles.weeklyXp}>
+                      {entry.weeklyXp.toLocaleString()} <span className={styles.xpUnit}>WK XP</span>
+                    </span>
+                    <span className={styles.totalXp}>{entry.totalXp.toLocaleString()} total</span>
+                  </div>
+                </DecoratedRow>
               </motion.div>
             );
           })}

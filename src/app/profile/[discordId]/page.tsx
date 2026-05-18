@@ -5,6 +5,8 @@ import styles from "./profile.module.css";
 import { Zap, Target, Star, Calendar, ArrowLeft, Trophy, Flame, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import DecoratedAvatar from "@/components/DecoratedAvatar";
+import DecoratedName from "@/components/DecoratedName";
 
 interface ProfileData {
   user: {
@@ -20,6 +22,7 @@ interface ProfileData {
     rank: number;
     squad: string;
     squadRank: number | null;
+    equippedItems: string[];
   };
   stats: {
     totalSessions: number;
@@ -107,13 +110,13 @@ export default function ProfilePage({ params }: { params: Promise<{ discordId: s
       >
         <div className={styles.glow} />
 
-        <img
-          src={data.user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.username)}&background=00ff9f&color=000`}
-          alt={data.user.username}
-          className={styles.avatar}
-        />
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+          <DecoratedAvatar avatar={data.user.avatar} username={data.user.username} equippedItems={data.user.equippedItems} size={100} />
+        </div>
 
-        <h1 className={styles.username}>{data.user.username}</h1>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
+          <DecoratedName username={data.user.username} equippedItems={data.user.equippedItems} className={styles.username} />
+        </div>
         <div className={styles.discordId}>ID: {data.user.discordId}</div>
         <div className={styles.joinDate}>Member since {joinDate}</div>
 

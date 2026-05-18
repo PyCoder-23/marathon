@@ -61,6 +61,7 @@ const userSchema = new mongoose.Schema({
   },
   inventory: [{ type: String }],
   equippedHistory: [{ type: String }],
+  equippedItems: [{ type: String, default: ['np-default', 'pfp-default', 'fnt-default'] }],
 });
 
 userSchema.index({ weeklyXp: -1 });

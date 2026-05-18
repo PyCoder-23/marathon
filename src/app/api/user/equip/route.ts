@@ -7,11 +7,11 @@ export async function POST(request: Request) {
   const sessionToken = cookieStore.get('sessionToken')?.value;
 
   if (!sessionToken) {
-    // We allow missing session token if discordId is passed
+    // We will allow missing sessionToken if discordId is provided in body
   }
 
   try {
-    const { itemId, discordId } = await request.json();
+    const { equippedItems, discordId } = await request.json();
     
     await connectDB();
     let user;
@@ -25,15 +25,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    if (!user.equippedHistory.includes(itemId)) {
-      user.equippedHistory.push(itemId);
+    if (Array.isArray(equippedItems)) {
+      user.equippedItems = equippedItems;
       await user.save();
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, equippedItems: user.equippedItems });
 
   } catch (error) {
-    console.error('Equip History Error:', error);
+    console.error('Equip Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

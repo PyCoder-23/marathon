@@ -51,6 +51,7 @@ export default function ShopPage() {
         if (parsed.isLoggedIn) {
           setUser(parsed);
           setUserCoins(parsed.coins || 0);
+          setOwnedItems(parsed.inventory || []);
         }
       } catch (e) {
         console.error("Failed to parse local user data", e);
@@ -69,7 +70,15 @@ export default function ShopPage() {
 
   const fetchUserData = async () => {
     try {
-      const res = await fetch('/api/user', { cache: 'no-store' });
+      const savedUser = localStorage.getItem("user");
+      let discordId = "";
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        discordId = parsed.discordId;
+      }
+      
+      const url = discordId ? `/api/user?discordId=${discordId}` : '/api/user';
+      const res = await fetch(url, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         console.log("[Shop] User data loaded:", data.user);
@@ -111,11 +120,17 @@ export default function ShopPage() {
     setIsPurchasing(true);
     setError(null);
 
+    let discordId = "";
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      discordId = JSON.parse(savedUser).discordId;
+    }
+
     try {
       const res = await fetch('/api/shop/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId: selectedItem.id })
+        body: JSON.stringify({ itemId: selectedItem.id, discordId })
       });
 
       const data = await res.json();
@@ -123,6 +138,14 @@ export default function ShopPage() {
       if (res.ok) {
         setUserCoins(data.coins);
         setOwnedItems(data.inventory);
+        
+        // Update localStorage to reflect the purchase immediately
+        const savedUser = localStorage.getItem("user");
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          localStorage.setItem("user", JSON.stringify({ ...parsed, coins: data.coins, inventory: data.inventory }));
+        }
+
         router.push(`/shop/success?itemId=${selectedItem.id}`);
       } else {
         setError(data.error || 'Transaction failed');
@@ -134,13 +157,15 @@ export default function ShopPage() {
     }
   };
 
-  const handleEquip = (itemId: string, category: string) => {
+  const handleEquip = async (itemId: string, category: string) => {
     // Logic to ensure only one item per category is equipped
     const categoryPrefix =
       category === 'Nameplates' ? 'np-' :
         category === 'PFP Decorations' ? 'pfp-' :
           category === 'Username Fonts' ? 'fnt-' : 'bst-';
     const otherEquipped = equippedItems.filter(id => !id.startsWith(categoryPrefix));
+
+    let newEquipped = [...equippedItems];
 
     if (equippedItems.includes(itemId)) {
       // If it's a default item, don't allow unequipping unless another is equipped
@@ -151,23 +176,43 @@ export default function ShopPage() {
           category === 'PFP Decorations' ? 'pfp-default' :
             category === 'Username Fonts' ? 'fnt-default' : '';
       if (defaultId) {
-        const newEquipped = [...otherEquipped, defaultId];
-        setEquippedItems(newEquipped);
-        localStorage.setItem("equippedItems", JSON.stringify(newEquipped));
+        newEquipped = [...otherEquipped, defaultId];
       }
     } else {
-      const newEquipped = [...otherEquipped, itemId];
-      setEquippedItems(newEquipped);
-      localStorage.setItem("equippedItems", JSON.stringify(newEquipped));
+      newEquipped = [...otherEquipped, itemId];
+    }
 
-      // Track history in DB
-      if (!equippedHistory.includes(itemId)) {
-        setEquippedHistory(prev => [...prev, itemId]);
-        fetch('/api/user/equip-history', {
+    setEquippedItems(newEquipped);
+    localStorage.setItem("equippedItems", JSON.stringify(newEquipped));
+
+    let discordId = "";
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      discordId = JSON.parse(savedUser).discordId;
+    }
+
+    // Save current equipped items
+    try {
+      await fetch('/api/user/equip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ equippedItems: newEquipped, discordId })
+      });
+    } catch (e) {
+      console.error("Failed to save equipped items", e);
+    }
+
+    // Track history in DB
+    if (!equippedHistory.includes(itemId)) {
+      setEquippedHistory(prev => [...prev, itemId]);
+      try {
+        await fetch('/api/user/equip-history', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ itemId })
+          body: JSON.stringify({ itemId, discordId })
         });
+      } catch (e) {
+        console.error("Failed to save history", e);
       }
     }
   };

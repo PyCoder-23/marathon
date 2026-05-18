@@ -49,7 +49,8 @@ export async function GET(request: Request) {
         joinedAt: user.joinedAt,
         rank: rank,
         squad: user.squad || 'Unassigned',
-        squadRank: squadRank
+        squadRank: squadRank,
+        equippedItems: user.equippedItems || []
       },
       stats: {
         totalSessions: totalSessionsCount,

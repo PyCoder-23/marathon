@@ -5,6 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import DecoratedAvatar from '@/components/DecoratedAvatar';
+import DecoratedName from '@/components/DecoratedName';
+import DecoratedRow from '@/components/DecoratedRow';
+import shopStyles from '@/app/shop/shop.module.css';
 import styles from './squad-detail.module.css';
 
 interface Member {
@@ -15,6 +19,7 @@ interface Member {
   weeklyXp: number;
   streak: number;
   rank: number;
+  equippedItems: string[];
 }
 
 interface SquadData {
@@ -181,14 +186,16 @@ export default function SquadDetail({ params }: { params: Promise<{ squadName: s
           <h2 className={styles.sectionTitle}>Top Contributors</h2>
           <div className={styles.topContributors}>
             {data.top3.map((member, idx) => (
-              <div key={member.discordId} className={`${styles.contributorCard} ${idx === 0 ? styles.mvpCard : ''}`}>
+              <DecoratedRow key={member.discordId} equippedItems={member.equippedItems} className={`${styles.contributorCard} ${idx === 0 ? styles.mvpCard : ''}`}>
                 {idx === 0 && <div className={styles.mvpBadge}>MVP</div>}
-                <img src={member.avatar || '/default-avatar.png'} alt={member.username} className={styles.avatar} />
+                <DecoratedAvatar avatar={member.avatar} username={member.username} equippedItems={member.equippedItems} size={64} />
                 <div className={styles.userInfo}>
-                  <div className={styles.username}>{member.username}</div>
+                  <div className={styles.username}>
+                    <DecoratedName username={member.username} equippedItems={member.equippedItems} type="font-only" />
+                  </div>
                   <div className={styles.userXp}>{member.weeklyXp.toLocaleString()} XP</div>
                 </div>
-              </div>
+              </DecoratedRow>
             ))}
             {data.top3.length === 0 && <div style={{ color: 'var(--text-muted)' }}>No active contributors yet.</div>}
           </div>
@@ -208,12 +215,14 @@ export default function SquadDetail({ params }: { params: Promise<{ squadName: s
               <tbody>
                 {data.members.map((member) => {
                   const isActive = member.weeklyXp >= 100;
+                  const npDeco = member.equippedItems?.find(id => id.startsWith('np-')) || 'np-default';
+                  const npEffectClass = npDeco !== 'np-default' ? shopStyles['effect-' + npDeco.split('-')[1]] : '';
                   return (
-                    <tr key={member.discordId} className={`${styles.rosterRow} ${!isActive ? styles.inactiveRow : ''}`}>
+                    <tr key={member.discordId} className={`${styles.rosterRow} ${!isActive ? styles.inactiveRow : ''} ${npEffectClass}`}>
                       <td className={styles.rankCell}>#{member.rank}</td>
                       <td className={styles.userCell}>
-                        <img src={member.avatar || '/default-avatar.png'} alt={member.username} className={styles.smallAvatar} />
-                        {member.username}
+                        <DecoratedAvatar avatar={member.avatar} username={member.username} equippedItems={member.equippedItems} size={32} />
+                        <DecoratedName username={member.username} equippedItems={member.equippedItems} />
                       </td>
                       <td className={styles.xpCell}>{member.weeklyXp.toLocaleString()}</td>
                       <td>{member.streak} 🔥</td>

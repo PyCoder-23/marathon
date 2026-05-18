@@ -76,6 +76,25 @@ function SuccessContent() {
     // Save back
     localStorage.setItem("equippedItems", JSON.stringify(equippedList));
 
+    let discordId = "";
+    if (user) {
+      discordId = (user as any).discordId;
+    }
+
+    // Save current equipped items to DB
+    fetch('/api/user/equip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ equippedItems: equippedList, discordId })
+    }).catch(e => console.error("Failed to save equipped items", e));
+
+    // Track history in DB
+    fetch('/api/user/equip-history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemId: item.id, discordId })
+    }).catch(e => console.error("Failed to save history", e));
+
     // Simulating API latency
     setTimeout(() => {
       setIsEquipping(false);
