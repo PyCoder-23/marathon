@@ -5,46 +5,46 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('use-boost')
     .setDescription('Consume a boost from your inventory.')
-    .addSubcommand(sub => 
+    .addSubcommand(sub =>
       sub.setName('2x-session')
-         .setDescription('Apply a 2x XP boost to your currently active session.')
+        .setDescription('Apply a 2x XP boost to your currently active session.')
     )
     .addSubcommand(sub =>
       sub.setName('1-5x-hour')
-         .setDescription('Apply a 1.5x XP boost for the first hour of your active session.')
+        .setDescription('Apply a 1.5x XP boost for the first hour of your active session.')
     )
     .addSubcommand(sub =>
       sub.setName('streak-protection')
-         .setDescription('Activate Streak Protection to save your streak if you miss a day.')
+        .setDescription('Activate Streak Protection to save your streak if you miss a day.')
     )
     .addSubcommand(sub =>
       sub.setName('weekend-rush')
-         .setDescription('Activate the Weekend Rush Amplifier (Friday 7:30 PM - Sunday 7:30 PM).')
+        .setDescription('Activate the Weekend Rush Amplifier (Friday 7:30 PM - Sunday 7:30 PM).')
     )
     .addSubcommand(sub =>
       sub.setName('2x-day')
-         .setDescription('Activate 2x XP Daily Rush for the rest of the current day (until 4:30 AM).')
+        .setDescription('Activate 2x XP Daily Rush for the rest of the current day (until 4:30 AM).')
     )
     .addSubcommand(sub =>
       sub.setName('squad-boost')
-         .setDescription('Activate a 1.2x XP multiplier for your entire squad for the current day.')
+        .setDescription('Activate a 1.2x XP multiplier for your entire squad for the current day.')
     )
     .addSubcommand(sub =>
       sub.setName('10x-global')
-         .setDescription('Secretly trigger a 10x GLOBAL XP multiplier for 1 hour. Be careful.')
+        .setDescription('Secretly trigger a 10x GLOBAL XP multiplier for 1 hour. Be careful.')
     )
     .addSubcommand(sub =>
       sub.setName('sabotage')
-         .setDescription('Target someone and instantly halve their weekly XP.')
-         .addUserOption(option => 
-            option.setName('target')
-                  .setDescription('The user to sabotage')
-                  .setRequired(true)
-         )
+        .setDescription('Target someone and instantly halve their weekly XP.')
+        .addUserOption(option =>
+          option.setName('target')
+            .setDescription('The user to sabotage')
+            .setRequired(true)
+        )
     )
     .addSubcommand(sub =>
       sub.setName('2x-week')
-         .setDescription('Activate a permanent 2x XP multiplier for the rest of the week (until hard reset).')
+        .setDescription('Activate a permanent 2x XP multiplier for the rest of the week (until hard reset).')
     ),
 
   async execute(interaction) {
@@ -275,9 +275,9 @@ module.exports = {
 
         const oneHourFromNow = Date.now() + 60 * 60 * 1000;
         await GlobalConfig.findOneAndUpdate(
-           { key: 'global_10x_end_time' },
-           { value: oneHourFromNow, updatedAt: new Date() },
-           { upsert: true, new: true }
+          { key: 'global_10x_end_time' },
+          { value: oneHourFromNow, updatedAt: new Date() },
+          { upsert: true, new: true }
         );
 
         inventory.splice(itemIndex, 1);
@@ -296,9 +296,9 @@ module.exports = {
 
       if (sub === 'sabotage') {
         const targetUser = interaction.options.getUser('target');
-        
+
         if (targetUser.id === interaction.user.id) {
-           return interaction.editReply({ content: '❌ You cannot sabotage yourself!' });
+          return interaction.editReply({ content: '❌ You cannot sabotage yourself!' });
         }
 
         const inventory = user.inventory || [];
