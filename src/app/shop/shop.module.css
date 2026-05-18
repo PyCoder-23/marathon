@@ -7,6 +7,7 @@
   --rarity-epic: #a855f7;
   --rarity-legendary: #f59e0b;
   --rarity-mythic: #ef4444;
+  --rarity-ascendant: #b91c1c;
   
   --squad-zenith: #8b5cf6;
   --squad-apex: #06b6d4;
@@ -244,6 +245,7 @@
 .itemCard:hover .rarity-Epic { border-color: var(--rarity-epic); box-shadow: 0 0 20px var(--rarity-epic); }
 .itemCard:hover .rarity-Legendary { border-color: var(--rarity-legendary); box-shadow: 0 0 25px var(--rarity-legendary); }
 .itemCard:hover .rarity-Mythic { border-color: var(--rarity-mythic); box-shadow: 0 0 30px var(--rarity-mythic); }
+.itemCard:hover .rarity-Ascendant { border-color: var(--rarity-ascendant); box-shadow: 0 0 40px var(--rarity-ascendant); }
 
 /* Rarity Styles */
 .rarityBadge {
@@ -279,6 +281,7 @@
 .rarity-Epic { background: rgba(168, 85, 247, 0.1); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
 .rarity-Legendary { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
 .rarity-Mythic { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); }
+.rarity-Ascendant { background: rgba(185, 28, 28, 0.15); color: #b91c1c; border: 1px solid rgba(185, 28, 28, 0.5); box-shadow: 0 0 25px rgba(185, 28, 28, 0.4); text-shadow: 0 0 10px rgba(185, 28, 28, 0.8); }
 
 .itemPreview {
   width: 100%;

@@ -1,4 +1,4 @@
-export type Rarity = 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic';
+export type Rarity = 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic' | 'Ascendant';
 
 export interface ShopItem {
   id: string;
@@ -399,10 +399,37 @@ export const SHOP_ITEMS: ShopItem[] = [
 
   // --- BOOSTS: XP Multipliers ---
   {
+    id: 'bst-2x-week',
+    name: '2x XP Weekly Rush',
+    description: 'A permanent 2x personal XP multiplier that lasts the entire week until the Sunday hard reset.',
+    price: 30000,
+    rarity: 'Mythic',
+    category: 'XP Multipliers',
+    section: 'Boosts'
+  },
+  {
+    id: 'bst-sabotage',
+    name: 'Sabotage',
+    description: 'Target another user and instantly halve their weekly XP. A cruel but effective tactic.',
+    price: 50000,
+    rarity: 'Mythic',
+    category: 'XP Multipliers',
+    section: 'Boosts'
+  },
+  {
+    id: 'bst-10x-global',
+    name: 'The Global Catalyst',
+    description: 'Secretly triggers a GLOBAL 10x XP multiplier for 1 hour. Anyone who ends their session during this hidden hour receives the multiplier.',
+    price: 75000,
+    rarity: 'Ascendant',
+    category: 'XP Multipliers',
+    section: 'Boosts'
+  },
+  {
     id: 'bst-2x-sess',
     name: '2x XP Session Boost',
     description: 'Applies 2x XP to ONE session only.',
-    price: 1200,
+    price: 2000,
     rarity: 'Rare',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -411,7 +438,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-1.5x-hour',
     name: '1.5x XP Hour Boost',
     description: 'Applies 1.5x XP for 1 hour of activity.',
-    price: 1800,
+    price: 1200,
     rarity: 'Rare',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -437,16 +464,6 @@ export const SHOP_ITEMS: ShopItem[] = [
     section: 'Boosts'
   },
 
-  // --- BOOSTS: Insurance ---
-  {
-    id: 'bst-insurance',
-    name: 'Session Insurance',
-    description: 'Recover 50% XP if a session is invalidated.',
-    price: 3500,
-    rarity: 'Epic',
-    category: 'Insurance',
-    section: 'Boosts'
-  },
 
   // --- BOOSTS: Events ---
   {

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { connectDB, Session, User, ActiveSession, GlobalConfig } = require('../../database.js');
+const { connectDB, Session, User, ActiveSession, GlobalConfig, SquadHistory } = require('../../database.js');
 
 module.exports = {
   data: (() => {
@@ -87,9 +87,63 @@ module.exports = {
       
       let potentialXp = 0;
       if (totalMinutes >= 25) {
+        const user = await User.findOne({ discordId: userId });
         const config = await GlobalConfig.findOne({ key: 'xp_multiplier' });
-        const multiplier = config ? config.value : 1;
-        potentialXp = Math.round(totalMinutes * 0.8 * multiplier);
+        let globalMultiplier = config ? config.value : 1;
+        
+        const catalystConfig = await GlobalConfig.findOne({ key: 'global_10x_end_time' });
+        if (catalystConfig && catalystConfig.value > Date.now()) {
+          globalMultiplier *= 10;
+        }
+
+        const sessionMultiplier = session.multiplier || 1;
+        
+        let personalMultiplier = 1;
+        if (user?.weekendRushMultiplier) personalMultiplier *= user.weekendRushMultiplier;
+        if (user?.weeklyRushMultiplier) personalMultiplier *= user.weeklyRushMultiplier;
+        if (user?.dailyRushDate) {
+          const getSessionDate = (date) => {
+            const d = new Date(date);
+            d.setHours(d.getHours() - 4);
+            d.setMinutes(d.getMinutes() - 30);
+            d.setHours(0, 0, 0, 0);
+            return d;
+          };
+          if (getSessionDate(new Date()).getTime() === getSessionDate(user.dailyRushDate).getTime()) {
+            if (user.dailyRushMultiplier) personalMultiplier *= user.dailyRushMultiplier;
+          }
+        }
+        
+        let squadMultiplier = 1;
+        if (user?.squad && user.squad !== 'Unassigned') {
+          const squadInfo = await SquadHistory.findOne({ squadName: user.squad });
+          if (squadInfo?.boostDate) {
+            const getSessionDate = (date) => {
+              const d = new Date(date);
+              d.setHours(d.getHours() - 4);
+              d.setMinutes(d.getMinutes() - 30);
+              d.setHours(0, 0, 0, 0);
+              return d;
+            };
+            if (getSessionDate(new Date()).getTime() === getSessionDate(squadInfo.boostDate).getTime()) {
+              squadMultiplier = 1.2;
+            }
+          }
+        }
+        
+        let baseMinutes = totalMinutes;
+        let hourBoostedMinutes = 0;
+        
+        if (session.hourBoost) {
+           hourBoostedMinutes = Math.min(60, totalMinutes);
+           baseMinutes = totalMinutes - hourBoostedMinutes;
+        }
+
+        const hBM = session.hourBoostMultiplier || 1.5;
+        const baseXP = baseMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier;
+        const boostedXP = hourBoostedMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier * hBM;
+        
+        potentialXp = Math.round(baseXP + boostedXP);
       }
 
       return interaction.reply({ embeds: [embed.setTitle('👀 Current Status').setDescription(`Elapsed: **${hours}h ${minutes}m**\nPotential XP: **+${potentialXp} XP**`)] });
@@ -126,10 +180,65 @@ module.exports = {
       const totalMinutes = finalH * 60 + finalM;
       
       let xpEarned = 0;
+      const user = await User.findOne({ discordId: userId });
+      
       if (totalMinutes >= 25) {
         const config = await GlobalConfig.findOne({ key: 'xp_multiplier' });
-        const multiplier = config ? config.value : 1;
-        xpEarned = Math.round(totalMinutes * 0.8 * multiplier);
+        let globalMultiplier = config ? config.value : 1;
+        
+        const catalystConfig = await GlobalConfig.findOne({ key: 'global_10x_end_time' });
+        if (catalystConfig && catalystConfig.value > Date.now()) {
+          globalMultiplier *= 10;
+        }
+
+        const sessionMultiplier = session.multiplier || 1;
+        
+        let personalMultiplier = 1;
+        if (user?.weekendRushMultiplier) personalMultiplier *= user.weekendRushMultiplier;
+        if (user?.weeklyRushMultiplier) personalMultiplier *= user.weeklyRushMultiplier;
+        if (user?.dailyRushDate) {
+          const getSessionDate = (date) => {
+            const d = new Date(date);
+            d.setHours(d.getHours() - 4);
+            d.setMinutes(d.getMinutes() - 30);
+            d.setHours(0, 0, 0, 0);
+            return d;
+          };
+          if (getSessionDate(new Date()).getTime() === getSessionDate(user.dailyRushDate).getTime()) {
+            if (user.dailyRushMultiplier) personalMultiplier *= user.dailyRushMultiplier;
+          }
+        }
+        
+        let squadMultiplier = 1;
+        if (user?.squad && user.squad !== 'Unassigned') {
+          const squadInfo = await SquadHistory.findOne({ squadName: user.squad });
+          if (squadInfo?.boostDate) {
+            const getSessionDate = (date) => {
+              const d = new Date(date);
+              d.setHours(d.getHours() - 4);
+              d.setMinutes(d.getMinutes() - 30);
+              d.setHours(0, 0, 0, 0);
+              return d;
+            };
+            if (getSessionDate(new Date()).getTime() === getSessionDate(squadInfo.boostDate).getTime()) {
+              squadMultiplier = 1.2;
+            }
+          }
+        }
+        
+        let baseMinutes = totalMinutes;
+        let hourBoostedMinutes = 0;
+        
+        if (session.hourBoost) {
+           hourBoostedMinutes = Math.min(60, totalMinutes);
+           baseMinutes = totalMinutes - hourBoostedMinutes;
+        }
+
+        const hBM = session.hourBoostMultiplier || 1.5;
+        const baseXP = baseMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier;
+        const boostedXP = hourBoostedMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier * hBM;
+        
+        xpEarned = Math.round(baseXP + boostedXP);
       }
 
       const sessionEmbed = embed.setTitle('🏆 Session Concluded')
@@ -158,25 +267,53 @@ module.exports = {
         });
 
         // Update User stats & Streak
-        const user = await User.findOne({ discordId: userId });
         if (user) {
           const now = new Date();
           const lastActive = user.lastActive ? new Date(user.lastActive) : null;
           
-          if (lastActive) {
-            const hoursSinceLast = (now.getTime() - lastActive.getTime()) / (1000 * 60 * 60);
-            if (hoursSinceLast > 48) {
+          const getSessionDate = (date) => {
+            const d = new Date(date);
+            d.setHours(d.getHours() - 4);
+            d.setMinutes(d.getMinutes() - 30);
+            d.setHours(0, 0, 0, 0);
+            return d;
+          };
+
+          if (xpEarned > 0) {
+            if (lastActive) {
+              const currentSession = getSessionDate(now);
+              const lastSession = getSessionDate(lastActive);
+              const diffDays = Math.round((currentSession.getTime() - lastSession.getTime()) / (1000 * 60 * 60 * 24));
+              
+              if (diffDays === 1) {
+                user.streak += 1;
+              } else if (diffDays > 1) {
+                if (user.streakProtection) {
+                  user.streakProtection = false; // Protection is consumed
+                  if (diffDays > 2) {
+                    user.streak = 1; // Missed more than 1 day, protection fails
+                  }
+                  // If diffDays === 2, streak stays frozen (no += 1, no = 1)
+                } else {
+                  user.streak = 1;
+                }
+              }
+              
+              if (user.streak === 0) {
+                user.streak = 1; // Failsafe if streak was wiped by hard-reset
+              }
+            } else {
               user.streak = 1;
-            } else if (now.toDateString() !== lastActive.toDateString()) {
-              user.streak += 1;
             }
+            user.lastActive = now;
           } else {
-            user.streak = 1;
+            if (user.streak === 0) {
+              user.streak = 1; // Basic failsafe if hard reset happened
+            }
           }
 
           user.xp += xpEarned;
           user.weeklyXp += xpEarned;
-          user.lastActive = now;
           await user.save();
         }
       } catch (dbErr) {

@@ -53,8 +53,7 @@ module.exports = {
           'bst-2x-sess': '2x XP Boost (Session)',
           'bst-1.5x-hour': '1.5x XP Boost (Hour)',
           'bst-2x-day': '2x XP Daily Rush',
-          'bst-streak-prot': 'Streak Protection',
-          'bst-insurance': 'Session Insurance'
+          'bst-streak-prot': 'Streak Protection'
         };
         if (names[id]) return names[id];
         
@@ -67,6 +66,26 @@ module.exports = {
         return `• ${name}${count > 1 ? ` **(x${count})**` : ''}`;
       }).join('\n') || '`Empty Inventory`';
 
+      // Dynamically calculate display streak
+      let displayStreak = userDoc.streak ?? 1;
+      if (userDoc.lastActive) {
+        const getSessionDate = (date) => {
+          const d = new Date(date);
+          d.setHours(d.getHours() - 4);
+          d.setMinutes(d.getMinutes() - 30);
+          d.setHours(0, 0, 0, 0);
+          return d;
+        };
+        const currentSession = getSessionDate(new Date());
+        const lastSession = getSessionDate(userDoc.lastActive);
+        const diffDays = Math.round((currentSession.getTime() - lastSession.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays > 1) {
+          if (!(userDoc.streakProtection && diffDays === 2)) {
+            displayStreak = 1;
+          }
+        }
+      }
+
       const embed = new EmbedBuilder()
         .setTitle(`👤 PROFILE: ${userDoc.username.toUpperCase()}`)
         .setDescription(`\`STATUS: RUNNING\` | \`ID: ${discordId}\``)
@@ -76,7 +95,7 @@ module.exports = {
           { name: 'Weekly XP', value: `\`${(userDoc.weeklyXp || 0).toLocaleString()} XP\``, inline: true },
           { name: 'Personal Treasury', value: `\`${(userDoc.coins || 0).toLocaleString()} Coins\``, inline: true },
           { name: 'Total XP', value: `\`${userDoc.xp.toLocaleString()} XP\``, inline: true },
-          { name: 'Streak', value: `\`${userDoc.streak} Days\``, inline: true },
+          { name: 'Streak', value: `\`${displayStreak} Days\``, inline: true },
           { name: 'Tasks Completed', value: `\`${completedTasks}\``, inline: true },
           { name: 'Sessions Done', value: `\`${totalSessions}\``, inline: true },
           { name: '🎒 Inventory', value: inventoryText, inline: false }

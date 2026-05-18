@@ -50,6 +50,11 @@ const userSchema = new mongoose.Schema({
   weeklyXp: { type: Number, default: 0 },
   coins: { type: Number, default: 0 },
   streak: { type: Number, default: 0 },
+  streakProtection: { type: Boolean, default: false },
+  weekendRushMultiplier: { type: Number, default: 1 },
+  weeklyRushMultiplier: { type: Number, default: 1 },
+  dailyRushMultiplier: { type: Number, default: 1 },
+  dailyRushDate: { type: Date },
   lastActive: { type: Date },
   hasLinked: { type: Boolean, default: false },
   joinedAt: { type: Date, default: Date.now },
@@ -122,6 +127,9 @@ const activeSessionSchema = new mongoose.Schema({
   totalMs: { type: Number, default: 0 },
   paused: { type: Boolean, default: false },
   pauseTime: { type: Number, default: null },
+  multiplier: { type: Number, default: 1 },
+  hourBoost: { type: Boolean, default: false },
+  hourBoostMultiplier: { type: Number, default: 1 },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -136,7 +144,9 @@ const squadHistorySchema = new mongoose.Schema({
   winStreak: { type: Number, default: 0 },
   allTimeWins: { type: Number, default: 0 },
   coins: { type: Number, default: 0 },
-  lastWinDate: { type: Date }
+  lastWinDate: { type: Date },
+  boostDate: { type: Date },
+  squadMultiplier: { type: Number, default: 1 }
 });
 
 // Models (Singleton check for Next.js fast-refresh)
