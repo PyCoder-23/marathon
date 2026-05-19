@@ -67,7 +67,7 @@ module.exports = {
       }).join('\n') || '`Empty Inventory`';
 
       // Dynamically calculate display streak
-      let displayStreak = userDoc.streak ?? 1;
+      let displayStreak = userDoc.streak ?? 0;
       if (userDoc.lastActive) {
         const getSessionDate = (date) => {
           const d = new Date(date);
@@ -81,7 +81,7 @@ module.exports = {
         const diffDays = Math.round((currentSession.getTime() - lastSession.getTime()) / (1000 * 60 * 60 * 24));
         if (diffDays > 1) {
           if (!(userDoc.streakProtection && diffDays === 2)) {
-            displayStreak = 1;
+            displayStreak = 0;
           }
         }
       }

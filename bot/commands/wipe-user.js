@@ -36,6 +36,7 @@ module.exports = {
       user.equippedHistory = [];
       user.equippedItems = ['np-default', 'pfp-default', 'fnt-default'];
       user.coins = 0;
+      user.streak = 0;
       user.streakProtection = false;
       user.weekendRushMultiplier = 1;
       user.weeklyRushMultiplier = 1;

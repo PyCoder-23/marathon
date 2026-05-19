@@ -298,18 +298,10 @@ module.exports = {
                   user.streak = 1;
                 }
               }
-              
-              if (user.streak === 0) {
-                user.streak = 1; // Failsafe if streak was wiped by hard-reset
-              }
             } else {
               user.streak = 1;
             }
             user.lastActive = now;
-          } else {
-            if (user.streak === 0) {
-              user.streak = 1; // Basic failsafe if hard reset happened
-            }
           }
 
           user.xp += xpEarned;

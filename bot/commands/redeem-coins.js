@@ -24,7 +24,7 @@ module.exports = {
       }
 
       // Dynamically calculate display streak
-      let currentStreak = user.streak ?? 1;
+      let currentStreak = user.streak ?? 0;
       
       const getSessionDate = (date) => {
         const d = new Date(date);
@@ -38,10 +38,10 @@ module.exports = {
       const lastSession = getSessionDate(user.lastActive);
       const diffDays = Math.round((currentSession.getTime() - lastSession.getTime()) / (1000 * 60 * 60 * 24));
       
-      // If they missed a day, their streak is essentially 1 right now (unless protected)
+      // If they missed a day, their streak is dead (0)
       if (diffDays > 1) {
         if (!(user.streakProtection && diffDays === 2)) {
-          currentStreak = 1;
+          currentStreak = 0;
         }
       }
 
