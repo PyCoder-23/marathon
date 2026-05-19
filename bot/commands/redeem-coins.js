@@ -20,12 +20,12 @@ module.exports = {
 
       // Check if they have done any session
       if (!user.lastActive) {
-         return interaction.editReply({ content: '❌ You need to complete at least one valid session to redeem coins.' });
+        return interaction.editReply({ content: '❌ You need to complete at least one valid session to redeem coins.' });
       }
 
       // Dynamically calculate display streak
       let currentStreak = user.streak ?? 0;
-      
+
       const getSessionDate = (date) => {
         const d = new Date(date);
         d.setHours(d.getHours() - 4);
@@ -33,11 +33,11 @@ module.exports = {
         d.setHours(0, 0, 0, 0);
         return d;
       };
-      
+
       const currentSession = getSessionDate(new Date());
       const lastSession = getSessionDate(user.lastActive);
       const diffDays = Math.round((currentSession.getTime() - lastSession.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       // If they missed a day, their streak is dead (0)
       if (diffDays > 1) {
         if (!(user.streakProtection && diffDays === 2)) {
@@ -46,7 +46,7 @@ module.exports = {
       }
 
       if (currentStreak === 0) {
-         return interaction.editReply({ content: '❌ Your streak is currently 0. Complete a session to start a new streak before redeeming!' });
+        return interaction.editReply({ content: '❌ Your streak is currently 0. Complete a session to start a new streak before redeeming!' });
       }
 
       // Calculate rewards based on current streak (n)
