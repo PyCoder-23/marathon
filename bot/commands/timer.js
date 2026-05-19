@@ -126,7 +126,7 @@ module.exports = {
               return d;
             };
             if (getSessionDate(new Date()).getTime() === getSessionDate(squadInfo.boostDate).getTime()) {
-              squadMultiplier = 1.2;
+              squadMultiplier = squadInfo.squadMultiplier || 1.2;
             }
           }
         }
@@ -221,7 +221,7 @@ module.exports = {
               return d;
             };
             if (getSessionDate(new Date()).getTime() === getSessionDate(squadInfo.boostDate).getTime()) {
-              squadMultiplier = 1.2;
+              squadMultiplier = squadInfo.squadMultiplier || 1.2;
             }
           }
         }
