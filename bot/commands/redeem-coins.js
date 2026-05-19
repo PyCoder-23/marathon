@@ -51,8 +51,9 @@ module.exports = {
 
       // Calculate rewards based on current streak (n)
       const n = currentStreak;
-      const personalCoins = 35 * Math.pow(2, n - 1);
+      const totalCoins = 50 * Math.pow(2, n - 1);
       const teamCoins = 15 * Math.pow(2, n - 1);
+      const personalCoins = 35 * Math.pow(2, n - 1);
 
       // Add to personal treasury and reset streak
       user.coins = (user.coins || 0) + personalCoins;
@@ -60,22 +61,26 @@ module.exports = {
       await user.save();
 
       // Add to team treasury
-      let teamMsg = '';
-      if (user.squad && user.squad !== 'Unassigned') {
+      let hasSquad = user.squad && user.squad !== 'Unassigned';
+      if (hasSquad) {
         let squad = await SquadHistory.findOne({ squadName: user.squad });
         if (!squad) {
           squad = new SquadHistory({ squadName: user.squad, coins: 0 });
         }
         squad.coins = (squad.coins || 0) + teamCoins;
         await squad.save();
-        teamMsg = ` and \`${teamCoins.toLocaleString()}\` coins for **${user.squad}**!`;
+      }
+
+      let description = '';
+      if (hasSquad) {
+        description = `You have redeemed a total of **${totalCoins.toLocaleString()}** coins, out of which **${teamCoins.toLocaleString()}** have gone to your team as taxes (make sure that they use the money for good), and that saves you a total of **${personalCoins.toLocaleString()}** which will be added directly to your bank account.\n\n*Streak reset to 0.*`;
       } else {
-        teamMsg = ` (You are not in a squad, so no team coins were awarded).`;
+        description = `You have redeemed a total of **${totalCoins.toLocaleString()}** coins, out of which **${teamCoins.toLocaleString()}** have gone to taxes (lost since you are not in a squad), and that saves you a total of **${personalCoins.toLocaleString()}** which will be added directly to your bank account.\n\n*Streak reset to 0.*`;
       }
 
       const embed = new EmbedBuilder()
         .setTitle('🪙 Coins Redeemed!')
-        .setDescription(`You sacrificed your **${n}-day streak**!\n\nYou earned \`${personalCoins.toLocaleString()}\` coins for your personal treasury${teamMsg}`)
+        .setDescription(description)
         .setColor('#eab308')
         .setTimestamp();
 
