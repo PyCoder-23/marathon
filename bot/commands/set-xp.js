@@ -48,6 +48,7 @@ module.exports = {
       const oldXp = userRecord.xp;
       userRecord.xp = amount;
       userRecord.weeklyXp = amount;
+      userRecord.weeklySquadXp = amount;
       
       await userRecord.save();
 

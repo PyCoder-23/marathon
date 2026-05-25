@@ -19,10 +19,10 @@ module.exports = {
             _id: '$squad',
             totalMembers: { $sum: 1 },
             activeMembers: {
-              $sum: { $cond: [{ $gte: ['$weeklyXp', 100] }, 1, 0] }
+              $sum: { $cond: [{ $gte: ['$weeklySquadXp', 100] }, 1, 0] }
             },
             squadXp: {
-              $sum: { $cond: [{ $gte: ['$weeklyXp', 100] }, '$weeklyXp', 0] }
+              $sum: { $cond: [{ $gte: ['$weeklySquadXp', 100] }, '$weeklySquadXp', 0] }
             }
           }
         },

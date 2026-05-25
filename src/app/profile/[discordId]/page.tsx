@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import styles from "./profile.module.css";
-import { Zap, Target, Star, Calendar, ArrowLeft, Trophy, Flame, ShoppingBag } from "lucide-react";
+import { Zap, Target, Star, Calendar, ArrowLeft, Trophy, Flame, ShoppingBag, Rocket } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import DecoratedAvatar from "@/components/DecoratedAvatar";
@@ -15,6 +15,7 @@ interface ProfileData {
     avatar: string;
     xp: number;
     weeklyXp: number;
+    weeklySquadXp: number;
     streak: number;
     coins: number;
     inventory: string[];
@@ -136,6 +137,11 @@ export default function ProfilePage({ params }: { params: Promise<{ discordId: s
             <Zap size={22} color="var(--accent)" />
             <span className={styles.statValue}>{data.user.weeklyXp.toLocaleString()}</span>
             <span className={styles.statLabel}>Weekly XP</span>
+          </div>
+          <div className={styles.statBox}>
+            <Rocket size={22} color="#f59e0b" />
+            <span className={styles.statValue}>{(data.user.weeklySquadXp || 0).toLocaleString()}</span>
+            <span className={styles.statLabel}>Weekly Squad XP</span>
           </div>
           <div className={styles.statBox}>
             <Star size={22} color="#fcd34d" />

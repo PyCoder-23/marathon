@@ -11,6 +11,7 @@ interface DashboardData {
     username: string;
     xp: number;
     weeklyXp: number;
+    weeklySquadXp: number;
     squad: string;
     squadRank: number | null;
   };
@@ -143,13 +144,45 @@ export default function Dashboard() {
             <Zap size={32} />
           </div>
           <div className={styles.statInfo}>
-            <span className={styles.label}>WEEKLY_XP_GAINS</span>
+            <span className={styles.label}>INDIVIDUAL_WEEKLY_XP</span>
             <h2 className={styles.value}>
               {(data.user.weeklyXp || 0).toLocaleString()}
               <span className={styles.unit}>XP</span>
             </h2>
           </div>
         </motion.div>
+
+        {data.user.squad && data.user.squad !== 'Unassigned' && (
+          <motion.div
+            className={styles.statCard}
+            whileHover={{ y: -5 }}
+          >
+            {(() => {
+              const colors: Record<string, string> = {
+                'Zenith Sentinels': '#8B5CF6',
+                'Apex Titans': '#06B6D4',
+                'Meridian Arbiters': '#22C55E',
+                'Horizon Vanguards': '#F97316',
+              };
+              const squadColor = colors[data.user.squad] || '#f59e0b';
+              return (
+                <>
+                  <div className={styles.statGlow} style={{ background: squadColor }} />
+                  <div className={styles.statIcon} style={{ color: squadColor }}>
+                    <Rocket size={32} />
+                  </div>
+                  <div className={styles.statInfo}>
+                    <span className={styles.label}>WEEKLY_SQUAD_XP</span>
+                    <h2 className={styles.value}>
+                      {(data.user.weeklySquadXp || 0).toLocaleString()}
+                      <span className={styles.unit}>XP</span>
+                    </h2>
+                  </div>
+                </>
+              );
+            })()}
+          </motion.div>
+        )}
 
         <motion.div
           className={styles.statCard}

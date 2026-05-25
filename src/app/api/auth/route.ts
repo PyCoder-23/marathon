@@ -146,7 +146,7 @@ export async function POST(request: Request) {
           $group: {
             _id: '$squad',
             totalMembers: { $sum: 1 },
-            squadXp: { $sum: { $cond: [{ $gte: ['$weeklyXp', 100] }, '$weeklyXp', 0] } }
+            squadXp: { $sum: { $cond: [{ $gte: ['$weeklySquadXp', 100] }, '$weeklySquadXp', 0] } }
           }
         }
       ]);
@@ -217,6 +217,7 @@ export async function POST(request: Request) {
         avatar: user.avatar,
         xp: user.xp,
         weeklyXp: user.weeklyXp,
+        weeklySquadXp: user.weeklySquadXp || 0,
         streak: user.streak
       }
     });

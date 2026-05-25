@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     // Calculate Squad Rank efficiently
     let squadRank = null;
     if (user.squad && user.squad !== 'Unassigned') {
-      squadRank = await User.countDocuments({ squad: user.squad, weeklyXp: { $gt: user.weeklyXp } }) + 1;
+      squadRank = await User.countDocuments({ squad: user.squad, weeklySquadXp: { $gt: user.weeklySquadXp || 0 } }) + 1;
     }
 
     return NextResponse.json({
@@ -43,6 +43,7 @@ export async function GET(request: Request) {
         avatar: user.avatar,
         xp: user.xp,
         weeklyXp: user.weeklyXp,
+        weeklySquadXp: user.weeklySquadXp || 0,
         streak: user.streak,
         coins: user.coins || 0,
         inventory: user.inventory || [],

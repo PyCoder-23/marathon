@@ -312,7 +312,7 @@ module.exports = {
           return interaction.editReply({ content: '❌ The target user is not registered in the system.' });
         }
 
-        targetData.weeklyXp = Math.floor(targetData.weeklyXp / 2);
+        targetData.weeklySquadXp = Math.floor((targetData.weeklySquadXp || 0) / 2);
         await targetData.save();
 
         inventory.splice(itemIndex, 1);
@@ -322,7 +322,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
           .setTitle('🗡️ Sabotage Successful!')
-          .setDescription(`You have successfully sabotaged <@${targetUser.id}>!\n\nTheir weekly XP has been immediately cut in half. Ruthless.`)
+          .setDescription(`You have successfully sabotaged <@${targetUser.id}>!\n\nTheir weekly Squad XP has been immediately cut in half. Ruthless.`)
           .setColor('#000000')
           .setTimestamp();
 

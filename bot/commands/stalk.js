@@ -32,8 +32,8 @@ module.exports = {
       // Calculate Squad Rank
       let squadText = '`Unassigned`';
       if (userDoc.squad && userDoc.squad !== 'Unassigned') {
-         const squadUsers = allUsers.filter(u => u.squad === userDoc.squad);
-         const squadRank = squadUsers.findIndex(u => u.discordId === discordId) + 1;
+         const allSquadUsers = await User.find({ squad: userDoc.squad }).sort({ weeklySquadXp: -1 });
+         const squadRank = allSquadUsers.findIndex(u => u.discordId === discordId) + 1;
          squadText = `**${userDoc.squad}** (#${squadRank} in squad)`;
       }
 
@@ -93,6 +93,7 @@ module.exports = {
           { name: 'Squad', value: squadText, inline: false },
           { name: 'Global Rank', value: `#**${rank}**`, inline: true },
           { name: 'Weekly XP', value: `\`${(userDoc.weeklyXp || 0).toLocaleString()} XP\``, inline: true },
+          { name: 'Weekly Squad XP', value: `\`${(userDoc.weeklySquadXp || 0).toLocaleString()} XP\``, inline: true },
           { name: 'Personal Treasury', value: `\`${(userDoc.coins || 0).toLocaleString()} Coins\``, inline: true },
           { name: 'Total XP', value: `\`${userDoc.xp.toLocaleString()} XP\``, inline: true },
           { name: 'Streak', value: `\`${displayStreak} Days\``, inline: true },

@@ -37,6 +37,7 @@ module.exports = {
         .addFields(
           { name: 'Your Position', value: `#**${userRank}** / ${allUsers.length}`, inline: true },
           { name: 'Weekly XP', value: `\`${userDoc.weeklyXp || 0} XP\``, inline: true },
+          { name: 'Weekly Squad XP', value: `\`${userDoc.weeklySquadXp || 0} XP\``, inline: true },
           { name: 'Streak', value: `\`${userDoc.streak}d\``, inline: true },
           { name: '━━━━━━━━━━━━━━', value: '**CURRENT TOP 3**' },
           { name: '\u200B', value: podiumText || 'No agents active yet this cycle.' }

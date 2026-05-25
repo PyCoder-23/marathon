@@ -35,10 +35,11 @@ module.exports = {
         .addFields(
           { name: '👤 Username', value: user.username, inline: true },
           { name: '✨ Weekly XP', value: `\`${user.weeklyXp} XP\``, inline: true },
+          { name: '🛡️ Weekly Squad XP', value: `\`${user.weeklySquadXp || 0} XP\``, inline: true },
           { name: '📈 Total XP', value: `\`${user.xp} XP\``, inline: true },
           { name: '🔥 Streak', value: `\`${user.streak} days\``, inline: true }
         )
-        .setFooter({ text: user.weeklyXp >= 100 ? '✅ Active Member (Contributing to Squad)' : '❌ Inactive Member (Needs 100 XP to contribute)' })
+        .setFooter({ text: (user.weeklySquadXp || 0) >= 100 ? '✅ Active Member (Contributing to Squad)' : '❌ Inactive Member (Needs 100 Squad XP to contribute)' })
         .setTimestamp();
 
       return interaction.reply({ embeds: [embed] });

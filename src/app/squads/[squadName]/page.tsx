@@ -17,6 +17,7 @@ interface Member {
   avatar: string;
   xp: number;
   weeklyXp: number;
+  weeklySquadXp: number;
   streak: number;
   rank: number;
   equippedItems: string[];
@@ -193,7 +194,7 @@ export default function SquadDetail({ params }: { params: Promise<{ squadName: s
                   <div className={styles.username}>
                     <DecoratedName username={member.username} equippedItems={member.equippedItems} type="font-only" />
                   </div>
-                  <div className={styles.userXp}>{member.weeklyXp.toLocaleString()} XP</div>
+                  <div className={styles.userXp}>{(member.weeklySquadXp || 0).toLocaleString()} Squad XP</div>
                 </div>
               </DecoratedRow>
             ))}
@@ -207,14 +208,14 @@ export default function SquadDetail({ params }: { params: Promise<{ squadName: s
                 <tr>
                   <th>Rank</th>
                   <th>Member</th>
-                  <th>Weekly XP</th>
+                  <th>Squad XP</th>
                   <th>Streak</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {data.members.map((member) => {
-                  const isActive = member.weeklyXp >= 100;
+                  const isActive = (member.weeklySquadXp || 0) >= 100;
                   const npDeco = member.equippedItems?.find(id => id.startsWith('np-')) || 'np-default';
                   const npEffectClass = npDeco !== 'np-default' ? shopStyles['effect-' + npDeco.split('-')[1]] : '';
                   return (
@@ -224,7 +225,7 @@ export default function SquadDetail({ params }: { params: Promise<{ squadName: s
                         <DecoratedAvatar avatar={member.avatar} username={member.username} equippedItems={member.equippedItems} size={32} />
                         <DecoratedName username={member.username} equippedItems={member.equippedItems} />
                       </td>
-                      <td className={styles.xpCell}>{member.weeklyXp.toLocaleString()}</td>
+                      <td className={styles.xpCell}>{(member.weeklySquadXp || 0).toLocaleString()}</td>
                       <td>{member.streak} 🔥</td>
                       <td style={{ color: isActive ? 'var(--accent)' : 'var(--text-muted)', fontSize: '0.875rem' }}>
                         {isActive ? 'Active' : 'Inactive'}

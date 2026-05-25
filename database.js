@@ -48,6 +48,7 @@ const userSchema = new mongoose.Schema({
   avatar: String,
   xp: { type: Number, default: 0 },
   weeklyXp: { type: Number, default: 0 },
+  weeklySquadXp: { type: Number, default: 0 },
   coins: { type: Number, default: 0 },
   streak: { type: Number, default: 0 },
   streakProtection: { type: Boolean, default: false },
@@ -70,6 +71,7 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.index({ weeklyXp: -1 });
+userSchema.index({ weeklySquadXp: -1 });
 userSchema.index({ xp: -1 });
 userSchema.index({ sessionToken: 1 });
 
@@ -106,6 +108,7 @@ const sessionSchema = new mongoose.Schema({
   discordId: { type: String, required: true },
   duration: { type: Number, required: true },
   xpGranted: { type: Number, default: 0 },
+  squadXpGranted: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
 });
 

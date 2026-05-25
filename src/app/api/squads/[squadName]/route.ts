@@ -14,12 +14,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ squa
 
     // Get members
     const members = await User.find({ squad: decodedName })
-      .select('username avatar xp weeklyXp streak lastActive equippedItems')
-      .sort({ weeklyXp: -1 })
+      .select('username avatar xp weeklyXp weeklySquadXp streak lastActive equippedItems')
+      .sort({ weeklySquadXp: -1 })
       .lean();
 
-    const activeMembers = members.filter(m => m.weeklyXp >= 100);
-    const totalXp = activeMembers.reduce((sum, m) => sum + m.weeklyXp, 0);
+    const activeMembers = members.filter(m => (m.weeklySquadXp || 0) >= 100);
+    const totalXp = activeMembers.reduce((sum, m) => sum + (m.weeklySquadXp || 0), 0);
     const avgXp = activeMembers.length > 0 ? Math.round(totalXp / activeMembers.length) : 0;
     const mvp = activeMembers.length > 0 ? activeMembers[0] : null;
     const top3 = activeMembers.slice(0, 3);
@@ -30,7 +30,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ squa
       { 
         $group: {
           _id: '$squad',
-          squadXp: { $sum: { $cond: [{ $gte: ['$weeklyXp', 100] }, '$weeklyXp', 0] } }
+          squadXp: { $sum: { $cond: [{ $gte: ['$weeklySquadXp', 100] }, '$weeklySquadXp', 0] } }
         }
       }
     ]);

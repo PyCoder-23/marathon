@@ -26,7 +26,7 @@ module.exports = {
       console.log('🧹 [ADMIN] Manual System Wipe initiated by', interaction.user.tag);
 
       // 1. Reset all Weekly XP, Streaks, Protection, and Weekly/Weekend Rush
-      const userRes = await User.updateMany({}, { $set: { weeklyXp: 0, streak: 0, streakProtection: false, weekendRushMultiplier: 1, weeklyRushMultiplier: 1 } });
+      const userRes = await User.updateMany({}, { $set: { weeklyXp: 0, weeklySquadXp: 0, streak: 0, streakProtection: false, weekendRushMultiplier: 1, weeklyRushMultiplier: 1 } });
 
       // 2. Clear all activity-related documents
       const sessionRes = await Session.deleteMany({});

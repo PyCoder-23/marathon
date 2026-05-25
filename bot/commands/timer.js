@@ -1,6 +1,20 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { connectDB, Session, User, ActiveSession, GlobalConfig, SquadHistory } = require('../../database.js');
 
+function isWeekendRushActive() {
+  const now = new Date();
+  const day = now.getDay();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const timeString = hours + (minutes / 60);
+
+  // Friday 7:30 PM (19.5) to Sunday 7:30 PM (19.5)
+  if (day === 5 && timeString >= 19.5) return true;
+  if (day === 6) return true;
+  if (day === 0 && timeString < 19.5) return true;
+  return false;
+}
+
 module.exports = {
   data: (() => {
     const builder = new SlashCommandBuilder()
@@ -85,7 +99,8 @@ module.exports = {
       const minutes = Math.floor((currentMs % 3600000) / 60000);
       const totalMinutes = hours * 60 + minutes;
       
-      let potentialXp = 0;
+      let potentialIndivXp = 0;
+      let potentialSquadXp = 0;
       if (totalMinutes >= 25) {
         const user = await User.findOne({ discordId: userId });
         const config = await GlobalConfig.findOne({ key: 'xp_multiplier' });
@@ -140,13 +155,18 @@ module.exports = {
         }
 
         const hBM = session.hourBoostMultiplier || 1.5;
-        const baseXP = baseMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier;
-        const boostedXP = hourBoostedMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier * hBM;
-        
-        potentialXp = Math.round(baseXP + boostedXP);
+        const adminWeekendMultiplier = isWeekendRushActive() ? 2 : 1;
+
+        // Individual XP
+        potentialIndivXp = Math.round(totalMinutes * 0.8 * globalMultiplier * adminWeekendMultiplier);
+
+        // Squad XP
+        const baseSquadXP = baseMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier * adminWeekendMultiplier;
+        const boostedSquadXP = hourBoostedMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier * hBM * adminWeekendMultiplier;
+        potentialSquadXp = Math.round(baseSquadXP + boostedSquadXP);
       }
 
-      return interaction.reply({ embeds: [embed.setTitle('👀 Current Status').setDescription(`Elapsed: **${hours}h ${minutes}m**\nPotential XP: **+${potentialXp} XP**`)] });
+      return interaction.reply({ embeds: [embed.setTitle('👀 Current Status').setDescription(`Elapsed: **${hours}h ${minutes}m**\nPotential Individual XP: **+${potentialIndivXp} XP**\nPotential Squad XP: **+${potentialSquadXp} XP**`)] });
     }
 
     if (sub === 'quit') {
@@ -179,7 +199,8 @@ module.exports = {
       const finalM = Math.floor((finalMs % 3600000) / 60000);
       const totalMinutes = finalH * 60 + finalM;
       
-      let xpEarned = 0;
+      let individualXpEarned = 0;
+      let squadXpEarned = 0;
       const user = await User.findOne({ discordId: userId });
       
       if (totalMinutes >= 25) {
@@ -235,17 +256,23 @@ module.exports = {
         }
 
         const hBM = session.hourBoostMultiplier || 1.5;
-        const baseXP = baseMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier;
-        const boostedXP = hourBoostedMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier * hBM;
-        
-        xpEarned = Math.round(baseXP + boostedXP);
+        const adminWeekendMultiplier = isWeekendRushActive() ? 2 : 1;
+
+        // Individual XP
+        individualXpEarned = Math.round(totalMinutes * 0.8 * globalMultiplier * adminWeekendMultiplier);
+
+        // Squad XP
+        const baseSquadXP = baseMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier * adminWeekendMultiplier;
+        const boostedSquadXP = hourBoostedMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier * hBM * adminWeekendMultiplier;
+        squadXpEarned = Math.round(baseSquadXP + boostedSquadXP);
       }
 
       const sessionEmbed = embed.setTitle('🏆 Session Concluded')
         .setDescription(`**${interaction.user.username}**, well done! Your work has been submitted.`)
         .addFields(
           { name: 'Total Duration', value: `\`${finalH}h ${finalM}m\``, inline: true },
-          { name: 'XP Granted', value: `\`+${xpEarned} XP\``, inline: true },
+          { name: 'Individual XP Granted', value: `\`+${individualXpEarned} XP\``, inline: true },
+          { name: 'Squad XP Granted', value: `\`+${squadXpEarned} XP\``, inline: true },
           { name: 'Proof Count', value: `\`${proofs.length} Images\``, inline: true }
         )
         .setImage(proofs[0].url) // Show primary image in result
@@ -262,7 +289,8 @@ module.exports = {
         await Session.create({
           discordId: userId,
           duration: finalMs,
-          xpGranted: xpEarned
+          xpGranted: individualXpEarned,
+          squadXpGranted: squadXpEarned
           // proofUrl removed as per strict privacy requirements
         });
 
@@ -279,7 +307,7 @@ module.exports = {
             return d;
           };
 
-          if (xpEarned > 0) {
+          if (individualXpEarned > 0) {
             if (lastActive) {
               const currentSession = getSessionDate(now);
               const lastSession = getSessionDate(lastActive);
@@ -304,8 +332,9 @@ module.exports = {
             user.lastActive = now;
           }
 
-          user.xp += xpEarned;
-          user.weeklyXp += xpEarned;
+          user.xp += individualXpEarned;
+          user.weeklyXp += individualXpEarned;
+          user.weeklySquadXp = (user.weeklySquadXp || 0) + squadXpEarned;
           await user.save();
         }
       } catch (dbErr) {
@@ -327,8 +356,9 @@ module.exports = {
               logEmbed.setTitle(`📝 Session Log: ${interaction.user.tag}`)
                 .addFields(
                   { name: 'Duration', value: `${finalH}h ${finalM}m`, inline: true },
-                  { name: 'ID', value: userId, inline: true },
-                  { name: 'Proof Submitted', value: `${proofs.length} Images`, inline: true }
+                  { name: 'Individual XP', value: `\`+${individualXpEarned} XP\``, inline: true },
+                  { name: 'Squad XP', value: `\`+${squadXpEarned} XP\``, inline: true },
+                  { name: 'Proof Submitted', value: `${proofs.length} Images`, inline: false }
                 )
                 .setTimestamp();
             }
