@@ -66,7 +66,19 @@ module.exports = {
         });
       }
 
-      // 5. Check squad assignment validity
+      // 5. Check weekly XP eligibility (both users must have earned XP this week)
+      if ((initiatorDoc.weeklyXp ?? 0) <= 0) {
+        return interaction.editReply({
+          content: '❌ **INELIGIBLE:** You have **0 weekly XP** this week. Earn some XP before you can request a squad exchange.'
+        });
+      }
+      if ((targetDoc.weeklyXp ?? 0) <= 0) {
+        return interaction.editReply({
+          content: `❌ **INELIGIBLE:** **${target.username}** has **0 weekly XP** this week and cannot be exchanged right now.`
+        });
+      }
+
+      // 6. Check squad assignment validity
       const initiatorSquad = initiatorDoc.squad;
       const targetSquad = targetDoc.squad;
 
