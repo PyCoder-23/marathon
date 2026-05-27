@@ -15,6 +15,15 @@ function isWeekendRushActive() {
   return false;
 }
 
+async function pauseSessionTimer(sessionDoc) {
+  if (!sessionDoc.paused) {
+    sessionDoc.totalMs += (Date.now() - sessionDoc.startTime);
+    sessionDoc.paused = true;
+    sessionDoc.pauseTime = Date.now();
+    await sessionDoc.save();
+  }
+}
+
 module.exports = {
   data: (() => {
     const builder = new SlashCommandBuilder()
@@ -27,12 +36,18 @@ module.exports = {
       .addSubcommand(sub => sub.setName('quit').setDescription('Abandon the current timer without gaining XP.'))
       .addSubcommand(sub => {
         sub.setName('end').setDescription('Finalize your session and submit proof.');
-        // Add 25 attachment options
+        // Add optional link option
+        sub.addStringOption(option =>
+          option.setName('link')
+            .setDescription('URL proof of work (e.g. GitHub, Google Docs) (Optional)')
+            .setRequired(false)
+        );
+        // Add 25 attachment options (all optional)
         for (let i = 1; i <= 25; i++) {
           sub.addAttachmentOption(option => 
             option.setName(`proof${i}`)
-              .setDescription(`Upload proof image #${i}${i === 1 ? ' (Required)' : ' (Optional)'}`)
-              .setRequired(i === 1)
+              .setDescription(`Upload proof file #${i} (Optional)`)
+              .setRequired(false)
           );
         }
         return sub;
@@ -166,7 +181,9 @@ module.exports = {
         potentialSquadXp = Math.round(baseSquadXP + boostedSquadXP);
       }
 
-      return interaction.reply({ embeds: [embed.setTitle('👀 Current Status').setDescription(`Elapsed: **${hours}h ${minutes}m**\nPotential Individual XP: **+${potentialIndivXp} XP**\nPotential Squad XP: **+${potentialSquadXp} XP**`)] });
+      const timerStatus = session.paused ? '⏸️ **Paused**' : '▶️ **Running**';
+
+      return interaction.reply({ embeds: [embed.setTitle('👀 Current Status').setDescription(`Status: ${timerStatus}\nElapsed: **${hours}h ${minutes}m**\nPotential Individual XP: **+${potentialIndivXp} XP**\nPotential Squad XP: **+${potentialSquadXp} XP**`)] });
     }
 
     if (sub === 'quit') {
@@ -175,20 +192,64 @@ module.exports = {
     }
 
     if (sub === 'end') {
-      // Gather all proof attachments
+      const linkProof = interaction.options.getString('link');
       const proofs = [];
+      const allowedTypes = ['image/', 'video/', 'text/', 'application/pdf'];
+
       for (let i = 1; i <= 25; i++) {
         const attachment = interaction.options.getAttachment(`proof${i}`);
         if (attachment) {
-          if (!attachment.contentType?.startsWith('image/')) {
-            return interaction.reply({ content: `File #${i} is not an image. Please only upload images for verification.`, ephemeral: true });
+          const isAllowed = allowedTypes.some(type => attachment.contentType?.startsWith(type));
+          if (!isAllowed) {
+            return interaction.reply({ 
+              content: `❌ **ERROR:** File #${i} (\`${attachment.name}\`) is not an allowed proof format. Please only upload Images, Videos, PDFs, or Text files.`, 
+              ephemeral: true 
+            });
           }
           proofs.push(attachment);
         }
       }
 
-      if (proofs.length === 0) {
-        return interaction.reply({ content: 'Please upload at least one image for verification.', ephemeral: true });
+      // Check if at least one proof of any kind was provided
+      if (proofs.length === 0 && !linkProof) {
+        return interaction.reply({ 
+          content: '❌ **ERROR:** Please submit at least one proof of work (either an uploaded file or a link-based proof).', 
+          ephemeral: true 
+        });
+      }
+
+      // Validate URL format for linkProof if provided
+      if (linkProof) {
+        try {
+          new URL(linkProof);
+        } catch (_) {
+          return interaction.reply({ 
+            content: '❌ **ERROR:** The provided link-based proof is not a valid URL. Please provide a valid URL starting with http:// or https://', 
+            ephemeral: true 
+          });
+        }
+      }
+
+      // Pre-emptive Size Limit Check (Discord limit is 25MB total for standard uploads)
+      const MAX_DISCORD_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
+      let totalSize = 0;
+      for (const p of proofs) {
+        if (p.size > MAX_DISCORD_FILE_SIZE) {
+          await pauseSessionTimer(session);
+          return interaction.reply({
+            content: `⚠️ **PROOF TOO LARGE:** The attachment \`${p.name}\` exceeds the 25MB limit (${(p.size / 1024 / 1024).toFixed(2)}MB). Your timer has been **paused** to preserve your progress. Please reduce the file size and try again.`,
+            ephemeral: false
+          });
+        }
+        totalSize += p.size;
+      }
+
+      if (totalSize > MAX_DISCORD_FILE_SIZE) {
+        await pauseSessionTimer(session);
+        return interaction.reply({
+          content: `⚠️ **TOTAL PROOF SIZE TOO LARGE:** The total size of your uploads is ${(totalSize / 1024 / 1024).toFixed(2)}MB, which exceeds the 25MB limit. Your timer has been **paused** to preserve your progress. Please upload smaller files and try again.`,
+          ephemeral: false
+        });
       }
 
       await interaction.deferReply(); // Defer to avoid timeout
@@ -267,31 +328,74 @@ module.exports = {
         squadXpEarned = Math.round(baseSquadXP + boostedSquadXP);
       }
 
-      const sessionEmbed = embed.setTitle('🏆 Session Concluded')
-        .setDescription(`**${interaction.user.username}**, well done! Your work has been submitted.`)
-        .addFields(
-          { name: 'Total Duration', value: `\`${finalH}h ${finalM}m\``, inline: true },
-          { name: 'Individual XP Granted', value: `\`+${individualXpEarned} XP\``, inline: true },
-          { name: 'Squad XP Granted', value: `\`+${squadXpEarned} XP\``, inline: true },
-          { name: 'Proof Count', value: `\`${proofs.length} Images\``, inline: true }
-        )
-        .setImage(proofs[0].url) // Show primary image in result
-        .setTimestamp();
+      // --- DISCORD UPLOAD / LOG GATE ---
+      try {
+        const fileAttachments = proofs.map(p => ({ attachment: p.url, name: p.name }));
+        const proofChannel = interaction.guild.channels.cache.find(c => c.name === 'proof-of-work') || 
+                             await interaction.guild.channels.fetch().then(cs => cs.find(c => c.name === 'proof-of-work'));
+        
+        if (proofChannel) {
+          const logEmbed = new EmbedBuilder()
+            .setTitle(`📝 Session Log: ${interaction.user.tag}`)
+            .setColor('#00ff9f')
+            .addFields(
+              { name: 'Duration', value: `${finalH}h ${finalM}m`, inline: true },
+              { name: 'Individual XP', value: `\`+${individualXpEarned} XP\``, inline: true },
+              { name: 'Squad XP', value: `\`+${squadXpEarned} XP\``, inline: true },
+              { name: 'Proof Submitted', value: `${proofs.length} Files`, inline: false }
+            )
+            .setTimestamp();
 
-      await interaction.editReply({ embeds: [sessionEmbed] });
+          if (linkProof) {
+            logEmbed.addFields({ name: '🔗 Link Proof', value: `[Click here to view proof](${linkProof})` });
+          }
 
-      // Clean up session
+          // Send summary and attachments to the proof log channel
+          await proofChannel.send({ embeds: [logEmbed], files: fileAttachments });
+        }
+
+        // Finalize User and Session State
+        const sessionEmbed = embed.setTitle('🏆 Session Concluded')
+          .setDescription(`**${interaction.user.username}**, well done! Your work has been submitted.`)
+          .addFields(
+            { name: 'Total Duration', value: `\`${finalH}h ${finalM}m\``, inline: true },
+            { name: 'Individual XP Granted', value: `\`+${individualXpEarned} XP\``, inline: true },
+            { name: 'Squad XP Granted', value: `\`+${squadXpEarned} XP\``, inline: true },
+            { name: 'Proof Count', value: `\`${proofs.length} Files\``, inline: true }
+          )
+          .setTimestamp();
+
+        if (linkProof) {
+          sessionEmbed.addFields({ name: '🔗 Link Proof', value: `[Click here to view proof](${linkProof})` });
+        }
+
+        // Display the primary image if the first attachment is an image
+        if (proofs.length > 0 && proofs[0].contentType?.startsWith('image/')) {
+          sessionEmbed.setImage(proofs[0].url);
+        }
+
+        await interaction.editReply({ embeds: [sessionEmbed], files: fileAttachments });
+
+      } catch (uploadErr) {
+        console.error('Discord file upload failed during /timer end:', uploadErr);
+        await pauseSessionTimer(session);
+        return interaction.editReply({
+          content: `⚠️ **UPLOAD FAILED:** The bot could not upload or process your proof files due to Discord limits or connection issues. Your timer has been **paused** to preserve your progress. Please reduce the size/duration of your content and try ending your session again.`,
+          embeds: [],
+          files: []
+        });
+      }
+
+      // --- CLEAN UP ACTIVE SESSION ---
       await ActiveSession.deleteOne({ discordId: userId });
 
-      // Save to database (NO IMAGE DATA SAVED)
+      // Save concluded session in database (NO IMAGE DATA SAVED)
       try {
-        // Log Session
         await Session.create({
           discordId: userId,
           duration: finalMs,
           xpGranted: individualXpEarned,
           squadXpGranted: squadXpEarned
-          // proofUrl removed as per strict privacy requirements
         });
 
         // Update User stats & Streak
@@ -321,7 +425,6 @@ module.exports = {
                   if (diffDays > 2) {
                     user.streak = 1; // Missed more than 1 day, protection fails
                   }
-                  // If diffDays === 2, streak stays frozen (no += 1, no = 1)
                 } else {
                   user.streak = 1;
                 }
@@ -339,44 +442,6 @@ module.exports = {
         }
       } catch (dbErr) {
         console.error('Failed to log session in DB:', dbErr);
-      }
-
-      // Log to proof channel (All proof images shown here)
-      try {
-        const proofChannel = interaction.guild.channels.cache.find(c => c.name === 'proof-of-work') || 
-                             await interaction.guild.channels.fetch().then(cs => cs.find(c => c.name === 'proof-of-work'));
-        
-        if (proofChannel) {
-          const logEmbeds = proofs.map((p, idx) => {
-            const logEmbed = new EmbedBuilder()
-              .setColor('#00ff9f')
-              .setImage(p.url);
-            
-            if (idx === 0) {
-              logEmbed.setTitle(`📝 Session Log: ${interaction.user.tag}`)
-                .addFields(
-                  { name: 'Duration', value: `${finalH}h ${finalM}m`, inline: true },
-                  { name: 'Individual XP', value: `\`+${individualXpEarned} XP\``, inline: true },
-                  { name: 'Squad XP', value: `\`+${squadXpEarned} XP\``, inline: true },
-                  { name: 'Proof Submitted', value: `${proofs.length} Images`, inline: false }
-                )
-                .setTimestamp();
-            }
-            return logEmbed;
-          });
-
-          // Discord allows 10 embeds per message. If more than 10, we'll send multiple messages.
-          const chunks = [];
-          for (let i = 0; i < logEmbeds.length; i += 10) {
-            chunks.push(logEmbeds.slice(i, i + 10));
-          }
-
-          for (const chunk of chunks) {
-            await proofChannel.send({ embeds: chunk });
-          }
-        }
-      } catch (logErr) {
-        console.error('Failed to log proof to channel:', logErr);
       }
     }
   },

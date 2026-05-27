@@ -152,6 +152,14 @@ const squadHistorySchema = new mongoose.Schema({
   squadMultiplier: { type: Number, default: 1 }
 });
 
+const teamExchangeRequestSchema = new mongoose.Schema({
+  initiatorId: { type: String, required: true },
+  targetId: { type: String, required: true, unique: true },
+  initiatorSquad: { type: String, required: true },
+  targetSquad: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now, expires: 900 } // 15 minutes TTL
+});
+
 // Models (Singleton check for Next.js fast-refresh)
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 const AuthCode = mongoose.models.AuthCode || mongoose.model('AuthCode', authCodeSchema);
@@ -162,5 +170,6 @@ const CalendarEvent = mongoose.models.CalendarEvent || mongoose.model('CalendarE
 const ActiveSession = mongoose.models.ActiveSession || mongoose.model('ActiveSession', activeSessionSchema);
 const GlobalConfig = mongoose.models.GlobalConfig || mongoose.model('GlobalConfig', globalConfigSchema);
 const SquadHistory = mongoose.models.SquadHistory || mongoose.model('SquadHistory', squadHistorySchema);
+const TeamExchangeRequest = mongoose.models.TeamExchangeRequest || mongoose.model('TeamExchangeRequest', teamExchangeRequestSchema);
 
-module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, CalendarEvent, ActiveSession, GlobalConfig, SquadHistory };
+module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, CalendarEvent, ActiveSession, GlobalConfig, SquadHistory, TeamExchangeRequest };
