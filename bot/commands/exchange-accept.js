@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { connectDB, User, TeamExchangeRequest } = require('../../database.js');
+const { connectDB, User, TeamExchangeRequest, ExchangeCooldown } = require('../../database.js');
 
 const SQUAD_ROLES = {
   'Zenith Sentinels': '1500526060146790642',
@@ -75,10 +75,23 @@ module.exports = {
       await initiatorDoc.save();
       await targetDoc.save();
 
-      // 6. Delete the pending request
+      // 6. Write 7-day cooldown for both participants
+      const cooldownUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await ExchangeCooldown.findOneAndUpdate(
+        { discordId: initiatorId },
+        { discordId: initiatorId, cooldownUntil, expiresAt: cooldownUntil },
+        { upsert: true, new: true }
+      );
+      await ExchangeCooldown.findOneAndUpdate(
+        { discordId: targetId },
+        { discordId: targetId, cooldownUntil, expiresAt: cooldownUntil },
+        { upsert: true, new: true }
+      );
+
+      // 7. Delete the pending request
       await TeamExchangeRequest.deleteOne({ _id: request._id });
 
-      // 7. Update Discord roles for both users
+      // 8. Update Discord roles for both users
       let roleSwapStatus = '✅ Database updated & synced.';
       try {
         // Handle initiator role updates
@@ -107,7 +120,8 @@ module.exports = {
         roleSwapStatus = '⚠️ Database updated, but could not update Discord roles automatically due to server hierarchy or permissions.';
       }
 
-      // 8. Send rich success embed
+      // 9. Send rich success embed
+      const cooldownTs = Math.floor(cooldownUntil.getTime() / 1000);
       const successEmbed = new EmbedBuilder()
         .setTitle('🔄 SQUAD SWAP SUCCESSFUL')
         .setDescription(`The squad exchange request between <@${initiatorId}> and <@${targetId}> has been executed and synced.`)
@@ -117,7 +131,8 @@ module.exports = {
           { name: '\u200B', value: '\u200B', inline: false },
           { name: 'Member', value: `<@${targetId}>`, inline: true },
           { name: 'New Squad Assignment', value: `**${initiatorSquad}**`, inline: true },
-          { name: 'Sync Status', value: roleSwapStatus, inline: false }
+          { name: 'Sync Status', value: roleSwapStatus, inline: false },
+          { name: '⏳ Exchange Cooldown', value: `Both members cannot participate in another exchange until <t:${cooldownTs}:F>.`, inline: false }
         )
         .setColor('#00ff9f')
         .setThumbnail(targetMember.user.displayAvatarURL({ extension: 'png' }))
@@ -129,14 +144,15 @@ module.exports = {
         embeds: [successEmbed]
       });
 
-      // 9. Alert initiator via DM
+      // 10. Alert initiator via DM
       try {
         const dmEmbed = new EmbedBuilder()
           .setTitle('🎉 Squad Exchange Approved!')
           .setDescription(`**${interaction.user.username}** accepted your team exchange request.`)
           .addFields(
             { name: 'Your New Squad', value: `**${targetSquad}**` },
-            { name: 'Status', value: 'Roles and web profile updated successfully.' }
+            { name: 'Status', value: 'Roles and web profile updated successfully.' },
+            { name: '⏳ Cooldown', value: `You cannot participate in another exchange until <t:${cooldownTs}:F>.` }
           )
           .setColor('#00ff9f')
           .setTimestamp();

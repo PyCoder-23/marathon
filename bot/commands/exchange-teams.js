@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { connectDB, User, TeamExchangeRequest } = require('../../database.js');
+const { connectDB, User, TeamExchangeRequest, ExchangeCooldown } = require('../../database.js');
 
 const TEAM_LEADER_ROLE_ID = '1500546046907125962';
 
@@ -89,7 +89,24 @@ module.exports = {
         });
       }
 
-      // 7. Check if there are any active exchange requests involving either user
+      // 7. Check 7-day exchange cooldowns for both users
+      const initiatorCooldown = await ExchangeCooldown.findOne({ discordId: initiator.id });
+      if (initiatorCooldown) {
+        const expiresTs = Math.floor(initiatorCooldown.cooldownUntil.getTime() / 1000);
+        return interaction.editReply({
+          content: `⏳ **COOLDOWN ACTIVE:** You were recently part of a squad exchange. You can initiate or participate in another exchange <t:${expiresTs}:R> (on <t:${expiresTs}:F>).`
+        });
+      }
+
+      const targetCooldown = await ExchangeCooldown.findOne({ discordId: target.id });
+      if (targetCooldown) {
+        const expiresTs = Math.floor(targetCooldown.cooldownUntil.getTime() / 1000);
+        return interaction.editReply({
+          content: `⏳ **COOLDOWN ACTIVE:** **${target.username}** was recently part of a squad exchange and cannot be exchanged again until <t:${expiresTs}:R> (on <t:${expiresTs}:F>).`
+        });
+      }
+
+      // 8. Check if there are any active exchange requests involving either user
       const existingRequest = await TeamExchangeRequest.findOne({
         $or: [
           { initiatorId: initiator.id },
@@ -105,7 +122,7 @@ module.exports = {
         });
       }
 
-      // 8. Create the exchange request in database
+      // 9. Create the exchange request in database
       await TeamExchangeRequest.create({
         initiatorId: initiator.id,
         targetId: target.id,
@@ -113,7 +130,7 @@ module.exports = {
         targetSquad
       });
 
-      // 9. Send public embed with ping
+      // 10. Send public embed with ping
       const exchangeEmbed = new EmbedBuilder()
         .setTitle('🔄 TEAM EXCHANGE PROTOCOL')
         .setDescription(`Attention <@${target.id}>! A squad exchange has been proposed.`)
@@ -135,7 +152,7 @@ module.exports = {
         embeds: [exchangeEmbed]
       });
 
-      // 10. Attempt to DM the target user to alert them
+      // 11. Attempt to DM the target user to alert them
       try {
         const dmEmbed = new EmbedBuilder()
           .setTitle('🔄 Inbound Team Exchange Request')

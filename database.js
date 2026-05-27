@@ -160,6 +160,14 @@ const teamExchangeRequestSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now, expires: 900 } // 15 minutes TTL
 });
 
+// Tracks 7-day post-exchange cooldown per user. Document auto-deletes when cooldown expires.
+const exchangeCooldownSchema = new mongoose.Schema({
+  discordId: { type: String, required: true, unique: true },
+  cooldownUntil: { type: Date, required: true }, // Readable expiry timestamp
+  expiresAt: { type: Date, required: true }       // TTL field — auto-delete
+});
+exchangeCooldownSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
 // Models (Singleton check for Next.js fast-refresh)
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 const AuthCode = mongoose.models.AuthCode || mongoose.model('AuthCode', authCodeSchema);
@@ -171,5 +179,6 @@ const ActiveSession = mongoose.models.ActiveSession || mongoose.model('ActiveSes
 const GlobalConfig = mongoose.models.GlobalConfig || mongoose.model('GlobalConfig', globalConfigSchema);
 const SquadHistory = mongoose.models.SquadHistory || mongoose.model('SquadHistory', squadHistorySchema);
 const TeamExchangeRequest = mongoose.models.TeamExchangeRequest || mongoose.model('TeamExchangeRequest', teamExchangeRequestSchema);
+const ExchangeCooldown = mongoose.models.ExchangeCooldown || mongoose.model('ExchangeCooldown', exchangeCooldownSchema);
 
-module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, CalendarEvent, ActiveSession, GlobalConfig, SquadHistory, TeamExchangeRequest };
+module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, CalendarEvent, ActiveSession, GlobalConfig, SquadHistory, TeamExchangeRequest, ExchangeCooldown };
