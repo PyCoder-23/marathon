@@ -42,8 +42,8 @@ module.exports = {
             .setDescription('URL proof of work (e.g. GitHub, Google Docs) (Optional)')
             .setRequired(false)
         );
-        // Add 25 attachment options (all optional)
-        for (let i = 1; i <= 25; i++) {
+        // Add 24 attachment options (all optional)
+        for (let i = 1; i <= 24; i++) {
           sub.addAttachmentOption(option => 
             option.setName(`proof${i}`)
               .setDescription(`Upload proof file #${i} (Optional)`)
