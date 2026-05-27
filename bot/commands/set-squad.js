@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const { connectDB, User } = require('../../database.js');
 
 const HEAD_ADMIN_ID = '857145663947014164';
-const MOD_ROLE_ID = '1421059467088363580';
+const MOD_ROLE_ID = '676767676767676767';
 
 const SQUAD_ROLES = {
   'Zenith Sentinels': '1500526060146790642',
@@ -16,7 +16,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('set-squad')
     .setDescription('MOD ONLY: Manually reassign a user to a squad.')
-    .addUserOption(option => 
+    .addUserOption(option =>
       option.setName('user')
         .setDescription('The user to reassign')
         .setRequired(true))
@@ -36,9 +36,9 @@ module.exports = {
     const isMod = interaction.member?.roles.cache.has(MOD_ROLE_ID);
 
     if (interaction.user.id !== HEAD_ADMIN_ID && !isMod) {
-      return interaction.reply({ 
-        content: '🚫 **ACCESS DENIED:** You do not have permission to reassign squads.', 
-        ephemeral: true 
+      return interaction.reply({
+        content: '🚫 **ACCESS DENIED:** You do not have permission to reassign squads.',
+        ephemeral: true
       });
     }
 
@@ -56,7 +56,7 @@ module.exports = {
       }
 
       const oldSquad = userDoc.squad;
-      
+
       if (oldSquad === newSquad) {
         return interaction.editReply({ content: `⚠️ ${targetUser.username} is already in **${newSquad}**.` });
       }
@@ -67,7 +67,7 @@ module.exports = {
       // Attempt to update Discord roles
       try {
         const member = await interaction.guild.members.fetch(targetUser.id);
-        
+
         // Remove old role
         if (oldSquad && SQUAD_ROLES[oldSquad]) {
           await member.roles.remove(SQUAD_ROLES[oldSquad]);
@@ -79,15 +79,15 @@ module.exports = {
         }
       } catch (roleErr) {
         console.error('Failed to update squad roles on Discord:', roleErr);
-        return interaction.editReply({ 
-          content: `✅ Database updated: **${targetUser.username}** moved from **${oldSquad}** to **${newSquad}**.\n⚠️ Note: Could not update Discord roles automatically.` 
+        return interaction.editReply({
+          content: `✅ Database updated: **${targetUser.username}** moved from **${oldSquad}** to **${newSquad}**.\n⚠️ Note: Could not update Discord roles automatically.`
         });
       }
 
       console.log(`[ADMIN] ${interaction.user.tag} reassigned ${targetUser.username} from ${oldSquad} to ${newSquad}`);
 
-      return interaction.editReply({ 
-        content: `✅ Successfully reassigned **${targetUser.username}** to **${newSquad}**.` 
+      return interaction.editReply({
+        content: `✅ Successfully reassigned **${targetUser.username}** to **${newSquad}**.`
       });
 
     } catch (error) {
