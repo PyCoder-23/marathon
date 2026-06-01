@@ -1,17 +1,82 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { connectDB, User, Session, Task } = require('../../database.js');
+const { connectDB, User, Session, Task, SquadHistory } = require('../../database.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('stalk')
-    .setDescription('View another user\'s profile statistics.')
+    .setDescription('View another user\'s or team\'s profile statistics.')
     .addUserOption(option => 
       option.setName('target')
         .setDescription('The user you want to stalk')
-        .setRequired(true)),
+        .setRequired(false))
+    .addStringOption(option =>
+      option.setName('team')
+        .setDescription('The team you want to stalk')
+        .setRequired(false)
+        .addChoices(
+          { name: 'Zenith Sentinels', value: 'Zenith Sentinels' },
+          { name: 'Apex Titans', value: 'Apex Titans' },
+          { name: 'Meridian Arbiters', value: 'Meridian Arbiters' },
+          { name: 'Horizon Vanguards', value: 'Horizon Vanguards' }
+        )),
         
   async execute(interaction) {
     const targetUser = interaction.options.getUser('target');
+    const targetTeam = interaction.options.getString('team');
+
+    if (!targetUser && !targetTeam) {
+      return interaction.reply({ content: '🚫 Please specify either a `target` user or a `team` to stalk.', ephemeral: true });
+    }
+
+    if (targetUser && targetTeam) {
+      return interaction.reply({ content: '🚫 Please specify either a `target` user OR a `team`, not both.', ephemeral: true });
+    }
+
+    if (targetTeam) {
+      try {
+        await connectDB();
+        
+        const squadHistory = await SquadHistory.findOne({ squadName: targetTeam });
+        const memberCount = await User.countDocuments({ squad: targetTeam });
+        
+        const xpStats = await User.aggregate([
+          { $match: { squad: targetTeam } },
+          { $group: { 
+              _id: null, 
+              totalXp: { $sum: "$xp" }, 
+              weeklySquadXp: { $sum: "$weeklySquadXp" } 
+            } 
+          }
+        ]);
+        
+        const totalXp = xpStats.length > 0 ? xpStats[0].totalXp : 0;
+        const weeklyXp = xpStats.length > 0 ? xpStats[0].weeklySquadXp : 0;
+        
+        const topMember = await User.findOne({ squad: targetTeam }).sort({ weeklySquadXp: -1 });
+        const topMemberText = topMember ? `${topMember.username} (${(topMember.weeklySquadXp || 0).toLocaleString()} XP)` : '`None`';
+
+        const embed = new EmbedBuilder()
+          .setTitle(`🛡️ TEAM PROFILE: ${targetTeam.toUpperCase()}`)
+          .setDescription(`\`STATUS: ACTIVE\` | \`MEMBERS: ${memberCount}\``)
+          .addFields(
+            { name: 'Team Treasury', value: `\`${(squadHistory?.coins || 0).toLocaleString()} Coins\``, inline: true },
+            { name: 'All-Time Wins', value: `\`${squadHistory?.allTimeWins || 0}\``, inline: true },
+            { name: 'Current Win Streak', value: `\`${squadHistory?.winStreak || 0}\``, inline: true },
+            { name: 'Total XP', value: `\`${totalXp.toLocaleString()} XP\``, inline: true },
+            { name: 'Weekly Squad XP', value: `\`${weeklyXp.toLocaleString()} XP\``, inline: true },
+            { name: 'Current MVP', value: topMemberText, inline: true }
+          )
+          .setColor('#ffaa00')
+          .setTimestamp()
+          .setFooter({ text: 'MARATHON SYSTEM | Team Profile' });
+
+        return interaction.reply({ embeds: [embed] });
+      } catch (error) {
+        console.error(error);
+        return interaction.reply({ content: '❌ Database error occurred while fetching team profile.', ephemeral: true });
+      }
+    }
+
     const discordId = targetUser.id;
 
     try {
