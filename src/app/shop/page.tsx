@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, ShoppingBag, Palette, Rocket, Coins, ShieldCheck, Star, Sparkles, X, Check, Type, ArrowLeft } from "lucide-react";
+import { Zap, ShoppingBag, Palette, Rocket, Coins, ShieldCheck, Star, Sparkles, X, Check, Type, ArrowLeft, Layout } from "lucide-react";
 import styles from "./shop.module.css";
 import { SHOP_ITEMS, ShopItem, Rarity } from "@/lib/shopData";
 
@@ -31,7 +31,7 @@ const FONT_MAP: Record<string, string> = {
 
 export default function ShopPage() {
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState<'Nameplates' | 'PFP Decorations' | 'Username Fonts' | 'Boosts'>('Nameplates');
+  const [activeSection, setActiveSection] = useState<'Nameplates' | 'PFP Decorations' | 'Username Fonts' | 'Boosts' | 'Themes'>('Nameplates');
   const [user, setUser] = useState<{ username: string; avatar?: string } | null>(null);
   const [userCoins, setUserCoins] = useState<number>(0);
   const [ownedItems, setOwnedItems] = useState<string[]>([]);
@@ -62,7 +62,7 @@ export default function ShopPage() {
     if (savedEquipped) {
       setEquippedItems(JSON.parse(savedEquipped));
     } else {
-      setEquippedItems(['np-default', 'pfp-default', 'fnt-default']);
+      setEquippedItems(['np-default', 'pfp-default', 'fnt-default', 'thm-default']);
     }
 
     fetchUserData();
@@ -105,11 +105,30 @@ export default function ShopPage() {
     { id: 'PFP Decorations', label: 'Identity Deco', icon: Sparkles },
     { id: 'Username Fonts', label: 'Typography', icon: Type },
     { id: 'Boosts', label: 'Performance Boosts', icon: Rocket },
+    { id: 'Themes', label: 'Global Themes', icon: Layout },
   ] as const;
 
   const filteredItems = SHOP_ITEMS
     .filter(item => item.section === activeSection)
-    .sort((a, b) => a.price - b.price);
+    .sort((a, b) => {
+      if (activeSection === 'Themes') {
+        const headingA = a.heading || 'Other';
+        const headingB = b.heading || 'Other';
+        
+        const orderMap: Record<string, number> = {
+          'Classics': 1,
+          'Shades': 2,
+          'Biomes': 3
+        };
+
+        if (headingA !== headingB) {
+          const orderA = orderMap[headingA] || 99;
+          const orderB = orderMap[headingB] || 99;
+          return orderA - orderB;
+        }
+      }
+      return a.price - b.price;
+    });
 
   const equippedFontId = equippedItems.find(id => id.startsWith('fnt-')) || 'fnt-default';
   const equippedFontFamily = FONT_MAP[equippedFontId] || FONT_MAP['fnt-default'];
@@ -162,7 +181,8 @@ export default function ShopPage() {
     const categoryPrefix =
       category === 'Nameplates' ? 'np-' :
         category === 'PFP Decorations' ? 'pfp-' :
-          category === 'Username Fonts' ? 'fnt-' : 'bst-';
+          category === 'Username Fonts' ? 'fnt-' :
+            category === 'Themes' ? 'thm-' : 'bst-';
     const otherEquipped = equippedItems.filter(id => !id.startsWith(categoryPrefix));
 
     let newEquipped = [...equippedItems];
@@ -174,7 +194,8 @@ export default function ShopPage() {
       const defaultId =
         category === 'Nameplates' ? 'np-default' :
           category === 'PFP Decorations' ? 'pfp-default' :
-            category === 'Username Fonts' ? 'fnt-default' : '';
+            category === 'Username Fonts' ? 'fnt-default' :
+              category === 'Themes' ? 'thm-default' : '';
       if (defaultId) {
         newEquipped = [...otherEquipped, defaultId];
       }
@@ -184,6 +205,7 @@ export default function ShopPage() {
 
     setEquippedItems(newEquipped);
     localStorage.setItem("equippedItems", JSON.stringify(newEquipped));
+    window.dispatchEvent(new Event("equippedItemsUpdated"));
 
     let discordId = "";
     const savedUser = localStorage.getItem("user");
@@ -285,10 +307,18 @@ export default function ShopPage() {
         className={styles.grid}
       >
         <AnimatePresence mode="popLayout">
-          {filteredItems.map((item) => (
-            <motion.div
-              key={item.id}
-              layout
+          {filteredItems.map((item, index) => {
+            const prevItem = index > 0 ? filteredItems[index - 1] : null;
+            const showHeading = activeSection === 'Themes' && item.heading && (!prevItem || prevItem.heading !== item.heading);
+            return (
+              <React.Fragment key={item.id}>
+                {showHeading && (
+                  <motion.div layout className={styles.sectionHeadingWrapper}>
+                    <h3 className={styles.sectionHeading}>{item.heading}</h3>
+                  </motion.div>
+                )}
+                <motion.div
+                  layout
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
@@ -365,6 +395,12 @@ export default function ShopPage() {
                   </div>
                 )}
 
+                {item.section === 'Themes' && (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)' }}>
+                    <img src={item.image} alt={item.name} style={{ width: '128px', height: '128px', borderRadius: '50%', objectFit: 'contain', filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.2))', transform: item.id === 'thm-white-mode' ? 'scale(1.8)' : 'scale(1)' }} />
+                  </div>
+                )}
+
                 {activeSection === 'Username Fonts' && (
                   <div className={styles.fontMockup} style={{ fontFamily: FONT_MAP[item.id] || FONT_MAP['fnt-default'] }}>
                     <div className={styles.fontPreviewText} style={{ fontFamily: FONT_MAP[item.id] || FONT_MAP['fnt-default'] }}>
@@ -409,7 +445,8 @@ export default function ShopPage() {
                 )}
               </div>
             </motion.div>
-          ))}
+            </React.Fragment>
+          )})}
         </AnimatePresence>
       </motion.div>
 

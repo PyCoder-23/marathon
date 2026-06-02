@@ -6,6 +6,7 @@ import { Zap, LogOut, Calendar, ChevronDown, Heart, BookOpen, CheckSquare } from
 import styles from "./Navbar.module.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useTheme } from "./ThemeProvider";
 
 const navLinks = [
   { label: "Dashboard", href: "/dashboard" },
@@ -20,6 +21,7 @@ export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<{ discordId?: string; username: string; avatar?: string; isLoggedIn: boolean } | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { activeTheme, logoSrc } = useTheme();
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -35,8 +37,7 @@ export default function Navbar() {
   return (
     <nav className={styles.navbar}>
       <Link href="/dashboard" className={styles.logo}>
-        <Zap size={20} fill="var(--accent)" color="var(--accent)" />
-        <span>MARATHON</span>
+        <span className={styles.brandName}>MARATHON</span>
       </Link>
 
       <div className={styles.links}>

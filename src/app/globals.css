@@ -39,6 +39,166 @@
   --sidebar-width: 280px;
 }
 
+/* White Mode Theme Overrides */
+body.theme-white-mode {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --surface: #ffffff;
+  --surface-hover: #f1f5f9;
+  --border: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(5, 150, 105, 0.4);
+  
+  --accent: #059669; /* Darker green */
+  --accent-soft: rgba(5, 150, 105, 0.08);
+  --accent-glow: rgba(5, 150, 105, 0.2);
+  --accent-deep: #047857;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.05);
+}
+
+/* Shade Themes Overrides */
+body.theme-neon-blue {
+  --accent: #00a8ff;
+  --accent-soft: rgba(0, 168, 255, 0.1);
+  --accent-glow: rgba(0, 168, 255, 0.3);
+}
+body.theme-neon-cyan {
+  --accent: #00ffff;
+  --accent-soft: rgba(0, 255, 255, 0.1);
+  --accent-glow: rgba(0, 255, 255, 0.3);
+}
+body.theme-neon-yellow {
+  --accent: #ffea00;
+  --accent-soft: rgba(255, 234, 0, 0.1);
+  --accent-glow: rgba(255, 234, 0, 0.3);
+}
+body.theme-neon-pink {
+  --accent: #ff007f;
+  --accent-soft: rgba(255, 0, 127, 0.1);
+  --accent-glow: rgba(255, 0, 127, 0.3);
+}
+body.theme-neon-violet {
+  --accent: #aa00ff;
+  --accent-soft: rgba(170, 0, 255, 0.1);
+  --accent-glow: rgba(170, 0, 255, 0.3);
+}
+body.theme-neon-orange {
+  --accent: #ff6a00;
+  --accent-soft: rgba(255, 106, 0, 0.1);
+  --accent-glow: rgba(255, 106, 0, 0.3);
+}
+body.theme-neon-red {
+  --accent: #ff0000;
+  --accent-soft: rgba(255, 0, 0, 0.1);
+  --accent-glow: rgba(255, 0, 0, 0.3);
+}
+
+/* Biomes Themes Overrides */
+body.theme-abyssal-waters {
+  --background: #010610;
+  --surface: #04101e;
+  --surface-hover: #08192c;
+  --border: rgba(0, 180, 255, 0.15);
+  --border-strong: rgba(0, 212, 255, 0.3);
+  
+  --accent: #00d4ff;
+  --accent-soft: rgba(0, 212, 255, 0.1);
+  --accent-glow: rgba(0, 212, 255, 0.4);
+  --accent-deep: #0099cc;
+  
+  --glass-bg: rgba(1, 6, 16, 0.85);
+  --glass-border: rgba(0, 180, 255, 0.1);
+}
+
+body.theme-scorched-sands {
+  --background: #120a02;
+  --surface: #1a1005;
+  --surface-hover: #261808;
+  --border: rgba(255, 183, 3, 0.1);
+  --border-strong: rgba(255, 183, 3, 0.25);
+  
+  --accent: #ffb703;
+  --accent-soft: rgba(255, 183, 3, 0.1);
+  --accent-glow: rgba(255, 183, 3, 0.4);
+  --accent-deep: #fb8500;
+  
+  --glass-bg: rgba(18, 10, 2, 0.85);
+  --glass-border: rgba(255, 183, 3, 0.05);
+}
+
+body.theme-cosmic-void {
+  --background: #06020c;
+  --surface: #0c0418;
+  --surface-hover: #140726;
+  --border: rgba(181, 23, 158, 0.15);
+  --border-strong: rgba(181, 23, 158, 0.3);
+  
+  --accent: #b5179e;
+  --accent-soft: rgba(181, 23, 158, 0.15);
+  --accent-glow: rgba(181, 23, 158, 0.4);
+  --accent-deep: #7209b7;
+  
+  --glass-bg: rgba(6, 2, 12, 0.85);
+  --glass-border: rgba(181, 23, 158, 0.1);
+}
+
+body.theme-arctic-tundra {
+  --background: #475569;
+  --surface: #334155;
+  --surface-hover: #1e293b;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.25);
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  
+  --accent: #38bdf8;
+  --accent-soft: rgba(56, 189, 248, 0.15);
+  --accent-glow: rgba(56, 189, 248, 0.4);
+  --accent-deep: #0284c7;
+  
+  --glass-bg: rgba(51, 65, 85, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+body.theme-emerald-canopy {
+  --background: #0f2214;
+  --surface: #1a3b22;
+  --surface-hover: #224b2b;
+  --border: rgba(16, 185, 129, 0.2);
+  --border-strong: rgba(16, 185, 129, 0.4);
+  
+  --accent: #10b981;
+  --accent-soft: rgba(16, 185, 129, 0.2);
+  --accent-glow: rgba(16, 185, 129, 0.5);
+  --accent-deep: #059669;
+  
+  --glass-bg: rgba(15, 34, 20, 0.85);
+  --glass-border: rgba(16, 185, 129, 0.15);
+}
+
+body.theme-timberline-range {
+  --background: #1e1610;
+  --surface: #2b2118;
+  --surface-hover: #3b2e23;
+  --border: rgba(132, 204, 22, 0.15);
+  --border-strong: rgba(132, 204, 22, 0.3);
+  
+  --accent: #84cc16;
+  --accent-soft: rgba(132, 204, 22, 0.15);
+  --accent-glow: rgba(132, 204, 22, 0.4);
+  --accent-deep: #4d7c0f;
+  
+  --glass-bg: rgba(30, 22, 16, 0.85);
+  --glass-border: rgba(132, 204, 22, 0.1);
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 4px;
@@ -99,6 +259,19 @@ body::after {
   z-index: -2;
   opacity: 0.4;
   mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+}
+
+body.theme-white-mode::before {
+  background: 
+    radial-gradient(circle at 50% -20%, rgba(5, 150, 105, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at -10% 50%, rgba(5, 150, 105, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 110% 50%, rgba(5, 150, 105, 0.05) 0%, transparent 40%);
+}
+
+body.theme-white-mode::after {
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
 }
 
 /* Base Components & Utilities */

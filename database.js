@@ -67,7 +67,7 @@ const userSchema = new mongoose.Schema({
   },
   inventory: [{ type: String }],
   equippedHistory: [{ type: String }],
-  equippedItems: [{ type: String, default: ['np-default', 'pfp-default', 'fnt-default'] }],
+  equippedItems: [{ type: String, default: ['np-default', 'pfp-default', 'fnt-default', 'thm-default'] }],
   purpleFeverCount: { type: Number, default: 0 },
   antiViralUntil: { type: Date }
 });

@@ -219,6 +219,23 @@
   margin-top: 2rem;
 }
 
+.sectionHeadingWrapper {
+  grid-column: 1 / -1;
+  margin-top: 1rem;
+  margin-bottom: -1rem;
+}
+
+.sectionHeading {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
 .itemCard {
   background: rgba(255, 255, 255, 0.01);
   backdrop-filter: blur(10px);

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import styles from "./Sidebar.module.css";
+import { useTheme } from "./ThemeProvider";
 
 const navItems = [
   { icon: Home, label: "Dashboard", href: "/" },
@@ -16,6 +17,7 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [user, setUser] = useState<{ username: string; isLoggedIn: boolean; avatar?: string } | null>(null);
+  const { activeTheme, logoSrc } = useTheme();
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -27,9 +29,6 @@ export default function Sidebar() {
   return (
     <div className={styles.sidebar}>
       <div className={styles.logo}>
-        <div className={styles.logoIcon}>
-          <Zap size={24} fill="var(--accent)" color="var(--accent)" />
-        </div>
         <span className={styles.logoText}>MARATHON</span>
       </div>
 

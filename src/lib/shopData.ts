@@ -7,9 +7,10 @@ export interface ShopItem {
   price: number;
   rarity: Rarity;
   category: string;
-  section: 'Nameplates' | 'PFP Decorations' | 'Username Fonts' | 'Boosts';
+  section: 'Nameplates' | 'PFP Decorations' | 'Username Fonts' | 'Boosts' | 'Themes';
   image?: string;
   effect?: string;
+  heading?: string;
 }
 
 export const SHOP_ITEMS: ShopItem[] = [
@@ -537,5 +538,176 @@ export const SHOP_ITEMS: ShopItem[] = [
     rarity: 'Mythic',
     category: 'Events',
     section: 'Boosts'
+  },
+
+  // --- THEMES ---
+  {
+    id: 'thm-default',
+    name: 'Neon Matrix',
+    description: 'The standard dark-mode productivity interface.',
+    price: 0,
+    rarity: 'Common',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/logo.png',
+    heading: 'Classics'
+  },
+  {
+    id: 'thm-white-mode',
+    name: 'White Mode',
+    description: 'A bright, clean interface theme.',
+    price: 500,
+    rarity: 'Uncommon',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/white_logo.png',
+    heading: 'Classics'
+  },
+
+  // --- SHADES ---
+  {
+    id: 'thm-neon-blue',
+    name: 'Neon Blue Shade',
+    description: 'A vibrant blue accent theme.',
+    price: 1000,
+    rarity: 'Rare',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/blue_logo.png',
+    heading: 'Shades'
+  },
+  {
+    id: 'thm-neon-cyan',
+    name: 'Neon Cyan Shade',
+    description: 'A bright cyan accent theme.',
+    price: 1000,
+    rarity: 'Rare',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/cyan_logo.png',
+    heading: 'Shades'
+  },
+  {
+    id: 'thm-neon-yellow',
+    name: 'Neon Yellow Shade',
+    description: 'A striking yellow accent theme.',
+    price: 1000,
+    rarity: 'Rare',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/yellow_logo.png',
+    heading: 'Shades'
+  },
+  {
+    id: 'thm-neon-pink',
+    name: 'Neon Pink Shade',
+    description: 'A bold pink accent theme.',
+    price: 1000,
+    rarity: 'Rare',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/pink_logo.png',
+    heading: 'Shades'
+  },
+  {
+    id: 'thm-neon-violet',
+    name: 'Neon Violet Shade',
+    description: 'A deep violet accent theme.',
+    price: 1000,
+    rarity: 'Rare',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/violet_logo.png',
+    heading: 'Shades'
+  },
+  {
+    id: 'thm-neon-orange',
+    name: 'Neon Orange Shade',
+    description: 'An energetic orange accent theme.',
+    price: 1000,
+    rarity: 'Rare',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/orange_logo.png',
+    heading: 'Shades'
+  },
+  {
+    id: 'thm-neon-red',
+    name: 'Neon Red Shade',
+    description: 'An intense red accent theme.',
+    price: 1000,
+    rarity: 'Rare',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/red_logo.png',
+    heading: 'Shades'
+  },
+
+  // --- BIOMES ---
+  {
+    id: 'thm-abyssal-waters',
+    name: 'Abyssal Waters',
+    description: 'Dive deep. A dark, oceanic interface with bioluminescent cyan accents.',
+    price: 1500,
+    rarity: 'Epic',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/ocean_logo.png',
+    heading: 'Biomes'
+  },
+  {
+    id: 'thm-scorched-sands',
+    name: 'Scorched Sands',
+    description: 'A blistering desert interface bathed in golden hour heat.',
+    price: 1500,
+    rarity: 'Epic',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/desert_logo.png',
+    heading: 'Biomes'
+  },
+  {
+    id: 'thm-cosmic-void',
+    name: 'Cosmic Void',
+    description: 'An endless starry expanse with deep nebular violet accents.',
+    price: 1500,
+    rarity: 'Epic',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/space_logo.png',
+    heading: 'Biomes'
+  },
+  {
+    id: 'thm-arctic-tundra',
+    name: 'Arctic Tundra',
+    description: 'A dim, frostbitten interface with icy blue and slate tones.',
+    price: 1500,
+    rarity: 'Epic',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/snow_logo.png',
+    heading: 'Biomes'
+  },
+  {
+    id: 'thm-emerald-canopy',
+    name: 'Emerald Canopy',
+    description: 'A deep rainforest aesthetic with lush green ambient lighting.',
+    price: 1500,
+    rarity: 'Epic',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/forest_logo.png',
+    heading: 'Biomes'
+  },
+  {
+    id: 'thm-timberline-range',
+    name: 'Timberline Range',
+    description: 'An earthy mountain aesthetic with rich brown tones and mossy green accents.',
+    price: 1500,
+    rarity: 'Epic',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/mountain_logo.png',
+    heading: 'Biomes'
   }
 ];

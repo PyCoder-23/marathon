@@ -124,7 +124,22 @@ module.exports = {
           'bst-anti-viral': 'Anti-Viral Shield',
           'bst-vampire': 'Vampire Siphon',
           'bst-xp-generator': 'XP Generator',
-          'np-space-legendary': 'Cosmic Void Nameplate'
+          'np-space-legendary': 'Cosmic Void Nameplate',
+          'thm-default': 'Neon Matrix Theme',
+          'thm-white-mode': 'White Mode Theme',
+          'thm-neon-blue': 'Neon Blue Shade',
+          'thm-neon-cyan': 'Neon Cyan Shade',
+          'thm-neon-yellow': 'Neon Yellow Shade',
+          'thm-neon-pink': 'Neon Pink Shade',
+          'thm-neon-violet': 'Neon Violet Shade',
+          'thm-neon-orange': 'Neon Orange Shade',
+          'thm-neon-red': 'Neon Red Shade',
+          'thm-abyssal-waters': 'Abyssal Waters Theme',
+          'thm-scorched-sands': 'Scorched Sands Theme',
+          'thm-cosmic-void': 'Cosmic Void Theme',
+          'thm-arctic-tundra': 'Arctic Tundra Theme',
+          'thm-emerald-canopy': 'Emerald Canopy Theme',
+          'thm-timberline-range': 'Timberline Range Theme'
         };
         if (names[id]) return names[id];
         

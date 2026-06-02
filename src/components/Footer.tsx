@@ -1,10 +1,14 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import styles from "./Footer.module.css";
 import { Mail, MessageSquare, Play, Users } from "lucide-react";
+import { useTheme } from "./ThemeProvider";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { activeTheme, logoSrc } = useTheme();
 
   return (
     <footer className={styles.footer}>
@@ -12,7 +16,7 @@ const Footer = () => {
         <div className={styles.topSection}>
           <div className={styles.brand}>
             <div className={styles.logoRow}>
-              <img src="/logo.png" alt="Marathon Logo" className={styles.logo} />
+              <img src={logoSrc} alt="Marathon Logo" className={styles.logo} style={{ borderRadius: '50%' }} />
               <h2 className={styles.brandName}>MARATHON SERVER</h2>
             </div>
             <p className={styles.description}>
