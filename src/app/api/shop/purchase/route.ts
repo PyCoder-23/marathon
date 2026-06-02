@@ -32,6 +32,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Item already owned' }, { status: 400 });
     }
 
+    const teamOnlyItemIds = ['bst-mini-sabotage', 'bst-purple-fever', 'bst-anti-viral', 'bst-vampire', 'bst-xp-generator'];
+    if (teamOnlyItemIds.includes(itemId)) {
+      if (!user.squad || user.squad === 'Unassigned') {
+        return NextResponse.json({ error: 'This boost is team-only. You must join a squad first!' }, { status: 400 });
+      }
+    }
+
     // Check coins
     if ((user.coins || 0) < item.price) {
       return NextResponse.json({ error: 'Insufficient coins' }, { status: 400 });

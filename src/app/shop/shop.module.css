@@ -778,6 +778,44 @@
   background: repeating-conic-gradient(from 0deg, #1e1b4b 0deg 10deg, #000 10deg 20deg);
   color: #c084fc;
 }
+.effect-space {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+
+.effect-space::before {
+  content: '';
+  position: absolute;
+  top: 15%;
+  right: 10%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 4px -4px 0 0 #ffffff;
+  transform: rotate(30deg);
+  z-index: 1;
+  filter: drop-shadow(0 0 5px rgba(255,255,255,0.8));
+}
+
+.effect-space::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 10px 10px, #ffffff 1px, transparent 1px),
+    radial-gradient(circle at 30px 25px, rgba(255,255,255,0.8) 1px, transparent 1px),
+    radial-gradient(circle at 50px 10px, #ffffff 1.5px, transparent 1.5px),
+    radial-gradient(circle at 20px 40px, rgba(255,255,255,0.6) 1px, transparent 1px),
+    radial-gradient(circle at 45px 35px, #ffffff 1px, transparent 1px);
+  background-size: 60px 50px;
+  animation: cosmic-twinkle 3s ease-in-out infinite alternate;
+  z-index: 0;
+}
 .effect-dragon {
   width: 110% !important;
   height: 60px !important;

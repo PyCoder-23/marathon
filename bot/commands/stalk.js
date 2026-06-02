@@ -118,7 +118,13 @@ module.exports = {
           'bst-2x-sess': '2x XP Boost (Session)',
           'bst-1.5x-hour': '1.5x XP Boost (Hour)',
           'bst-2x-day': '2x XP Daily Rush',
-          'bst-streak-prot': 'Streak Protection'
+          'bst-streak-prot': 'Streak Protection',
+          'bst-mini-sabotage': 'Mini-Sabotage',
+          'bst-purple-fever': 'Purple Fever',
+          'bst-anti-viral': 'Anti-Viral Shield',
+          'bst-vampire': 'Vampire Siphon',
+          'bst-xp-generator': 'XP Generator',
+          'np-space-legendary': 'Cosmic Void Nameplate'
         };
         if (names[id]) return names[id];
         

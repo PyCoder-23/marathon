@@ -78,10 +78,19 @@ export const SHOP_ITEMS: ShopItem[] = [
     section: 'Nameplates'
   },
   {
+    id: 'np-space-legendary',
+    name: 'Cosmic Void',
+    description: 'A deep space boundary adorned with stars and a crescent moon.',
+    price: 10000,
+    rarity: 'Legendary',
+    category: 'Nameplates',
+    section: 'Nameplates'
+  },
+  {
     id: 'np-titan',
     name: 'Titan Core',
     description: 'The raw power of a planetary engine.',
-    price: 7500,
+    price: 6500,
     rarity: 'Legendary',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -99,7 +108,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-arcane',
     name: 'Arcane Sigil',
     description: 'Mystical runes that protect your focus.',
-    price: 10000,
+    price: 8000,
     rarity: 'Legendary',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -449,6 +458,51 @@ export const SHOP_ITEMS: ShopItem[] = [
     description: 'Double XP for the entire 24-hour period.',
     price: 5000,
     rarity: 'Legendary',
+    category: 'XP Multipliers',
+    section: 'Boosts'
+  },
+  {
+    id: 'bst-mini-sabotage',
+    name: 'Mini-Sabotage',
+    description: 'Use this boost to deduct 50 XP from any user. (Team Only)',
+    price: 750,
+    rarity: 'Uncommon',
+    category: 'XP Multipliers',
+    section: 'Boosts'
+  },
+  {
+    id: 'bst-purple-fever',
+    name: 'Purple Fever',
+    description: 'A special sabotage. Target loses 200 XP, and the next 3 people they send coins to also lose 50 XP each. (Team Only)',
+    price: 4500,
+    rarity: 'Epic',
+    category: 'XP Multipliers',
+    section: 'Boosts'
+  },
+  {
+    id: 'bst-anti-viral',
+    name: 'Anti-Viral',
+    description: 'Protects you from any kind of sabotage for 24 hours. (Team Only)',
+    price: 6000,
+    rarity: 'Legendary',
+    category: 'XP Multipliers',
+    section: 'Boosts'
+  },
+  {
+    id: 'bst-vampire',
+    name: 'Vampire',
+    description: 'Reduce another user\'s total XP by half, but your own XP gets reset to 0. (Team Only)',
+    price: 40000,
+    rarity: 'Mythic',
+    category: 'XP Multipliers',
+    section: 'Boosts'
+  },
+  {
+    id: 'bst-xp-generator',
+    name: 'XP Generator',
+    description: 'Doubles the XP multiplier for your entire squad until the Sunday weekly hard reset. (Team Only)',
+    price: 100000,
+    rarity: 'Ascendant',
     category: 'XP Multipliers',
     section: 'Boosts'
   },

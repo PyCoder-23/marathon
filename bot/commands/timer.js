@@ -147,16 +147,21 @@ module.exports = {
         let squadMultiplier = 1;
         if (user?.squad && user.squad !== 'Unassigned') {
           const squadInfo = await SquadHistory.findOne({ squadName: user.squad });
-          if (squadInfo?.boostDate) {
-            const getSessionDate = (date) => {
-              const d = new Date(date);
-              d.setHours(d.getHours() - 4);
-              d.setMinutes(d.getMinutes() - 30);
-              d.setHours(0, 0, 0, 0);
-              return d;
-            };
-            if (getSessionDate(new Date()).getTime() === getSessionDate(squadInfo.boostDate).getTime()) {
-              squadMultiplier = squadInfo.squadMultiplier || 1.2;
+          if (squadInfo) {
+            if (squadInfo.boostDate) {
+              const getSessionDate = (date) => {
+                const d = new Date(date);
+                d.setHours(d.getHours() - 4);
+                d.setMinutes(d.getMinutes() - 30);
+                d.setHours(0, 0, 0, 0);
+                return d;
+              };
+              if (getSessionDate(new Date()).getTime() === getSessionDate(squadInfo.boostDate).getTime()) {
+                squadMultiplier = squadInfo.squadMultiplier || 1.2;
+              }
+            }
+            if (squadInfo.xpGeneratorActive) {
+              squadMultiplier *= 2;
             }
           }
         }
@@ -294,16 +299,21 @@ module.exports = {
         let squadMultiplier = 1;
         if (user?.squad && user.squad !== 'Unassigned') {
           const squadInfo = await SquadHistory.findOne({ squadName: user.squad });
-          if (squadInfo?.boostDate) {
-            const getSessionDate = (date) => {
-              const d = new Date(date);
-              d.setHours(d.getHours() - 4);
-              d.setMinutes(d.getMinutes() - 30);
-              d.setHours(0, 0, 0, 0);
-              return d;
-            };
-            if (getSessionDate(new Date()).getTime() === getSessionDate(squadInfo.boostDate).getTime()) {
-              squadMultiplier = squadInfo.squadMultiplier || 1.2;
+          if (squadInfo) {
+            if (squadInfo.boostDate) {
+              const getSessionDate = (date) => {
+                const d = new Date(date);
+                d.setHours(d.getHours() - 4);
+                d.setMinutes(d.getMinutes() - 30);
+                d.setHours(0, 0, 0, 0);
+                return d;
+              };
+              if (getSessionDate(new Date()).getTime() === getSessionDate(squadInfo.boostDate).getTime()) {
+                squadMultiplier = squadInfo.squadMultiplier || 1.2;
+              }
+            }
+            if (squadInfo.xpGeneratorActive) {
+              squadMultiplier *= 2;
             }
           }
         }

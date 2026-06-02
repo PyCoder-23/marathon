@@ -68,6 +68,8 @@ const userSchema = new mongoose.Schema({
   inventory: [{ type: String }],
   equippedHistory: [{ type: String }],
   equippedItems: [{ type: String, default: ['np-default', 'pfp-default', 'fnt-default'] }],
+  purpleFeverCount: { type: Number, default: 0 },
+  antiViralUntil: { type: Date }
 });
 
 userSchema.index({ weeklyXp: -1 });
@@ -149,7 +151,8 @@ const squadHistorySchema = new mongoose.Schema({
   coins: { type: Number, default: 0 },
   lastWinDate: { type: Date },
   boostDate: { type: Date },
-  squadMultiplier: { type: Number, default: 1 }
+  squadMultiplier: { type: Number, default: 1 },
+  xpGeneratorActive: { type: Boolean, default: false }
 });
 
 const teamExchangeRequestSchema = new mongoose.Schema({

@@ -45,6 +45,41 @@ module.exports = {
     .addSubcommand(sub =>
       sub.setName('2x-week')
         .setDescription('Activate a permanent 2x XP multiplier for the rest of the week (until hard reset).')
+    )
+    .addSubcommand(sub =>
+      sub.setName('mini-sabotage')
+        .setDescription('Target someone and deduct 50 XP from them. (Team Only)')
+        .addUserOption(option =>
+          option.setName('target')
+            .setDescription('The user to sabotage')
+            .setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('purple-fever')
+        .setDescription('Sabotage a target. They lose 200 XP and infect people they send coins to. (Team Only)')
+        .addUserOption(option =>
+          option.setName('target')
+            .setDescription('The user to infect')
+            .setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('anti-viral')
+        .setDescription('Protects you from any kind of sabotage for 24 hours. (Team Only)')
+    )
+    .addSubcommand(sub =>
+      sub.setName('vampire')
+        .setDescription('Reduce another user\'s total XP by half, but your own XP gets reset to 0. (Team Only)')
+        .addUserOption(option =>
+          option.setName('target')
+            .setDescription('The user to siphon XP from')
+            .setRequired(true)
+        )
+    )
+    .addSubcommand(sub =>
+      sub.setName('xp-generator')
+        .setDescription('Doubles the XP multiplier for your entire squad until Sunday hard reset. (Team Only)')
     ),
 
   async execute(interaction) {
@@ -58,6 +93,13 @@ module.exports = {
 
       if (!user) {
         return interaction.editReply({ content: '❌ You must join the Marathon server first.' });
+      }
+
+      const teamOnlyBoosts = ['mini-sabotage', 'purple-fever', 'anti-viral', 'vampire', 'xp-generator'];
+      if (teamOnlyBoosts.includes(sub)) {
+        if (!user.squad || user.squad === 'Unassigned') {
+          return interaction.editReply({ content: '❌ **ERROR:** This is a team-only boost and can only be used by members assigned to a squad!' });
+        }
       }
 
       if (sub === '2x-session') {
@@ -312,13 +354,22 @@ module.exports = {
           return interaction.editReply({ content: '❌ The target user is not registered in the system.' });
         }
 
-        targetData.weeklySquadXp = Math.floor((targetData.weeklySquadXp || 0) / 2);
-        await targetData.save();
-
         inventory.splice(itemIndex, 1);
         user.inventory = inventory;
         user.markModified('inventory');
         await user.save();
+
+        if (targetData.antiViralUntil && targetData.antiViralUntil > new Date()) {
+          const embed = new EmbedBuilder()
+            .setTitle('🛡️ Sabotage Neutralized!')
+            .setDescription(`You tried to use a **Sabotage** on <@${targetUser.id}>, but their **Anti-Viral Shield** protected them!`)
+            .setColor('#3b82f6')
+            .setTimestamp();
+          return interaction.editReply({ embeds: [embed] });
+        }
+
+        targetData.weeklySquadXp = Math.floor((targetData.weeklySquadXp || 0) / 2);
+        await targetData.save();
 
         const embed = new EmbedBuilder()
           .setTitle('🗡️ Sabotage Successful!')
@@ -347,6 +398,195 @@ module.exports = {
           .setTitle('🚀 Weekly Rush Activated!')
           .setDescription('You have successfully applied the **2x XP Weekly Rush**!\n\nAll your sessions will automatically earn a personal **2x XP** multiplier until the next weekly hard reset.')
           .setColor('#ef4444')
+          .setTimestamp();
+
+        return interaction.editReply({ embeds: [embed] });
+      }
+
+      if (sub === 'mini-sabotage') {
+        const targetUser = interaction.options.getUser('target');
+
+        if (targetUser.id === interaction.user.id) {
+          return interaction.editReply({ content: '❌ You cannot sabotage yourself!' });
+        }
+
+        const inventory = user.inventory || [];
+        const itemIndex = inventory.indexOf('bst-mini-sabotage');
+        if (itemIndex === -1) {
+          return interaction.editReply({ content: '❌ You do not own a **Mini-Sabotage** boost. You can purchase one from the shop!' });
+        }
+
+        const targetData = await User.findOne({ discordId: targetUser.id });
+        if (!targetData) {
+          return interaction.editReply({ content: '❌ The target user is not registered in the system.' });
+        }
+
+        inventory.splice(itemIndex, 1);
+        user.inventory = inventory;
+        user.markModified('inventory');
+        await user.save();
+
+        if (targetData.antiViralUntil && targetData.antiViralUntil > new Date()) {
+          const embed = new EmbedBuilder()
+            .setTitle('🛡️ Sabotage Neutralized!')
+            .setDescription(`You tried to use a **Mini-Sabotage** on <@${targetUser.id}>, but their **Anti-Viral Shield** protected them!`)
+            .setColor('#3b82f6')
+            .setTimestamp();
+          return interaction.editReply({ embeds: [embed] });
+        }
+
+        targetData.weeklySquadXp = Math.max(0, (targetData.weeklySquadXp || 0) - 50);
+        await targetData.save();
+
+        const embed = new EmbedBuilder()
+          .setTitle('🗡️ Mini-Sabotage Successful!')
+          .setDescription(`You have successfully sabotaged <@${targetUser.id}>!\n\nThey have lost **50 weekly Squad XP** on the squad leaderboard.`)
+          .setColor('#ef4444')
+          .setTimestamp();
+
+        return interaction.editReply({ embeds: [embed] });
+      }
+
+      if (sub === 'purple-fever') {
+        const targetUser = interaction.options.getUser('target');
+
+        if (targetUser.id === interaction.user.id) {
+          return interaction.editReply({ content: '❌ You cannot sabotage yourself!' });
+        }
+
+        const inventory = user.inventory || [];
+        const itemIndex = inventory.indexOf('bst-purple-fever');
+        if (itemIndex === -1) {
+          return interaction.editReply({ content: '❌ You do not own a **Purple Fever** boost. You can purchase one from the shop!' });
+        }
+
+        const targetData = await User.findOne({ discordId: targetUser.id });
+        if (!targetData) {
+          return interaction.editReply({ content: '❌ The target user is not registered in the system.' });
+        }
+
+        inventory.splice(itemIndex, 1);
+        user.inventory = inventory;
+        user.markModified('inventory');
+        await user.save();
+
+        if (targetData.antiViralUntil && targetData.antiViralUntil > new Date()) {
+          const embed = new EmbedBuilder()
+            .setTitle('🛡️ Sabotage Neutralized!')
+            .setDescription(`You tried to infect <@${targetUser.id}> with **Purple Fever**, but their **Anti-Viral Shield** protected them!`)
+            .setColor('#3b82f6')
+            .setTimestamp();
+          return interaction.editReply({ embeds: [embed] });
+        }
+
+        targetData.weeklySquadXp = Math.max(0, (targetData.weeklySquadXp || 0) - 200);
+        targetData.purpleFeverCount = 3;
+        await targetData.save();
+
+        const embed = new EmbedBuilder()
+          .setTitle('🤢 Purple Fever Outbreak!')
+          .setDescription(`You have successfully infected <@${targetUser.id}> with **Purple Fever**!\n\nThey have lost **200 weekly Squad XP** on the squad leaderboard and are now highly contagious. The next 3 people they send coins to will also lose **50 weekly Squad XP** each!`)
+          .setColor('#8b5cf6')
+          .setTimestamp();
+
+        return interaction.editReply({ embeds: [embed] });
+      }
+
+      if (sub === 'anti-viral') {
+        const inventory = user.inventory || [];
+        const itemIndex = inventory.indexOf('bst-anti-viral');
+        if (itemIndex === -1) {
+          return interaction.editReply({ content: '❌ You do not own an **Anti-Viral** boost. You can purchase one from the shop!' });
+        }
+
+        user.antiViralUntil = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        inventory.splice(itemIndex, 1);
+        user.inventory = inventory;
+        user.markModified('inventory');
+        await user.save();
+
+        const embed = new EmbedBuilder()
+          .setTitle('🛡️ Anti-Viral Shield Activated!')
+          .setDescription(`You have successfully activated the **Anti-Viral** shield!\n\nYou are immune to all kinds of sabotage for the next **24 hours**!`)
+          .setColor('#10b981')
+          .setTimestamp();
+
+        return interaction.editReply({ embeds: [embed] });
+      }
+
+      if (sub === 'vampire') {
+        const targetUser = interaction.options.getUser('target');
+
+        if (targetUser.id === interaction.user.id) {
+          return interaction.editReply({ content: '❌ You cannot target yourself!' });
+        }
+
+        const inventory = user.inventory || [];
+        const itemIndex = inventory.indexOf('bst-vampire');
+        if (itemIndex === -1) {
+          return interaction.editReply({ content: '❌ You do not own a **Vampire** boost. You can purchase one from the shop!' });
+        }
+
+        const targetData = await User.findOne({ discordId: targetUser.id });
+        if (!targetData) {
+          return interaction.editReply({ content: '❌ The target user is not registered in the system.' });
+        }
+
+        inventory.splice(itemIndex, 1);
+        user.inventory = inventory;
+        user.markModified('inventory');
+        
+        // Sender's weekly squad XP is reset to 0
+        user.weeklySquadXp = 0;
+        await user.save();
+
+        if (targetData.antiViralUntil && targetData.antiViralUntil > new Date()) {
+          const embed = new EmbedBuilder()
+            .setTitle('🛡️ Vampire Blocked!')
+            .setDescription(`You tried to siphon XP from <@${targetUser.id}> using **Vampire**, but their **Anti-Viral Shield** protected them! However, your weekly squad XP was still reset to 0 in the process. Devastating.`)
+            .setColor('#dc2626')
+            .setTimestamp();
+          return interaction.editReply({ embeds: [embed] });
+        }
+
+        // Halve target's weekly squad XP
+        targetData.weeklySquadXp = Math.floor((targetData.weeklySquadXp || 0) / 2);
+        await targetData.save();
+
+        const embed = new EmbedBuilder()
+          .setTitle('🩸 Siphoned!')
+          .setDescription(`You have successfully used **Vampire** on <@${targetUser.id}>!\n\nTheir weekly squad XP has been halved! Your own weekly squad XP was reset to 0.`)
+          .setColor('#dc2626')
+          .setTimestamp();
+
+        return interaction.editReply({ embeds: [embed] });
+      }
+
+      if (sub === 'xp-generator') {
+        const inventory = user.inventory || [];
+        const itemIndex = inventory.indexOf('bst-xp-generator');
+        if (itemIndex === -1) {
+          return interaction.editReply({ content: '❌ You do not own an **XP Generator** boost. You can purchase one from the shop!' });
+        }
+
+        let squadInfo = await SquadHistory.findOne({ squadName: user.squad });
+        if (!squadInfo) {
+          squadInfo = await SquadHistory.create({ squadName: user.squad });
+        }
+
+        squadInfo.xpGeneratorActive = true;
+        await squadInfo.save();
+
+        inventory.splice(itemIndex, 1);
+        user.inventory = inventory;
+        user.markModified('inventory');
+        await user.save();
+
+        const embed = new EmbedBuilder()
+          .setTitle('⚡ XP Generator Online!')
+          .setDescription(`You have successfully activated the **XP Generator** for **${user.squad}**!\n\nYour entire squad's XP multiplier is now **DOUBLED** until the next Sunday weekly hard reset!`)
+          .setColor('#f59e0b')
           .setTimestamp();
 
         return interaction.editReply({ embeds: [embed] });

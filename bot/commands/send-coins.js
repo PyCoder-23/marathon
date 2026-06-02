@@ -76,12 +76,35 @@ module.exports = {
         sender.coins -= amount;
         receiver.coins = (receiver.coins || 0) + amount;
 
+        let purpleFeverTriggered = false;
+        let protectedByAntiViral = false;
+
+        if (sender.purpleFeverCount > 0) {
+          sender.purpleFeverCount -= 1;
+          purpleFeverTriggered = true;
+
+          if (receiver.antiViralUntil && receiver.antiViralUntil > new Date()) {
+            protectedByAntiViral = true;
+          } else {
+            receiver.weeklySquadXp = Math.max(0, (receiver.weeklySquadXp || 0) - 50);
+          }
+        }
+
         await sender.save();
         await receiver.save();
 
+        let extraNote = '';
+        if (purpleFeverTriggered) {
+          if (protectedByAntiViral) {
+            extraNote = `\n\n⚠️ **PURPLE FEVER ALERT:** You are infected with Purple Fever! You tried to transmit the infection, but <@${targetUser.id}> was protected by an **Anti-Viral Shield**! *(Remaining infections: ${sender.purpleFeverCount})*`;
+          } else {
+            extraNote = `\n\n🤢 **PURPLE FEVER ALERT:** You are infected with Purple Fever! The infection has spread, and <@${targetUser.id}> has lost **50 weekly Squad XP** on the squad leaderboard! *(Remaining infections: ${sender.purpleFeverCount})*`;
+          }
+        }
+
         const embed = new EmbedBuilder()
           .setTitle('🪙 Coins Transferred!')
-          .setDescription(`You successfully sent **${amount.toLocaleString()}** coins to <@${targetUser.id}>!\n\nYour remaining balance: **${sender.coins.toLocaleString()}** coins.`)
+          .setDescription(`You successfully sent **${amount.toLocaleString()}** coins to <@${targetUser.id}>!\n\nYour remaining balance: **${sender.coins.toLocaleString()}** coins.${extraNote}`)
           .setColor('#eab308')
           .setTimestamp();
 

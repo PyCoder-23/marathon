@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { connectDB, User, Session, Task, ActiveSession } = require('../../database.js');
+const { connectDB, User, Session, Task, ActiveSession, SquadHistory } = require('../../database.js');
 
 const HEAD_ADMIN_ID = '857145663947014164';
 
@@ -25,14 +25,34 @@ module.exports = {
 
       console.log('🧹 [ADMIN] Manual System Wipe initiated by', interaction.user.tag);
 
-      // 1. Reset all Weekly XP, Streaks, Protection, and Weekly/Weekend Rush
-      const userRes = await User.updateMany({}, { $set: { weeklyXp: 0, weeklySquadXp: 0, streak: 0, streakProtection: false, weekendRushMultiplier: 1, weeklyRushMultiplier: 1 } });
+      // 1. Reset all Weekly XP, Streaks, Protection, Weekly/Weekend Rush, and activated user boosts
+      const userRes = await User.updateMany({}, { 
+        $set: { 
+          weeklyXp: 0, 
+          weeklySquadXp: 0, 
+          streak: 0, 
+          streakProtection: false, 
+          weekendRushMultiplier: 1, 
+          weeklyRushMultiplier: 1,
+          purpleFeverCount: 0,
+          antiViralUntil: null
+        } 
+      });
 
-      // 2. Clear all activity-related documents
+      // 2. Reset squad boosts & XP generators
+      const squadRes = await SquadHistory.updateMany({}, { 
+        $set: { 
+          xpGeneratorActive: false, 
+          squadMultiplier: 1, 
+          boostDate: null 
+        } 
+      });
+
+      // 3. Clear all activity-related documents
       const sessionRes = await Session.deleteMany({});
       const taskRes = await Task.deleteMany({});
       
-      // 3. Clear all active sessions in DB
+      // 4. Clear all active sessions in DB
       const activeRes = await ActiveSession.deleteMany({});
 
       return interaction.editReply({ 
