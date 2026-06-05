@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Zap, LogOut, Calendar, ChevronDown, Heart, BookOpen, CheckSquare } from "lucide-react";
+import { Zap, LogOut, Calendar, ChevronDown, Heart, BookOpen, CheckSquare, ClipboardList, Volume2, VolumeX } from "lucide-react";
 import styles from "./Navbar.module.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -11,9 +11,9 @@ import { useTheme } from "./ThemeProvider";
 const navLinks = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Shop", href: "/shop" },
-  { label: "Planner", href: "/planner" },
   { label: "Leaderboard", href: "/leaderboard" },
   { label: "Squads", href: "/squads" },
+  { label: "Timelapse", href: "/timelapse" },
 ];
 
 export default function Navbar() {
@@ -21,7 +21,7 @@ export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<{ discordId?: string; username: string; avatar?: string; isLoggedIn: boolean } | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { activeTheme, logoSrc } = useTheme();
+  const { activeTheme, logoSrc, isMusicPlaying, hasThemeMusic, toggleMusic } = useTheme();
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -36,7 +36,7 @@ export default function Navbar() {
 
   return (
     <nav className={styles.navbar}>
-      <Link href="/dashboard" className={styles.logo}>
+      <Link href="/" className={styles.logo}>
         <span className={styles.brandName}>MARATHON</span>
       </Link>
 
@@ -53,6 +53,15 @@ export default function Navbar() {
       </div>
 
       <div className={styles.actions}>
+        {hasThemeMusic && (
+          <button 
+            className={`${styles.musicToggle} ${isMusicPlaying ? styles.playing : ''}`}
+            onClick={toggleMusic}
+            title={isMusicPlaying ? "Pause Theme Music" : "Play Theme Music"}
+          >
+            {isMusicPlaying ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          </button>
+        )}
         {user?.isLoggedIn ? (
           <div className={styles.dropdownContainer}>
             <button 
@@ -91,6 +100,15 @@ export default function Navbar() {
                       >
                         <Zap size={16} className={styles.itemIcon} />
                         <span>My Profile</span>
+                      </Link>
+
+                      <Link 
+                        href="/planner" 
+                        className={styles.dropdownItem}
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <ClipboardList size={16} className={styles.itemIcon} />
+                        <span>Planner</span>
                       </Link>
 
                       <Link 

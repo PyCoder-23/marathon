@@ -28,7 +28,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-neon',
     name: 'Neon Frame',
     description: 'A vibrant pulsing neon border for your name.',
-    price: 500,
+    price: 50,
     rarity: 'Uncommon',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -37,7 +37,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-diamond',
     name: 'Diamond Pulse',
     description: 'Crystalline brilliance that radiates status.',
-    price: 1200,
+    price: 120,
     rarity: 'Rare',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -46,7 +46,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-infernal',
     name: 'Infernal Glow',
     description: 'Forged in the depths of the competitive grind.',
-    price: 2500,
+    price: 250,
     rarity: 'Epic',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -55,7 +55,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-quantum',
     name: 'Quantum Border',
     description: 'A shifting boundary of subatomic particles.',
-    price: 3000,
+    price: 300,
     rarity: 'Epic',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -64,7 +64,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-phantom',
     name: 'Phantom Shift',
     description: 'A ghostly border that fades in and out of reality.',
-    price: 3500,
+    price: 350,
     rarity: 'Epic',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -73,7 +73,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-zenith',
     name: 'Zenith Crown',
     description: 'The ultimate symbol of peak performance.',
-    price: 5000,
+    price: 500,
     rarity: 'Legendary',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -82,7 +82,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-space-legendary',
     name: 'Cosmic Void',
     description: 'A deep space boundary adorned with stars and a crescent moon.',
-    price: 10000,
+    price: 1000,
     rarity: 'Legendary',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -91,7 +91,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-titan',
     name: 'Titan Core',
     description: 'The raw power of a planetary engine.',
-    price: 6500,
+    price: 650,
     rarity: 'Legendary',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -100,7 +100,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-glitch',
     name: 'Glitched Matrix',
     description: 'A corrupted stream of raw data packets.',
-    price: 4000,
+    price: 400,
     rarity: 'Legendary',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -109,7 +109,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-arcane',
     name: 'Arcane Sigil',
     description: 'Mystical runes that protect your focus.',
-    price: 8000,
+    price: 800,
     rarity: 'Legendary',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -118,7 +118,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-celestial',
     name: 'Celestial Aura',
     description: 'Blessed by the gods of productivity.',
-    price: 3500,
+    price: 350,
     rarity: 'Epic',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -127,7 +127,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'np-dragon',
     name: 'Dragon Soul',
     description: 'The fiery breath of a focus legend.',
-    price: 12000,
+    price: 1200,
     rarity: 'Mythic',
     category: 'Nameplates',
     section: 'Nameplates'
@@ -147,7 +147,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'pfp-electric',
     name: 'Electric Ring',
     description: 'High-voltage energy circling your avatar.',
-    price: 1000,
+    price: 100,
     rarity: 'Uncommon',
     category: 'PFP Decorations',
     section: 'PFP Decorations'
@@ -156,7 +156,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'pfp-crown',
     name: 'Crown Orbit',
     description: 'A spinning crown of orbital satellites.',
-    price: 1500,
+    price: 150,
     rarity: 'Rare',
     category: 'PFP Decorations',
     section: 'PFP Decorations'
@@ -165,7 +165,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'pfp-holographic',
     name: 'Holographic Halo',
     description: 'A futuristic projection of digital light.',
-    price: 3000,
+    price: 300,
     rarity: 'Epic',
     category: 'PFP Decorations',
     section: 'PFP Decorations'
@@ -174,7 +174,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'pfp-firestorm',
     name: 'Firestorm Border',
     description: 'Licking flames of pure passion.',
-    price: 4500,
+    price: 450,
     rarity: 'Epic',
     category: 'PFP Decorations',
     section: 'PFP Decorations'
@@ -183,7 +183,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'pfp-frost',
     name: 'Frost Nova',
     description: 'Sub-zero temperatures to keep you cool.',
-    price: 4000,
+    price: 400,
     rarity: 'Epic',
     category: 'PFP Decorations',
     section: 'PFP Decorations'
@@ -192,7 +192,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'pfp-corrupted',
     name: 'Corrupted Signal',
     description: 'Static and noise from the outer rim.',
-    price: 5000,
+    price: 500,
     rarity: 'Legendary',
     category: 'PFP Decorations',
     section: 'PFP Decorations'
@@ -201,7 +201,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'pfp-wings',
     name: 'Digital Wings',
     description: 'Flight data processed in real-time.',
-    price: 6500,
+    price: 650,
     rarity: 'Legendary',
     category: 'PFP Decorations',
     section: 'PFP Decorations'
@@ -210,7 +210,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'pfp-golden',
     name: 'Golden Pulse',
     description: 'The heartbeat of a champion.',
-    price: 6000,
+    price: 600,
     rarity: 'Legendary',
     category: 'PFP Decorations',
     section: 'PFP Decorations'
@@ -219,7 +219,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'pfp-obsidian',
     name: 'Obsidian Shards',
     description: 'Dark volcanic glass revolving in harmony.',
-    price: 7000,
+    price: 700,
     rarity: 'Legendary',
     category: 'PFP Decorations',
     section: 'PFP Decorations'
@@ -228,7 +228,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'pfp-cosmic',
     name: 'Cosmic Reactor',
     description: 'The power of a dying star, contained.',
-    price: 10000,
+    price: 1000,
     rarity: 'Mythic',
     category: 'PFP Decorations',
     section: 'PFP Decorations'
@@ -237,7 +237,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'pfp-void',
     name: 'Void Singularity',
     description: 'The absolute zero of distractions.',
-    price: 15000,
+    price: 1500,
     rarity: 'Mythic',
     category: 'PFP Decorations',
     section: 'PFP Decorations'
@@ -257,7 +257,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-inter',
     name: 'Inter Modern',
     description: 'A clean, modern typeface for a minimalist look.',
-    price: 800,
+    price: 80,
     rarity: 'Uncommon',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -266,7 +266,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-roboto',
     name: 'Roboto Steel',
     description: 'Industrial precision in every character.',
-    price: 850,
+    price: 85,
     rarity: 'Uncommon',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -275,7 +275,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-montserrat',
     name: 'Montserrat Bold',
     description: 'Classic geometric elegance for your name.',
-    price: 900,
+    price: 90,
     rarity: 'Uncommon',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -284,7 +284,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-lato',
     name: 'Lato Smooth',
     description: 'A balanced and friendly presentation.',
-    price: 950,
+    price: 95,
     rarity: 'Uncommon',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -293,7 +293,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-oswald',
     name: 'Oswald Compressed',
     description: 'Vertical authority for a commanding presence.',
-    price: 1000,
+    price: 100,
     rarity: 'Uncommon',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -302,7 +302,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-source',
     name: 'Source Code',
     description: 'The hacker-elite aesthetic for developers.',
-    price: 1100,
+    price: 110,
     rarity: 'Uncommon',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -311,7 +311,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-open',
     name: 'Open Sans Clean',
     description: 'The most readable choice for long focus sessions.',
-    price: 750,
+    price: 75,
     rarity: 'Uncommon',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -320,7 +320,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-bebas',
     name: 'Bebas Vanguard',
     description: 'The standard for high-impact esports titles.',
-    price: 2500,
+    price: 250,
     rarity: 'Rare',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -329,7 +329,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-playfair',
     name: 'Playfair Royal',
     description: 'Sophisticated serif styling for the elite.',
-    price: 2800,
+    price: 280,
     rarity: 'Rare',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -338,7 +338,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-space',
     name: 'Space Grotesk',
     description: 'A futuristic twist on a classic design.',
-    price: 3000,
+    price: 300,
     rarity: 'Rare',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -347,7 +347,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-syne',
     name: 'Syne Artistic',
     description: 'Experimental and bold, for the unique.',
-    price: 3200,
+    price: 320,
     rarity: 'Rare',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -356,7 +356,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-orbitron',
     name: 'Orbitron Command',
     description: 'Straight from the starship bridge.',
-    price: 5500,
+    price: 550,
     rarity: 'Epic',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -365,7 +365,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-righteous',
     name: 'Righteous Wave',
     description: 'Retro-futuristic vibes with a clean edge.',
-    price: 6000,
+    price: 600,
     rarity: 'Epic',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -374,7 +374,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-cinzel',
     name: 'Cinzel Decorative',
     description: 'Inspired by ancient Roman inscriptions.',
-    price: 6500,
+    price: 650,
     rarity: 'Epic',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -383,7 +383,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-uncial',
     name: 'Uncial Antiqua',
     description: 'Ancient mystical scrolls in digital form.',
-    price: 9000,
+    price: 900,
     rarity: 'Legendary',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -392,7 +392,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-press',
     name: 'Press Start Retro',
     description: '8-bit nostalgia for the pixel pioneers.',
-    price: 9500,
+    price: 950,
     rarity: 'Legendary',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -401,7 +401,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'fnt-metal',
     name: 'Metal Mania',
     description: 'The ultimate dark-prestige typography.',
-    price: 15000,
+    price: 1500,
     rarity: 'Mythic',
     category: 'Username Fonts',
     section: 'Username Fonts'
@@ -412,7 +412,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-2x-week',
     name: '2x XP Weekly Rush',
     description: 'A permanent 2x personal XP multiplier that lasts the entire week until the Sunday hard reset.',
-    price: 30000,
+    price: 3000,
     rarity: 'Mythic',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -421,7 +421,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-sabotage',
     name: 'Sabotage',
     description: 'Target another user and instantly halve their weekly XP. A cruel but effective tactic.',
-    price: 50000,
+    price: 5000,
     rarity: 'Mythic',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -430,7 +430,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-10x-global',
     name: 'The Global Catalyst',
     description: 'Secretly triggers a GLOBAL 10x XP multiplier for 1 hour. Anyone who ends their session during this hidden hour receives the multiplier.',
-    price: 75000,
+    price: 7500,
     rarity: 'Ascendant',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -439,7 +439,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-2x-sess',
     name: '2x XP Session Boost',
     description: 'Applies 2x XP to ONE session only.',
-    price: 2000,
+    price: 200,
     rarity: 'Rare',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -448,7 +448,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-1.5x-hour',
     name: '1.5x XP Hour Boost',
     description: 'Applies 1.5x XP for 1 hour of activity.',
-    price: 1200,
+    price: 120,
     rarity: 'Rare',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -457,7 +457,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-2x-day',
     name: '2x XP Daily Rush',
     description: 'Double XP for the entire 24-hour period.',
-    price: 5000,
+    price: 500,
     rarity: 'Legendary',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -466,7 +466,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-mini-sabotage',
     name: 'Mini-Sabotage',
     description: 'Use this boost to deduct 50 XP from any user. (Team Only)',
-    price: 750,
+    price: 75,
     rarity: 'Uncommon',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -475,7 +475,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-purple-fever',
     name: 'Purple Fever',
     description: 'A special sabotage. Target loses 200 XP, and the next 3 people they send coins to also lose 50 XP each. (Team Only)',
-    price: 4500,
+    price: 450,
     rarity: 'Epic',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -484,7 +484,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-anti-viral',
     name: 'Anti-Viral',
     description: 'Protects you from any kind of sabotage for 24 hours. (Team Only)',
-    price: 6000,
+    price: 600,
     rarity: 'Legendary',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -493,7 +493,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-vampire',
     name: 'Vampire',
     description: 'Reduce another user\'s total XP by half, but your own XP gets reset to 0. (Team Only)',
-    price: 40000,
+    price: 4000,
     rarity: 'Mythic',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -502,7 +502,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-xp-generator',
     name: 'XP Generator',
     description: 'Doubles the XP multiplier for your entire squad until the Sunday weekly hard reset. (Team Only)',
-    price: 100000,
+    price: 10000,
     rarity: 'Ascendant',
     category: 'XP Multipliers',
     section: 'Boosts'
@@ -513,7 +513,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-streak-prot',
     name: 'Streak Protection',
     description: 'Protects one missed daily consistency day. (1/week)',
-    price: 2500,
+    price: 250,
     rarity: 'Epic',
     category: 'Streak Protection',
     section: 'Boosts'
@@ -525,7 +525,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-wr-amp',
     name: 'Weekend Rush Amplifier',
     description: 'Gain additional bonus XP during Weekend Rush.',
-    price: 4000,
+    price: 400,
     rarity: 'Legendary',
     category: 'Events',
     section: 'Boosts'
@@ -534,7 +534,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'bst-sq-boost',
     name: 'Squad Contribution Booster',
     description: 'Temporarily increases your squad XP multiplier.',
-    price: 7500,
+    price: 750,
     rarity: 'Mythic',
     category: 'Events',
     section: 'Boosts'
@@ -556,7 +556,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-white-mode',
     name: 'White Mode',
     description: 'A bright, clean interface theme.',
-    price: 500,
+    price: 250,
     rarity: 'Uncommon',
     category: 'Themes',
     section: 'Themes',
@@ -569,7 +569,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-neon-blue',
     name: 'Neon Blue Shade',
     description: 'A vibrant blue accent theme.',
-    price: 1000,
+    price: 500,
     rarity: 'Rare',
     category: 'Themes',
     section: 'Themes',
@@ -580,7 +580,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-neon-cyan',
     name: 'Neon Cyan Shade',
     description: 'A bright cyan accent theme.',
-    price: 1000,
+    price: 500,
     rarity: 'Rare',
     category: 'Themes',
     section: 'Themes',
@@ -591,7 +591,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-neon-yellow',
     name: 'Neon Yellow Shade',
     description: 'A striking yellow accent theme.',
-    price: 1000,
+    price: 500,
     rarity: 'Rare',
     category: 'Themes',
     section: 'Themes',
@@ -602,7 +602,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-neon-pink',
     name: 'Neon Pink Shade',
     description: 'A bold pink accent theme.',
-    price: 1000,
+    price: 500,
     rarity: 'Rare',
     category: 'Themes',
     section: 'Themes',
@@ -613,7 +613,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-neon-violet',
     name: 'Neon Violet Shade',
     description: 'A deep violet accent theme.',
-    price: 1000,
+    price: 500,
     rarity: 'Rare',
     category: 'Themes',
     section: 'Themes',
@@ -624,7 +624,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-neon-orange',
     name: 'Neon Orange Shade',
     description: 'An energetic orange accent theme.',
-    price: 1000,
+    price: 500,
     rarity: 'Rare',
     category: 'Themes',
     section: 'Themes',
@@ -635,7 +635,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-neon-red',
     name: 'Neon Red Shade',
     description: 'An intense red accent theme.',
-    price: 1000,
+    price: 500,
     rarity: 'Rare',
     category: 'Themes',
     section: 'Themes',
@@ -648,7 +648,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-abyssal-waters',
     name: 'Abyssal Waters',
     description: 'Dive deep. A dark, oceanic interface with bioluminescent cyan accents.',
-    price: 1500,
+    price: 750,
     rarity: 'Epic',
     category: 'Themes',
     section: 'Themes',
@@ -659,7 +659,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-scorched-sands',
     name: 'Scorched Sands',
     description: 'A blistering desert interface bathed in golden hour heat.',
-    price: 1500,
+    price: 750,
     rarity: 'Epic',
     category: 'Themes',
     section: 'Themes',
@@ -670,7 +670,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-cosmic-void',
     name: 'Cosmic Void',
     description: 'An endless starry expanse with deep nebular violet accents.',
-    price: 1500,
+    price: 750,
     rarity: 'Epic',
     category: 'Themes',
     section: 'Themes',
@@ -681,7 +681,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-arctic-tundra',
     name: 'Arctic Tundra',
     description: 'A dim, frostbitten interface with icy blue and slate tones.',
-    price: 1500,
+    price: 750,
     rarity: 'Epic',
     category: 'Themes',
     section: 'Themes',
@@ -692,7 +692,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-emerald-canopy',
     name: 'Emerald Canopy',
     description: 'A deep rainforest aesthetic with lush green ambient lighting.',
-    price: 1500,
+    price: 750,
     rarity: 'Epic',
     category: 'Themes',
     section: 'Themes',
@@ -703,11 +703,24 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-timberline-range',
     name: 'Timberline Range',
     description: 'An earthy mountain aesthetic with rich brown tones and mossy green accents.',
-    price: 1500,
+    price: 750,
     rarity: 'Epic',
     category: 'Themes',
     section: 'Themes',
     image: '/mountain_logo.png',
     heading: 'Biomes'
+  },
+
+  // --- ANIME SERIES ---
+  {
+    id: 'thm-demon-slayer',
+    name: 'Wisteria - Kimetsu No Yaiba',
+    description: 'The night is ruled by demons — but not for long. A legendary Demon Slayer theme bathed in wisteria purple, moonlit shadows, and the sound of Total Concentration Breathing.',
+    price: 2500,
+    rarity: 'Legendary',
+    category: 'Themes',
+    section: 'Themes',
+    image: '/anime_ds_logo.png',
+    heading: 'Anime Series'
   }
 ];

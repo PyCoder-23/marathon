@@ -1,34 +1,40 @@
-# 📢 **Marathon Bot Updates – New Team Exchange System & Timer Enhancements**
+# 📢 **Marathon Server Updates – Timelapse, Shop Price Slash & New Themes!**
 
 ---
 
-## 🔄 New Team‑Exchange Workflow
+## 🎥 **The Timelapse Feature is now LIVE!**
+A massive shoutout to **Benight** (savyasachi) for making this possible! 
+For the remainder of this challenge, all users can test and try out the brand new Timelapse website. Watch your progress unfold over time and see the marathon in action!
 
-We've added a **7‑day cooldown** to protect squad balance and prevent rapid swapping.
+👉 **Try it here:** [project-marathon.vercel.app/timelapse](https://project-marathon.vercel.app/timelapse)
 
-**How it works**
-- Use `/exchange-teams @User` to propose a swap.
-- The target must accept with `/exchange‑accept` or decline with `/exchange‑deny`.
-- **Both participants** receive a 7‑day cooldown after a successful swap. While on cooldown they **cannot** initiate **or** be part of another exchange.
-- If you attempt an exchange while on cooldown you’ll see a message like:
-  > ⏳ **COOLDOWN ACTIVE:** You can initiate another exchange <t:1701234567:R> (on <t:1701234567:F>).
-- Team Leaders (role ID `1500546046907125962`) are **blocked** from swapping.
-
-**What you’ll see**
-- Successful swaps embed a **cooldown timestamp** for both users.
-- DMs to the initiator also contain the cooldown expiry.
+*If you run into any issues or bugs while testing, please report them directly to **@benight**.*
 
 ---
 
-## ⏱️ Timer (`/timer`) Enhancements
+## 📉 **MASSIVE Shop Price Reductions!**
+We've been listening to your feedback, and the economy has been heavily adjusted! 
+- **ALL standard items** (Nameplates, Banners, Fonts, PFP Decorations) have been reduced to **1/10th** of their original price!
+- **ALL Themes** (Biomes, Shades, Classics, and Anime) have had their prices slashed by a massive **50%**!
 
-We’ve expanded proof submission and added smarter handling:
-- **Proof types now include:** Video, PDF, Text, Link **and** images.
-- At least **one proof of any type** is required – you no longer need to provide every type.
-- If a proof exceeds Discord’s size limits, the timer **auto‑pauses** and the user receives a prompt to reduce the file size.
-- UI now shows session status (`▶️ Running` or `⏸️ Paused`).
-- Attachment slots reduced to **24 + 1 link** to stay within Discord’s 25‑option limit.
+Now is the absolute perfect time to spend your hard-earned coins and grab that aesthetic you've been eyeing!
 
 ---
 
-Feel free to try the new commands and let us know if you encounter any issues! 🎉
+## 🎧 **Immersive Theme Upgrades**
+The themes just got a massive feature upgrade! We've introduced **Dynamic Audio Integration**. 
+Whenever you equip one of the 6 Epic Biome themes (Abyssal Waters, Scorched Sands, Cosmic Void, Arctic Tundra, Emerald Canopy, or Timberline Range), a custom, high-quality environmental soundtrack will automatically loop in the background to set the perfect vibe for your grind. 
+
+*(Don't worry, you can easily pause/play the music at any time using the new audio control button right in the top Navbar!)*
+
+---
+
+## 🗡️ **The First LEGENDARY Theme is Here: Demon Slayer**
+We are incredibly proud to introduce our very first Legendary tier theme: **Wisteria - Kimetsu No Yaiba**!
+Equipping this masterpiece doesn't just change your UI colors. It completely overhauls the experience with:
+- A custom aesthetic logo
+- An immersive Demon Slayer soundtrack
+- A fully custom Nezuko cursor
+- And an interactive Tanjiro at the bottom of your screen who actively cheers you on and drops motivational dialogue during your marathon! 
+
+Head over to the shop to check out these massive upgrades. Let's keep the momentum going! 🚀

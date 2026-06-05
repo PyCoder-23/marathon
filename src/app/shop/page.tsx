@@ -118,7 +118,8 @@ export default function ShopPage() {
         const orderMap: Record<string, number> = {
           'Classics': 1,
           'Shades': 2,
-          'Biomes': 3
+          'Biomes': 3,
+          'Anime Series': 4,
         };
 
         if (headingA !== headingB) {

@@ -187,3 +187,232 @@
     gap: 1rem;
   }
 }
+
+/* ══════════════════════════════════════════
+   DEMON SLAYER CINEMATIC FOOTER
+   ══════════════════════════════════════════ */
+
+.footerDemonSlayer {
+  position: relative;
+  height: 520px;
+  overflow: hidden;
+  margin-top: 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Village night scene — full bleed background */
+.dsSceneBg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/ds_footer_scene.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  z-index: 0;
+}
+
+/* Layered gradient overlay for readability */
+.dsSceneOverlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom,
+      rgba(6, 1, 15, 0.78) 0%,
+      rgba(6, 1, 15, 0.35) 40%,
+      rgba(6, 1, 15, 0.25) 60%,
+      rgba(6, 1, 15, 0.85) 88%,
+      rgba(6, 1, 15, 0.97) 100%
+    );
+  z-index: 1;
+}
+
+/* Brand card — glassmorphism pill top-left */
+.dsBrandCard {
+  position: absolute;
+  top: 1.8rem;
+  left: 2rem;
+  z-index: 10;
+  background: rgba(6, 1, 15, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(123, 47, 201, 0.25);
+  border-radius: 16px;
+  padding: 1.4rem 1.8rem;
+  max-width: 280px;
+}
+
+.dsBrandName {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+  color: #7b2fc9;
+  margin: 0;
+}
+
+.dsDescription {
+  color: rgba(184, 159, 212, 0.85);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  margin: 0.8rem 0 1.2rem 0;
+  max-width: 230px;
+}
+
+.dsSocialLink {
+  width: 36px;
+  height: 36px;
+  background: rgba(123, 47, 201, 0.12);
+  border: 1px solid rgba(123, 47, 201, 0.25);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b89fd4;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.dsSocialLink:hover {
+  background: rgba(123, 47, 201, 0.3);
+  color: #f9f0ff;
+  border-color: #7b2fc9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(123, 47, 201, 0.35);
+}
+
+/* Links — floating in the sky (top-right area) */
+.dsLinksFloat {
+  position: absolute;
+  top: 2rem;
+  right: 2.5rem;
+  z-index: 10;
+  display: flex;
+  gap: 3.5rem;
+}
+
+.dsLinkGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dsGroupTitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: rgba(123, 47, 201, 0.9);
+  letter-spacing: 0.18em;
+  margin-bottom: 0.8rem;
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(123, 47, 201, 0.5);
+}
+
+.dsLinks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dsLinks a {
+  text-decoration: none;
+  color: rgba(249, 240, 255, 0.85);
+  font-size: 0.88rem;
+  transition: all 0.3s ease;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
+  font-weight: 500;
+}
+
+.dsLinks a:hover {
+  color: #c084fc;
+  text-shadow: 0 0 12px rgba(192, 132, 252, 0.6);
+}
+
+/* Characters along the path */
+.dsCharacterRow {
+  position: absolute;
+  bottom: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.dsCharacter {
+  height: 150px;
+  width: auto;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 10px rgba(123, 47, 201, 0.4));
+}
+
+/* Bottom bar */
+.dsBottomBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 2rem;
+  background: rgba(6, 1, 15, 0.92);
+  border-top: 1px solid rgba(123, 47, 201, 0.2);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dsCopyright {
+  color: #6e5589;
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.dsStatusDot {
+  width: 8px;
+  height: 8px;
+  background-color: #7b2fc9;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #7b2fc9;
+  animation: pulse 2s infinite;
+}
+
+/* Mobile: collapse layout */
+@media (max-width: 768px) {
+  .footerDemonSlayer {
+    height: auto;
+    min-height: 420px;
+  }
+
+  .dsBrandCard {
+    position: relative;
+    top: auto;
+    left: auto;
+    max-width: 100%;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    margin: 0;
+  }
+
+  .dsLinksFloat {
+    position: relative;
+    top: auto;
+    right: auto;
+    padding: 1.5rem 1.5rem 0;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .dsSceneBg {
+    opacity: 0.6;
+  }
+}

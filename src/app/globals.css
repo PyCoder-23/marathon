@@ -199,6 +199,193 @@ body.theme-timberline-range {
   --glass-border: rgba(132, 204, 22, 0.1);
 }
 
+/* ════════════════════════════════════════════
+   LEGENDARY — ANIME SERIES: Demon Slayer
+   Kimetsu no Yaiba  |  thm-demon-slayer
+   ════════════════════════════════════════════ */
+body.theme-demon-slayer {
+  --background: #06010f;
+  --foreground: #f9f0ff;
+  --surface: #0d0420;
+  --surface-hover: #160830;
+  --border: rgba(123, 47, 201, 0.18);
+  --border-strong: rgba(123, 47, 201, 0.45);
+
+  --accent: #7b2fc9;
+  --accent-soft: rgba(123, 47, 201, 0.12);
+  --accent-glow: rgba(123, 47, 201, 0.55);
+  --accent-deep: #5c1fa0;
+
+  --text-primary: #f9f0ff;
+  --text-secondary: #b89fd4;
+  --text-muted: #6e5589;
+
+  --glass-bg: rgba(6, 1, 15, 0.88);
+  --glass-border: rgba(123, 47, 201, 0.12);
+}
+
+/* Custom Cursor */
+body.theme-demon-slayer,
+body.theme-demon-slayer * {
+  cursor: url('/ds_mouse.png') 0 0, auto;
+}
+
+body.theme-demon-slayer a,
+body.theme-demon-slayer button,
+body.theme-demon-slayer [role="button"],
+body.theme-demon-slayer input,
+body.theme-demon-slayer select,
+body.theme-demon-slayer textarea,
+body.theme-demon-slayer .button-primary,
+body.theme-demon-slayer .link {
+  cursor: url('/ds_click_hover.png') 0 0, pointer !important;
+}
+
+/* Atmospheric background — demon fire ember + moonlight bloom */
+body.theme-demon-slayer::before {
+  background:
+    radial-gradient(ellipse at 15% 95%, rgba(180, 40, 20, 0.14) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 5%, rgba(100, 60, 200, 0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(123, 47, 201, 0.06) 0%, transparent 60%);
+}
+
+/* Diagonal speed lines — breathing technique visual */
+body.theme-demon-slayer::after {
+  background-image:
+    repeating-linear-gradient(
+      12deg,
+      rgba(123, 47, 201, 0.025) 0px,
+      transparent 1px,
+      transparent 55px,
+      rgba(123, 47, 201, 0.015) 56px,
+      transparent 57px,
+      transparent 110px
+    );
+  background-size: 100% 100%;
+  opacity: 0.7;
+}
+
+/* Navbar — purple treatment */
+body.theme-demon-slayer .logo span {
+  background: linear-gradient(to right, #ffffff, #7b2fc9) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
+body.theme-demon-slayer .link::after {
+  background: #7b2fc9 !important;
+  box-shadow: 0 0 10px rgba(123, 47, 201, 0.6) !important;
+}
+
+body.theme-demon-slayer .active {
+  color: #7b2fc9 !important;
+}
+
+body.theme-demon-slayer .profileBadge:hover {
+  border-color: #7b2fc9 !important;
+  box-shadow: 0 0 15px rgba(123, 47, 201, 0.4) !important;
+}
+
+body.theme-demon-slayer .avatar {
+  border-color: #7b2fc9 !important;
+}
+
+body.theme-demon-slayer .joinBtn {
+  background: #7b2fc9 !important;
+  box-shadow: 0 0 20px rgba(123, 47, 201, 0.4) !important;
+}
+
+body.theme-demon-slayer .joinBtn:hover {
+  box-shadow: 0 0 30px rgba(123, 47, 201, 0.65) !important;
+}
+
+body.theme-demon-slayer .dropdownItem:hover {
+  color: #7b2fc9 !important;
+}
+
+body.theme-demon-slayer .dropdownItem:hover .itemIcon {
+  color: #7b2fc9 !important;
+}
+
+/* Primary button — wisteria sword / fiery blaze */
+body.theme-demon-slayer .button-primary {
+  background: linear-gradient(135deg, #7b2fc9 0%, #5c1fa0 100%);
+  box-shadow: 0 0 22px rgba(123, 47, 201, 0.55);
+  border: 1px solid rgba(200, 150, 255, 0.15);
+  position: relative;
+}
+
+/* Fiery blaze beneath button on hover */
+body.theme-demon-slayer .button-primary::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 10%;
+  width: 80%;
+  height: 25px;
+  background: radial-gradient(ellipse at center, rgba(255, 80, 0, 0.85) 0%, rgba(255, 40, 0, 0) 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  filter: blur(10px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+body.theme-demon-slayer .button-primary:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 10px 30px -5px rgba(255, 60, 0, 0.6), 0 0 15px rgba(255, 100, 0, 0.4);
+  border-color: rgba(255, 120, 0, 0.6);
+}
+
+body.theme-demon-slayer .button-primary:hover::after {
+  opacity: 1;
+  animation: fieryFlicker 0.6s infinite alternate;
+}
+
+@keyframes fieryFlicker {
+  0% { opacity: 0.7; transform: scaleX(0.9); }
+  100% { opacity: 1; transform: scaleX(1.1); }
+}
+
+/* Cards — purple hover */
+body.theme-demon-slayer .card:hover {
+  border-color: rgba(123, 47, 201, 0.4) !important;
+  box-shadow: 0 10px 30px -10px rgba(123, 47, 201, 0.25) !important;
+}
+
+/* Text gradient — parchment to lavender */
+body.theme-demon-slayer .text-gradient {
+  background: linear-gradient(to bottom, #f9f0ff, #b89fd4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Section label — wisteria color */
+body.theme-demon-slayer .section-label {
+  color: #7b2fc9;
+}
+
+/* Manga-panel accent bar on headings */
+body.theme-demon-slayer h2,
+body.theme-demon-slayer h3 {
+  position: relative;
+}
+
+body.theme-demon-slayer h2::before,
+body.theme-demon-slayer h3::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 0.9em;
+  background: linear-gradient(to bottom, #7b2fc9, #00c8f8);
+  margin-right: 0.55rem;
+  border-radius: 2px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 4px;
@@ -216,6 +403,16 @@ body.theme-timberline-range {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent);
+}
+
+/* DS scrollbar override */
+body.theme-demon-slayer ::-webkit-scrollbar-thumb {
+  background: #7b2fc9;
+  box-shadow: 0 0 6px rgba(123, 47, 201, 0.6);
+}
+
+body.theme-demon-slayer ::-webkit-scrollbar-thumb:hover {
+  background: #9b4fe9;
 }
 
 * {

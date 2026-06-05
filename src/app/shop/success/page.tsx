@@ -63,7 +63,8 @@ function SuccessContent() {
     const categoryPrefix =
       category === 'Nameplates' ? 'np-' :
         category === 'PFP Decorations' ? 'pfp-' :
-          category === 'Username Fonts' ? 'fnt-' : 'bst-';
+          category === 'Username Fonts' ? 'fnt-' : 
+            category === 'Themes' ? 'thm-' : 'bst-';
 
     const savedEquipped = localStorage.getItem("equippedItems");
     let equippedList = savedEquipped ? JSON.parse(savedEquipped) : ['np-default', 'pfp-default', 'fnt-default'];
@@ -75,6 +76,7 @@ function SuccessContent() {
     
     // Save back
     localStorage.setItem("equippedItems", JSON.stringify(equippedList));
+    window.dispatchEvent(new Event("equippedItemsUpdated"));
 
     let discordId = "";
     if (user) {

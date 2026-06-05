@@ -1,22 +1,79 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import AnimeOverlay from "./AnimeOverlay";
 
 type ThemeContextType = {
   activeTheme: string | null;
   logoSrc: string;
+  isMusicPlaying: boolean;
+  hasThemeMusic: boolean;
+  toggleMusic: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextType>({
   activeTheme: null,
   logoSrc: "/logo.png",
+  isMusicPlaying: false,
+  hasThemeMusic: false,
+  toggleMusic: () => {},
 });
 
 export const useTheme = () => useContext(ThemeContext);
 
+const THEME_MUSIC: Record<string, string> = {
+  "thm-demon-slayer": "/ds_music.mp3",
+  "thm-abyssal-waters": "/abyssal_waters.mp3",
+  "thm-arctic-tundra": "/arctic_tundra.mp3",
+  "thm-cosmic-void": "/cosmic_void.mp3",
+  "thm-emerald-canopy": "/emerald_canopy.mp3",
+  "thm-scorched-sands": "/scorched_sands.mp3",
+  "thm-timberline-range": "/timberline_range.mp3",
+};
+
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [activeTheme, setActiveTheme] = useState<string | null>(null);
   const [logoSrc, setLogoSrc] = useState<string>("/logo.png");
+  
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [hasThemeMusic, setHasThemeMusic] = useState(false);
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  // Manage music when theme changes
+  useEffect(() => {
+    if (activeTheme && THEME_MUSIC[activeTheme]) {
+      setHasThemeMusic(true);
+      if (audioRef.current) {
+        audioRef.current.src = THEME_MUSIC[activeTheme];
+        audioRef.current.loop = true;
+        audioRef.current.play().then(() => {
+          setIsMusicPlaying(true);
+        }).catch((e) => {
+          console.warn("Autoplay blocked by browser:", e);
+          setIsMusicPlaying(false);
+        });
+      }
+    } else {
+      setHasThemeMusic(false);
+      setIsMusicPlaying(false);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+    }
+  }, [activeTheme]);
+
+  const toggleMusic = () => {
+    if (!audioRef.current || !hasThemeMusic) return;
+    if (isMusicPlaying) {
+      audioRef.current.pause();
+      setIsMusicPlaying(false);
+    } else {
+      audioRef.current.play().then(() => {
+        setIsMusicPlaying(true);
+      }).catch(e => console.error("Error playing audio:", e));
+    }
+  };
 
   useEffect(() => {
     const checkTheme = () => {
@@ -57,6 +114,9 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
             } else if (theme === "thm-timberline-range") {
               setLogoSrc("/mountain_logo.png");
               document.body.classList.add("theme-timberline-range");
+            } else if (theme === "thm-demon-slayer") {
+              setLogoSrc("/anime_ds_logo.png");
+              document.body.classList.add("theme-demon-slayer");
             } else if (theme.startsWith("thm-neon-")) {
               const color = theme.replace("thm-neon-", "");
               setLogoSrc(`/${color}_logo.png`);
@@ -94,7 +154,9 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ activeTheme, logoSrc }}>
+    <ThemeContext.Provider value={{ activeTheme, logoSrc, isMusicPlaying, hasThemeMusic, toggleMusic }}>
+      <audio ref={audioRef} />
+      {activeTheme === 'thm-demon-slayer' && <AnimeOverlay />}
       {children}
     </ThemeContext.Provider>
   );
