@@ -224,6 +224,48 @@ body.theme-demon-slayer {
   --glass-border: rgba(123, 47, 201, 0.12);
 }
 
+/* ════════════════════════════════════════════
+   LEGENDARY — ANIME SERIES: Jujutsu Kaisen
+   Malevolent Shrine  |  thm-malevolent-shrine
+   ════════════════════════════════════════════ */
+body.theme-malevolent-shrine {
+  --background: #030000;
+  --foreground: #ffeded;
+  --surface: #0a0101;
+  --surface-hover: #140202;
+  --border: rgba(220, 38, 38, 0.15);
+  --border-strong: rgba(220, 38, 38, 0.4);
+
+  --accent: #dc2626; /* Bright aggressive red */
+  --accent-soft: rgba(220, 38, 38, 0.12);
+  --accent-glow: rgba(220, 38, 38, 0.55);
+  --accent-deep: #991b1b;
+
+  --text-primary: #ffeded;
+  --text-secondary: #fca5a5;
+  --text-muted: #991b1b;
+
+  --glass-bg: rgba(3, 0, 0, 0.9);
+  --glass-border: rgba(220, 38, 38, 0.15);
+}
+
+/* Malevolent Shrine Cursor */
+body.theme-malevolent-shrine,
+body.theme-malevolent-shrine * {
+  cursor: url('/sukuna_finger_small.png') 0 0, auto;
+}
+
+body.theme-malevolent-shrine a,
+body.theme-malevolent-shrine button,
+body.theme-malevolent-shrine [role="button"],
+body.theme-malevolent-shrine input,
+body.theme-malevolent-shrine select,
+body.theme-malevolent-shrine textarea,
+body.theme-malevolent-shrine .button-primary,
+body.theme-malevolent-shrine .link {
+  cursor: url('/sukuna_finger_hover_small.png') 0 0, pointer !important;
+}
+
 /* Custom Cursor */
 body.theme-demon-slayer,
 body.theme-demon-slayer * {

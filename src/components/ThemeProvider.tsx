@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AnimeOverlay from "./AnimeOverlay";
+import JJKOverlay from "./JJKOverlay";
 
 type ThemeContextType = {
   activeTheme: string | null;
@@ -23,6 +24,7 @@ export const useTheme = () => useContext(ThemeContext);
 
 const THEME_MUSIC: Record<string, string> = {
   "thm-demon-slayer": "/ds_music.mp3",
+  "thm-malevolent-shrine": "/jjkms_music.mp3",
   "thm-abyssal-waters": "/abyssal_waters.mp3",
   "thm-arctic-tundra": "/arctic_tundra.mp3",
   "thm-cosmic-void": "/cosmic_void.mp3",
@@ -117,6 +119,9 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
             } else if (theme === "thm-demon-slayer") {
               setLogoSrc("/anime_ds_logo.png");
               document.body.classList.add("theme-demon-slayer");
+            } else if (theme === "thm-malevolent-shrine") {
+              setLogoSrc("/jjk_logo.png");
+              document.body.classList.add("theme-malevolent-shrine");
             } else if (theme.startsWith("thm-neon-")) {
               const color = theme.replace("thm-neon-", "");
               setLogoSrc(`/${color}_logo.png`);
@@ -157,6 +162,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     <ThemeContext.Provider value={{ activeTheme, logoSrc, isMusicPlaying, hasThemeMusic, toggleMusic }}>
       <audio ref={audioRef} />
       {activeTheme === 'thm-demon-slayer' && <AnimeOverlay />}
+      {activeTheme === 'thm-malevolent-shrine' && <JJKOverlay />}
       {children}
     </ThemeContext.Provider>
   );

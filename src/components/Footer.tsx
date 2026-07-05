@@ -17,6 +17,7 @@ const Footer = () => {
   }, []);
 
   const isDemonSlayer = mounted && activeTheme === 'thm-demon-slayer';
+  const isJJK = mounted && activeTheme === 'thm-malevolent-shrine';
 
   if (isDemonSlayer) {
     return (
@@ -126,6 +127,21 @@ const Footer = () => {
               </a>
             </div>
           </div>
+
+          {isJJK && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '1 1 200px' }}>
+              <img 
+                src="/footer_jjk.png" 
+                alt="JJK" 
+                style={{ 
+                  height: '220px', 
+                  width: 'auto', 
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 0 20px rgba(220, 38, 38, 0.4))'
+                }} 
+              />
+            </div>
+          )}
 
           <div className={styles.linksGrid}>
             <div className={styles.linkGroup}>
