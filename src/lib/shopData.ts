@@ -727,7 +727,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     id: 'thm-malevolent-shrine',
     name: 'Malevolent Shrine - Jujutsu Kaisen',
     description: 'A domain expansion of pure discipline. A legendary Jujutsu Kaisen theme drenched in deep crimson, falling embers, and the overwhelming presence of the King of Curses.',
-    price: 2500,
+    price: 3000,
     rarity: 'Legendary',
     category: 'Themes',
     section: 'Themes',

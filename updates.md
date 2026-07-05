@@ -29,6 +29,15 @@ Whenever you equip one of the 6 Epic Biome themes (Abyssal Waters, Scorched Sand
 
 ---
 
+## 🔥 **NEW LEGENDARY THEME: Malevolent Shrine (Jujutsu Kaisen)**
+A brand new domain expansion has hit the shop! Equip the **Malevolent Shrine** theme to completely overhaul your dashboard into a dark, aggressive, cursed environment.
+- Fully customized JJK dashboard aesthetics (blood red & pitch black).
+- King of Curses audio track and atmospheric background.
+- Floating cursed embers and custom Sukuna finger cursors.
+- Available now in the shop for **3,000 coins**!
+
+---
+
 ## 🗡️ **The First LEGENDARY Theme is Here: Demon Slayer**
 We are incredibly proud to introduce our very first Legendary tier theme: **Wisteria - Kimetsu No Yaiba**!
 Equipping this masterpiece doesn't just change your UI colors. It completely overhauls the experience with:
