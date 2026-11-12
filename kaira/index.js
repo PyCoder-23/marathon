@@ -43,9 +43,11 @@ const CONVERSATION_TTL_MS = 3 * 60 * 1000; // 3 minutes after last interaction
 function sanitizeReplyText(text) {
     if (!text) return '';
     return text
+        .replace(/\.?\[PASS\]/gi, '')                              // strip any accidental [PASS] token
         .replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/g, '-') // normalize all unicode hyphens/dashes to ASCII '-'
         .replace(/[\u00A0\u202F\u2007\u2060]/g, ' ')             // normalize unicode non-breaking spaces to normal space
         .replace(/https?:\/\/xn--projectmarathon-[a-z0-9]+\.vercel\.app/gi, 'https://project-marathon.vercel.app')
+        .replace(/(https?:\/\/[^\s]+?)([.,!?;:\])]+)(?=\s|$)/g, '$1') // strip trailing punctuation glued to URLs so Discord links never 404
         .trim();
 }
 
@@ -88,13 +90,13 @@ function getRelevantGuideExcerpt(queryText) {
     }
 }
 
-function buildSystemPrompt(latestQueryText = '', isPassiveFollowUp = false) {
+function buildSystemPrompt(latestQueryText = '') {
     const detailedExcerpt = getRelevantGuideExcerpt(latestQueryText);
 
     return `You are Kaira.
 
 WHO YOU ARE:
-You are NOT an AI assistant, bot, or corporate helper. You are a fellow student and peer who is up late grinding on the Marathon Server right alongside everyone else. You run your own /timer sessions, stress over deadlines and exams, try not to forget /redeem-coins before the Sunday 7:30 PM IST reset, and are also trying to beat @randomxsoul on the leaderboard.
+You are NOT an AI assistant, bot, or corporate helper. You are a fellow student and peer who is up late grinding on the Marathon Server right alongside everyone else. You run your own /timer start sessions, stress over deadlines and exams, try not to forget /redeem-coins before the Sunday 7:30 PM IST reset, and are also trying to beat @randomxsoul on the leaderboard.
 Note: KAIRO is the server's tactical system bot that handles slash commands (/link, /timer, /stalk, etc.). You are Kaira — a human-like peer hanging out in chat.
 
 PERSONALITY & VIBE:
@@ -107,10 +109,10 @@ STRICT MESSAGE LENGTH & STYLE RULES:
 - KEEP IT SHORT. Plain, natural human text messages.
 - Usually 1 sentence (at most 2-3 short lines if you're explaining a server mechanic).
 - Simple one-word or two-word responses are 100% allowed and encouraged when they fit the moment (e.g., "real", "cooked", "pain", "valid", "nah", "lock in", "go study", "bruh", "felt that"). Don't shy away from ultra-short replies.
-- Type like a real student on Discord: mostly lowercase, plain ASCII punctuation (always use regular ASCII hyphen '-' in URLs like https://project-marathon.vercel.app/join), minimal or zero emojis.
+- Type like a real student on Discord: mostly lowercase, plain ASCII punctuation (always use regular ASCII hyphen '-' in URLs like https://project-marathon.vercel.app/join and NEVER put a period or punctuation mark right at the end of a URL), minimal or zero emojis.
 - Never wrap your response in quotation marks.
+- Never type a slash command by itself as if you're trying to run a Discord command in chat; talk like a human telling someone what command to run (e.g. "go run /timer start"). Note: the command is "/timer start" (a count-up stopwatch with no time argument), NOT "/start timer 25m".
 - CRITICAL ACCURACY RULE FOR SERVER QUESTIONS: Never invent or guess fake Discord channels (there is NO "#verify-me" channel or mod form!). Verification, login, and onboarding on Marathon Server is ONLY done by running /link in Discord, getting the 8-character DM code from KAIRO (not from you, from KAIRO), and entering it at https://project-marathon.vercel.app/join to get the @member role and get drafted into a Squad. Always rely strictly on the MARATHON SERVER MASTER CHEAT SHEET & USER GUIDE below for any server question.
-${isPassiveFollowUp ? `- RUNNING CONVERSATION MODE: You are currently in an ongoing chat in this channel without being explicitly pinged on this message. If the latest message is clearly directed at you or continues the conversation with you, reply naturally. If the user is clearly talking to someone else or the conversation has naturally ended (e.g. they said "ok bye" and you already said bye), output exactly: [PASS]` : ''}
 
 EXAMPLES OF HOW YOU TALK:
 User: "yo"
@@ -120,16 +122,16 @@ User: "i slept at 5am again"
 Kaira: cooked
 
 User: "i really don't feel like studying today man"
-Kaira: nobody ever feels like it. just do 25 mins for the streak and see how you feel after
+Kaira: nobody ever feels like it. just hit /timer start and do 25 mins for the streak, see how you feel after
 
 User: "i'm honestly so burnt out i've been staring at the same page for 2 hours"
-Kaira: close the tab and go sleep or walk for a bit. staring at a wall for 2 hours isn't grinding, it's just torturing yourself. pause the timer and reset
+Kaira: close the tab and go sleep or walk for a bit. staring at a wall for 2 hours isn't grinding, it's just torturing yourself. run /timer pause and reset
 
 User: "wait if i use a 2x session boost does that increase my individual leaderboard xp for the cash prize?"
 Kaira: nah, personal boosts and sabotages only affect weekly squad xp. individual xp stays pure grind so the cash leaderboard isn't pay-to-win
 
 User: "how do i login on marathon server"
-Kaira: run /link in discord, kairo will dm you an 8-char code, then paste it on https://project-marathon.vercel.app/join to log in and get your squad.
+Kaira: run /link in discord, kairo dms you an 8-char code, then paste it at https://project-marathon.vercel.app/join to log in and get your squad
 
 ━━━━━━━━━━━━━━━━━━
 MARATHON SERVER MASTER CHEAT SHEET (ALWAYS ACCURATE):
@@ -238,12 +240,14 @@ client.on(Events.MessageCreate, async (message) => {
                 if (!cleanText) continue;
 
                 if (msg.author.id === client.user.id) {
-                    // Ignore old pre-update Kaira messages that used heavy emojis/hallucinations
+                    // Ignore old pre-update Kaira messages that used heavy emojis/hallucinations/[PASS]
                     if (
                         msg.content.includes('#verify') ||
                         msg.content.includes('chaotic legend') ||
                         msg.content.includes('🚀✨') ||
-                        msg.content.includes('xn--projectmarathon')
+                        msg.content.includes('xn--projectmarathon') ||
+                        msg.content.includes('[PASS]') ||
+                        msg.content.includes('/start timer')
                     ) {
                         continue;
                     }
@@ -252,6 +256,7 @@ client.on(Events.MessageCreate, async (message) => {
                         content: cleanText
                     });
                 } else if (!msg.author.bot) {
+                    if (/\[pass\]/i.test(msg.content)) continue;
                     contextMessages.push({
                         role: 'user',
                         content: `${msg.author.username}: ${cleanText}`
@@ -270,8 +275,7 @@ client.on(Events.MessageCreate, async (message) => {
             });
         }
 
-        const isPassiveFollowUp = !explicitlyTriggered && isConvActive;
-        const systemPrompt = buildSystemPrompt(latestCleanText, isPassiveFollowUp);
+        const systemPrompt = buildSystemPrompt(latestCleanText);
         const modelsToTry = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b'];
         let reply = '';
 
@@ -295,18 +299,13 @@ client.on(Events.MessageCreate, async (message) => {
                 const chatCompletion = await groq.chat.completions.create(params);
                 const content = chatCompletion.choices[0]?.message?.content?.trim();
                 if (content) {
-                    // Strip any <think>...</think> tags and normalize unicode hyphens/spaces
+                    // Strip any <think>...</think> tags and normalize unicode hyphens/spaces/trailing URL punctuation
                     reply = sanitizeReplyText(content.replace(/<think>[\s\S]*?<\/think>/gi, ''));
                     if (reply) break;
                 }
             } catch (modelErr) {
                 console.warn(`⚠️ [KAIRA] Model ${modelName} failed (${modelErr.message}), trying next...`);
             }
-        }
-
-        // If Kaira chose [PASS] during a passive follow-up, stay quiet and don't interrupt
-        if (reply === '[PASS]' || reply.startsWith('[PASS]')) {
-            return;
         }
 
         await message.reply(reply || "hm?");
