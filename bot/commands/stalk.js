@@ -55,6 +55,14 @@ module.exports = {
         const topMember = await User.findOne({ squad: targetTeam }).sort({ weeklySquadXp: -1 });
         const topMemberText = topMember ? `${topMember.username} (${(topMember.weeklySquadXp || 0).toLocaleString()} XP)` : '`None`';
 
+        const squadMembers = await User.find({ squad: targetTeam }, { discordId: 1 });
+        const squadMemberIds = squadMembers.map(m => m.discordId);
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const recentTeamSessions = squadMemberIds.length > 0
+          ? await Session.find({ discordId: { $in: squadMemberIds }, createdAt: { $gte: twentyFourHoursAgo } })
+          : [];
+        const teamLast24hXp = recentTeamSessions.reduce((sum, s) => sum + (s.squadXpGranted || s.xpGranted || 0), 0);
+
         const embed = new EmbedBuilder()
           .setTitle(`🛡️ TEAM PROFILE: ${targetTeam.toUpperCase()}`)
           .setDescription(`\`STATUS: ACTIVE\` | \`MEMBERS: ${memberCount}\``)
@@ -64,6 +72,7 @@ module.exports = {
             { name: 'Current Win Streak', value: `\`${squadHistory?.winStreak || 0}\``, inline: true },
             { name: 'Total XP', value: `\`${totalXp.toLocaleString()} XP\``, inline: true },
             { name: 'Weekly Squad XP', value: `\`${weeklyXp.toLocaleString()} XP\``, inline: true },
+            { name: 'XP (Last 24h)', value: `\`${teamLast24hXp.toLocaleString()} XP\``, inline: true },
             { name: 'Current MVP', value: topMemberText, inline: true }
           )
           .setColor('#ffaa00')
@@ -89,6 +98,14 @@ module.exports = {
 
       const totalSessions = await Session.countDocuments({ discordId });
       const completedTasks = await Task.countDocuments({ discordId, isCompleted: true });
+
+      // Calculate XP earned in the last 24 hours
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recent24hSessions = await Session.find({
+        discordId,
+        createdAt: { $gte: twentyFourHoursAgo }
+      });
+      const last24hXp = recent24hSessions.reduce((sum, s) => sum + (s.xpGranted || 0), 0);
 
       // Calculate Rank
       const allUsers = await User.find({}).sort({ weeklyXp: -1 });
@@ -180,6 +197,7 @@ module.exports = {
           { name: 'Global Rank', value: `#**${rank}**`, inline: true },
           { name: 'Weekly XP', value: `\`${(userDoc.weeklyXp || 0).toLocaleString()} XP\``, inline: true },
           { name: 'Weekly Squad XP', value: `\`${(userDoc.weeklySquadXp || 0).toLocaleString()} XP\``, inline: true },
+          { name: 'XP (Last 24h)', value: `\`${last24hXp.toLocaleString()} XP\``, inline: true },
           { name: 'Personal Treasury', value: `\`${(userDoc.coins || 0).toLocaleString()} Coins\``, inline: true },
           { name: 'Total XP', value: `\`${userDoc.xp.toLocaleString()} XP\``, inline: true },
           { name: 'Streak', value: `\`${displayStreak} Days\``, inline: true },

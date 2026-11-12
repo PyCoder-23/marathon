@@ -123,11 +123,11 @@ Every slash command is powered by **KAIRO (`𝙺ΛIЯØ`)**. Here is the complet
 - You cannot start a new timer if you already have one running or paused.
 
 ### 2. `/timer pause`
-- Pauses your currently running session and banks the exact milliseconds you have worked so far.
+- Pauses your currently running session, banks the exact milliseconds you have worked so far, and displays your **Elapsed Time (`Xh Ym`)**, **Potential Individual XP**, and **Potential Squad XP**.
 - Use this whenever you take a break so you don't record AFK time!
 
 ### 3. `/timer resume`
-- Resumes a paused timer and continues accumulating time from where you left off.
+- Resumes a paused timer, continues accumulating time from where you left off, and displays your current **Elapsed Time (`Xh Ym`)**, **Potential Individual XP**, and **Potential Squad XP**.
 
 ### 4. `/timer view`
 - Shows an instant status card of your current session without stopping it:
@@ -180,9 +180,9 @@ Every slash command is powered by **KAIRO (`𝙺ΛIЯØ`)**. Here is the complet
 ### 12. `/stalk [target:@user] [team:<squad_name>]`
 - Our deep-scan intelligence command! You must choose **either** `target` (to inspect a user) **OR** `team` (to inspect a squad):
   - **👤 Mode 1: `/stalk target:@user` (Operative Dossier)**
-    - Shows the user's **Squad**, **Global Rank (`#X`)**, **Squad Rank (`#X`)**, **Weekly Individual XP**, **Weekly Squad XP**, **All-Time Total XP**, **Current Streak**, **Personal Coins (`🪙`)**, **Completed Tasks (`✅`)**, **Total Recorded Sessions (`⏱️`)**, and their **Complete Categorized Inventory** (*Nameplates, PFP Decorations, Username Fonts, Global Themes, and Boosts with exact item counts like `x2`, `x3`*).
+    - Shows the user's **Squad**, **Global Rank (`#X`)**, **Squad Rank (`#X`)**, **Weekly Individual XP**, **Weekly Squad XP**, **XP (Last 24h)**, **All-Time Total XP**, **Current Streak**, **Personal Coins (`🪙`)**, **Completed Tasks (`✅`)**, **Total Recorded Sessions (`⏱️`)**, and their **Complete Categorized Inventory** (*Nameplates, PFP Decorations, Username Fonts, Global Themes, and Boosts with exact item counts like `x2`, `x3`*).
   - **🛡️ Mode 2: `/stalk team:<squad_name>` (Squad Dossier)**
-    - Shows the Squad's **Team Treasury (`🪙 coins`)**, **All-Time Weekly Wins (`🏆`)**, **Current Win Streak (`⚡`)**, **Total Combined All-Time XP**, **Weekly Squad XP** (both *Active $\ge 100$ XP* and *Total Unfiltered*), **Operative Count** (*Active / Total*), and the **Current Squad MVP**!
+    - Shows the Squad's **Team Treasury (`🪙 coins`)**, **All-Time Weekly Wins (`🏆`)**, **Current Win Streak (`⚡`)**, **Total Combined All-Time XP**, **Weekly Squad XP** (both *Active $\ge 100$ XP* and *Total Unfiltered*), **XP (Last 24h)**, **Operative Count** (*Active / Total*), and the **Current Squad MVP**!
 
 ---
 

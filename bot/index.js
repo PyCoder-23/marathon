@@ -89,6 +89,61 @@ client.on(Events.InteractionCreate, async interaction => {
 
 const { connectDB, User, Session, Task, ActiveSession } = require('../database.js');
 
+// --- HONEYPOT CHANNEL ANTI-SPAM PROTOCOL ---
+const HONEYPOT_CHANNEL_ID = '1570490244392943717';
+
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot) return;
+  if (message.channelId !== HONEYPOT_CHANNEL_ID) return;
+
+  console.log(`🍯 [Honeypot] Triggered by ${message.author.tag} (${message.author.id}) in channel ${HONEYPOT_CHANNEL_ID}`);
+
+  // 1. Always delete the offending message immediately
+  try {
+    await message.delete();
+  } catch (delError) {
+    console.error('❌ [Honeypot] Failed to delete message:', delError.message);
+  }
+
+  // 2. Fetch member and check if the bot has hierarchy/permission power to ban them
+  const member = message.member || await message.guild?.members.fetch(message.author.id).catch(() => null);
+
+  if (member && member.bannable) {
+    // Send ban notification DM BEFORE banning (since Discord blocks DMs once banned)
+    try {
+      await message.author.send(
+        '🚫 **BANNED — HONEYPOT CHANNEL TRIGGERED**\n\n' +
+        'You were banned from **Marathon Server** for sending a message in the honeypot channel, which is meant to catch spammers.\n\n' +
+        'If you think this is a mistake, please contact **randomxsoul** on Discord.'
+      );
+    } catch (dmError) {
+      console.log(`ℹ️ [Honeypot] Could not DM ${message.author.tag} before ban:`, dmError.message);
+    }
+
+    try {
+      await member.ban({
+        reason: 'Sent a message in the honeypot channel (meant to catch spammers).'
+      });
+      console.log(`🔨 [Honeypot] Successfully banned ${message.author.tag} (${message.author.id}).`);
+      return;
+    } catch (banError) {
+      console.error(`❌ [Honeypot] Ban failed for ${message.author.tag}:`, banError.message);
+      // Fall through to unbannable notification below if ban unexpectedly failed
+    }
+  }
+
+  // 3. Fallback if the user cannot be banned (e.g. role hierarchy / admin / owner above the bot)
+  try {
+    await message.author.send(
+      '⚠️ **MESSAGE DELETED — HONEYPOT CHANNEL**\n\n' +
+      `Your message in <#${HONEYPOT_CHANNEL_ID}> was automatically deleted because it was sent in the **honeypot channel**, which is strictly meant to catch spammers (normal members are instantly banned for messaging there).`
+    );
+    console.log(`✉️ [Honeypot] Notified unbannable user ${message.author.tag} that their message was deleted.`);
+  } catch (dmError) {
+    console.log(`ℹ️ [Honeypot] Could not DM unbannable user ${message.author.tag}:`, dmError.message);
+  }
+});
+
 // HEAD_ADMIN_ID: 857145663947014164
 
 // Note: Multi-cycle automated wipes have been disabled in favor of the manual /hard-reset admin command.

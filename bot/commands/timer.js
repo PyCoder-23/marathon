@@ -24,6 +24,88 @@ async function pauseSessionTimer(sessionDoc) {
   }
 }
 
+async function getSessionPotentialStats(session, userId) {
+  let currentMs = session.totalMs;
+  if (!session.paused) currentMs += (Date.now() - session.startTime);
+  const hours = Math.floor(currentMs / 3600000);
+  const minutes = Math.floor((currentMs % 3600000) / 60000);
+  const totalMinutes = hours * 60 + minutes;
+
+  let potentialIndivXp = 0;
+  let potentialSquadXp = 0;
+  if (totalMinutes >= 25) {
+    const user = await User.findOne({ discordId: userId });
+    const config = await GlobalConfig.findOne({ key: 'xp_multiplier' });
+    let globalMultiplier = config ? config.value : 1;
+
+    const catalystConfig = await GlobalConfig.findOne({ key: 'global_10x_end_time' });
+    if (catalystConfig && catalystConfig.value > Date.now()) {
+      globalMultiplier *= 10;
+    }
+
+    const sessionMultiplier = session.multiplier || 1;
+
+    let personalMultiplier = 1;
+    if (user?.weekendRushMultiplier) personalMultiplier *= user.weekendRushMultiplier;
+    if (user?.weeklyRushMultiplier) personalMultiplier *= user.weeklyRushMultiplier;
+    if (user?.dailyRushDate) {
+      const getSessionDate = (date) => {
+        const d = new Date(date);
+        d.setHours(d.getHours() - 4);
+        d.setMinutes(d.getMinutes() - 30);
+        d.setHours(0, 0, 0, 0);
+        return d;
+      };
+      if (getSessionDate(new Date()).getTime() === getSessionDate(user.dailyRushDate).getTime()) {
+        if (user.dailyRushMultiplier) personalMultiplier *= user.dailyRushMultiplier;
+      }
+    }
+
+    let squadMultiplier = 1;
+    if (user?.squad && user.squad !== 'Unassigned') {
+      const squadInfo = await SquadHistory.findOne({ squadName: user.squad });
+      if (squadInfo) {
+        if (squadInfo.boostDate) {
+          const getSessionDate = (date) => {
+            const d = new Date(date);
+            d.setHours(d.getHours() - 4);
+            d.setMinutes(d.getMinutes() - 30);
+            d.setHours(0, 0, 0, 0);
+            return d;
+          };
+          if (getSessionDate(new Date()).getTime() === getSessionDate(squadInfo.boostDate).getTime()) {
+            squadMultiplier = squadInfo.squadMultiplier || 1.2;
+          }
+        }
+        if (squadInfo.xpGeneratorActive) {
+          squadMultiplier *= 2;
+        }
+      }
+    }
+
+    let baseMinutes = totalMinutes;
+    let hourBoostedMinutes = 0;
+
+    if (session.hourBoost) {
+      hourBoostedMinutes = Math.min(60, totalMinutes);
+      baseMinutes = totalMinutes - hourBoostedMinutes;
+    }
+
+    const hBM = session.hourBoostMultiplier || 1.5;
+    const adminWeekendMultiplier = isWeekendRushActive() ? 2 : 1;
+
+    // Individual XP
+    potentialIndivXp = Math.round(totalMinutes * 0.8 * globalMultiplier * adminWeekendMultiplier);
+
+    // Squad XP
+    const baseSquadXP = baseMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier * adminWeekendMultiplier;
+    const boostedSquadXP = hourBoostedMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier * hBM * adminWeekendMultiplier;
+    potentialSquadXp = Math.round(baseSquadXP + boostedSquadXP);
+  }
+
+  return { hours, minutes, potentialIndivXp, potentialSquadXp };
+}
+
 module.exports = {
   data: (() => {
     const builder = new SlashCommandBuilder()
@@ -93,7 +175,20 @@ module.exports = {
       session.pauseTime = Date.now();
       await session.save();
 
-      return interaction.reply({ embeds: [embed.setTitle('⏸️ Session Paused').setDescription('Take a break. Timer stopped.')] });
+      const { hours, minutes, potentialIndivXp, potentialSquadXp } = await getSessionPotentialStats(session, userId);
+
+      return interaction.reply({
+        embeds: [
+          embed
+            .setTitle('⏸️ Session Paused')
+            .setDescription(
+              `Take a break. Timer stopped.\n\n` +
+              `Elapsed: **${hours}h ${minutes}m**\n` +
+              `Potential Individual XP: **+${potentialIndivXp} XP**\n` +
+              `Potential Squad XP: **+${potentialSquadXp} XP**`
+            )
+        ]
+      });
     }
 
     if (sub === 'resume') {
@@ -104,88 +199,24 @@ module.exports = {
       session.pauseTime = null;
       await session.save();
 
-      return interaction.reply({ embeds: [embed.setTitle('▶️ Session Resumed').setDescription('Marathon continues...')] });
+      const { hours, minutes, potentialIndivXp, potentialSquadXp } = await getSessionPotentialStats(session, userId);
+
+      return interaction.reply({
+        embeds: [
+          embed
+            .setTitle('▶️ Session Resumed')
+            .setDescription(
+              `Marathon continues...\n\n` +
+              `Elapsed: **${hours}h ${minutes}m**\n` +
+              `Potential Individual XP: **+${potentialIndivXp} XP**\n` +
+              `Potential Squad XP: **+${potentialSquadXp} XP**`
+            )
+        ]
+      });
     }
 
     if (sub === 'view') {
-      let currentMs = session.totalMs;
-      if (!session.paused) currentMs += (Date.now() - session.startTime);
-      const hours = Math.floor(currentMs / 3600000);
-      const minutes = Math.floor((currentMs % 3600000) / 60000);
-      const totalMinutes = hours * 60 + minutes;
-      
-      let potentialIndivXp = 0;
-      let potentialSquadXp = 0;
-      if (totalMinutes >= 25) {
-        const user = await User.findOne({ discordId: userId });
-        const config = await GlobalConfig.findOne({ key: 'xp_multiplier' });
-        let globalMultiplier = config ? config.value : 1;
-        
-        const catalystConfig = await GlobalConfig.findOne({ key: 'global_10x_end_time' });
-        if (catalystConfig && catalystConfig.value > Date.now()) {
-          globalMultiplier *= 10;
-        }
-
-        const sessionMultiplier = session.multiplier || 1;
-        
-        let personalMultiplier = 1;
-        if (user?.weekendRushMultiplier) personalMultiplier *= user.weekendRushMultiplier;
-        if (user?.weeklyRushMultiplier) personalMultiplier *= user.weeklyRushMultiplier;
-        if (user?.dailyRushDate) {
-          const getSessionDate = (date) => {
-            const d = new Date(date);
-            d.setHours(d.getHours() - 4);
-            d.setMinutes(d.getMinutes() - 30);
-            d.setHours(0, 0, 0, 0);
-            return d;
-          };
-          if (getSessionDate(new Date()).getTime() === getSessionDate(user.dailyRushDate).getTime()) {
-            if (user.dailyRushMultiplier) personalMultiplier *= user.dailyRushMultiplier;
-          }
-        }
-        
-        let squadMultiplier = 1;
-        if (user?.squad && user.squad !== 'Unassigned') {
-          const squadInfo = await SquadHistory.findOne({ squadName: user.squad });
-          if (squadInfo) {
-            if (squadInfo.boostDate) {
-              const getSessionDate = (date) => {
-                const d = new Date(date);
-                d.setHours(d.getHours() - 4);
-                d.setMinutes(d.getMinutes() - 30);
-                d.setHours(0, 0, 0, 0);
-                return d;
-              };
-              if (getSessionDate(new Date()).getTime() === getSessionDate(squadInfo.boostDate).getTime()) {
-                squadMultiplier = squadInfo.squadMultiplier || 1.2;
-              }
-            }
-            if (squadInfo.xpGeneratorActive) {
-              squadMultiplier *= 2;
-            }
-          }
-        }
-        
-        let baseMinutes = totalMinutes;
-        let hourBoostedMinutes = 0;
-        
-        if (session.hourBoost) {
-           hourBoostedMinutes = Math.min(60, totalMinutes);
-           baseMinutes = totalMinutes - hourBoostedMinutes;
-        }
-
-        const hBM = session.hourBoostMultiplier || 1.5;
-        const adminWeekendMultiplier = isWeekendRushActive() ? 2 : 1;
-
-        // Individual XP
-        potentialIndivXp = Math.round(totalMinutes * 0.8 * globalMultiplier * adminWeekendMultiplier);
-
-        // Squad XP
-        const baseSquadXP = baseMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier * adminWeekendMultiplier;
-        const boostedSquadXP = hourBoostedMinutes * 0.8 * globalMultiplier * sessionMultiplier * personalMultiplier * squadMultiplier * hBM * adminWeekendMultiplier;
-        potentialSquadXp = Math.round(baseSquadXP + boostedSquadXP);
-      }
-
+      const { hours, minutes, potentialIndivXp, potentialSquadXp } = await getSessionPotentialStats(session, userId);
       const timerStatus = session.paused ? '⏸️ **Paused**' : '▶️ **Running**';
 
       return interaction.reply({ embeds: [embed.setTitle('👀 Current Status').setDescription(`Status: ${timerStatus}\nElapsed: **${hours}h ${minutes}m**\nPotential Individual XP: **+${potentialIndivXp} XP**\nPotential Squad XP: **+${potentialSquadXp} XP**`)] });
