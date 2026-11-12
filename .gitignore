@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 bot/node_modules
 bot/.env
+kaira/node_modules
+kaira/.env
+marathon.sqlite*

@@ -639,9 +639,10 @@ Find the **Reaction Roles** embed in the server and react with the emojis below 
 - 🔔 **`Reset Reminders`** — **HIGHLY RECOMMENDED!** Pings you **30 minutes before the 4:30 AM IST daily cutoff** and **30m & 10m before the Sunday 7:30 PM IST Weekly Hard Reset** so you never lose an active timer or forget to `/redeem-coins`!
 - 💯 **`Daily Motivation`** — Pings you every morning at **8:00 AM IST** with the daily motivational quote.
 
-### 🧠 2. KAIRA — The Server AI Companion (`@KAIRA`)
-- Want someone to talk to during a late-night study break, need advice, or want to get roasted out of procrastination?
-- Simply **mention `@KAIRA` or reply to her messages** in any chat channel! She remembers recent conversation context in the channel and will keep you sharp and accountable.
+### 🧠 2. KAIRA — Your Fellow Grinding Peer (`@KAIRA`)
+- **Who She Is:** KAIRA isn't a stiff corporate bot — she's a fellow student and peer who is up late grinding on the Marathon Server right alongside you. She's slightly dry, sarcastic, sensible, and emotionally aware.
+- **Ask Her Anything About Marathon:** She knows this entire **User Guide** inside out! If you're confused about a command, how XP multipliers or sabotages work, when resets happen, or how to use the website, just ping **`@KAIRA`** (or reply to her message) and ask.
+- **Late-Night Accountability:** Need a quick reality check when you're procrastinating, or someone to talk to during a burnout spiral? Ping **`@KAIRA`** in chat!
 
 ---
 
@@ -666,7 +667,14 @@ To keep the weekly cash prizes, squad wars, and `#hall-of-fame` 100% fair and au
 
 ### 🚫 4. Penalties for Cheating
 - **First Offense:** Immediate **disqualification from the current running weekly competition** (and forfeiture of any weekly rewards/bounties).
-- **Repeat Offenses:** Repeatedly attempting to cheat or bypass the Proof of Work system will result in **permanent kicks or ban** from the Marathon Server.
+- **Repeat Offenses:** Repeatedly attempting to cheat or bypass the Proof of Work system will result in **permanent kicks or bans** from the Marathon Server.
+
+### 🍯 5. Anti-Spam Honeypot Channel Rule (`ID: 1570490244392943717`)
+- The server has a dedicated **Honeypot Channel** (`<#1570490244392943717>`) designed strictly to trap automated spam bots and compromised Discord accounts.
+- **DO NOT type or send any message in the Honeypot Channel:**
+  - Any message sent there is **immediately deleted**, and the sender is **instantly banned** by KAIRO after receiving a DM notice.
+  - *(If you have a higher staff role than KAIRO and cannot be banned, your message will still be deleted immediately and you will receive a DM warning).*
+  - If you ever trigger the honeypot channel by genuine mistake, contact **`@randomxsoul`** on Discord to appeal.
 
 ---
 
