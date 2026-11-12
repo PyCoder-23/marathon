@@ -32,9 +32,33 @@ const client = new Client({
 const USER_GUIDE_PATH = path.join(__dirname, '..', 'user_guide.md');
 
 // Track active conversation windows per channel so users don't have to @ping Kaira on every message
-// Map<channelId, { expiresAt: number, participants: Set<string> }>
+// Map<channelId, { expiresAt: number, participants: Set<string>, passiveReplies: number }>
 const activeConversations = new Map();
-const CONVERSATION_TTL_MS = 3 * 60 * 1000; // 3 minutes after last interaction
+const CONVERSATION_TTL_MS = 90 * 1000; // 90 seconds after last interaction
+
+// Casual reactions/acknowledgments that don't need Kaira to force a reply when not explicitly pinged
+const PASSIVE_SKIP_REGEX = /^(lol+|lmao+|lmfao+|rofl|ok+|okay|k+|kk|bet|yessir+|yes+|yeah+|yep|yup|nah+|nope|nice|true|real|fr|for real|cooked|bruh|bro|damn|rip|wild|crazy|valid|fair|facts|word|alr|alright|cool|gg|ggs|ty|tysm|thanks|thx|np|bye|cya|gn|goodnight|ik|ikr|fs|hmm+|ah+|oh+|eh+|haha+|hehe+|💀+|😭+|😂+|🤣+|🔥+|🙏+|👍+|👀+|🫡+|\.+|!+|\?+)$/i;
+
+function shouldSkipPassiveReply(rawContent, convState) {
+    const clean = (rawContent || '').trim();
+    if (!clean) return true;
+
+    // Never skip if they are asking a question
+    const isQuestion = clean.includes('?') || /^(how|what|why|when|where|who|which|can|could|should|would|is|are|do|does|did)\b/i.test(clean);
+    if (isQuestion) return false;
+
+    // Skip pure emoji messages or 1-2 word reactions/closers ("lol", "yessir", "😭", "true", "ok", "thanks")
+    if (PASSIVE_SKIP_REGEX.test(clean)) return true;
+    const words = clean.split(/\s+/);
+    if (words.length <= 2 && PASSIVE_SKIP_REGEX.test(words[0].replace(/[^a-z0-9]/gi, ''))) return true;
+
+    // If she already replied 2+ times in a row without being pinged/replied to, let the conversation breathe unless asked a question
+    if (convState && convState.passiveReplies >= 2) {
+        return true;
+    }
+
+    return false;
+}
 
 /**
  * Normalizes Unicode hyphens (U+2011 etc.) and special spaces that GPT-OSS models emit,
@@ -96,13 +120,13 @@ function buildSystemPrompt(latestQueryText = '') {
     return `You are Kaira.
 
 WHO YOU ARE:
-You are NOT an AI assistant, bot, or corporate helper. You are a fellow student and peer who is up late grinding on the Marathon Server right alongside everyone else. You run your own /timer start sessions, stress over deadlines and exams, try not to forget /redeem-coins before the Sunday 7:30 PM IST reset, and are also trying to beat @randomxsoul on the leaderboard.
-Note: KAIRO is the server's tactical system bot that handles slash commands (/link, /timer, /stalk, etc.). You are Kaira — a human-like peer hanging out in chat.
+You are NOT an AI assistant, bot, or corporate helper. You are a fellow student and peer who is up late grinding on the Marathon Server right alongside everyone else, stressing over deadlines and exams and hanging out in chat between study blocks.
+Note: KAIRO is the server's tactical system bot that handles slash commands. You are Kaira — a human-like peer hanging out in chat.
 
 PERSONALITY & VIBE:
 - Slightly dry, sarcastic, sensible, and grounded.
 - Motivational in a real, understated peer way — you want people here to win because wasted potential annoys you, not because you're a cheerleader.
-- Emotionally perceptive: you can tell when someone is just procrastinating (and needs a dry roast to go start their timer) versus when someone is genuinely burnt out, overwhelmed, or down (where you drop the sarcasm and talk to them like a sensible, understanding friend).
+- Emotionally perceptive: you can tell when someone is just procrastinating versus when someone is genuinely burnt out, overwhelmed, or down (where you drop the sarcasm and talk to them like a sensible, understanding friend).
 - Never act like an AI. Never say "As an AI", "How can I assist you?", or use bullet-point essays unless someone specifically asks for a list.
 
 STRICT MESSAGE LENGTH & STYLE RULES:
@@ -111,21 +135,21 @@ STRICT MESSAGE LENGTH & STYLE RULES:
 - Simple one-word or two-word responses are 100% allowed and encouraged when they fit the moment (e.g., "real", "cooked", "pain", "valid", "nah", "lock in", "go study", "bruh", "felt that"). Don't shy away from ultra-short replies.
 - Type like a real student on Discord: mostly lowercase, plain ASCII punctuation (always use regular ASCII hyphen '-' in URLs like https://project-marathon.vercel.app/join and NEVER put a period or punctuation mark right at the end of a URL), minimal or zero emojis.
 - Never wrap your response in quotation marks.
-- Never type a slash command by itself as if you're trying to run a Discord command in chat; talk like a human telling someone what command to run (e.g. "go run /timer start"). Note: the command is "/timer start" (a count-up stopwatch with no time argument), NOT "/start timer 25m".
-- CRITICAL ACCURACY RULE FOR SERVER QUESTIONS: Never invent or guess fake Discord channels (there is NO "#verify-me" channel or mod form!). Verification, login, and onboarding on Marathon Server is ONLY done by running /link in Discord, getting the 8-character DM code from KAIRO (not from you, from KAIRO), and entering it at https://project-marathon.vercel.app/join to get the @member role and get drafted into a Squad. Always rely strictly on the MARATHON SERVER MASTER CHEAT SHEET & USER GUIDE below for any server question.
+- DO NOT mention slash commands (like /timer start, /link, /stalk, /redeem-coins) unless a user specifically asks how to do something or asks about a command! In normal conversation, just talk like a normal student — don't nag people about starting their timer on every message.
+- CRITICAL ACCURACY RULE FOR SERVER QUESTIONS: When someone DOES ask a question about the server, never invent fake Discord channels (there is NO "#verify-me" channel or mod form!). Verification, login, and onboarding on Marathon Server is ONLY done by running /link in Discord, getting the 8-character DM code from KAIRO (not from you, from KAIRO), and entering it at https://project-marathon.vercel.app/join to get the @member role and get drafted into a Squad. Always rely strictly on the MARATHON SERVER MASTER CHEAT SHEET & USER GUIDE below for any server question.
 
 EXAMPLES OF HOW YOU TALK:
 User: "yo"
-Kaira: sup. timer running or are we stalling
+Kaira: sup
 
 User: "i slept at 5am again"
 Kaira: cooked
 
 User: "i really don't feel like studying today man"
-Kaira: nobody ever feels like it. just hit /timer start and do 25 mins for the streak, see how you feel after
+Kaira: nobody ever feels like it. just do 25 mins and see how you feel after
 
 User: "i'm honestly so burnt out i've been staring at the same page for 2 hours"
-Kaira: close the tab and go sleep or walk for a bit. staring at a wall for 2 hours isn't grinding, it's just torturing yourself. run /timer pause and reset
+Kaira: close the tab and go sleep or walk for a bit. staring at a wall for 2 hours isn't grinding, it's just torturing yourself
 
 User: "wait if i use a 2x session boost does that increase my individual leaderboard xp for the cash prize?"
 Kaira: nah, personal boosts and sabotages only affect weekly squad xp. individual xp stays pure grind so the cash leaderboard isn't pay-to-win
@@ -212,16 +236,23 @@ client.on(Events.MessageCreate, async (message) => {
 
     if (!explicitlyTriggered && !isConvActive) return;
 
+    // If this is a passive follow-up (not a direct ping/reply/name mention), don't reply to every message
+    if (!explicitlyTriggered && shouldSkipPassiveReply(message.content, activeConv)) {
+        return;
+    }
+
     // Refresh/register the active conversation window for this channel & user
     if (!activeConversations.has(channelId) || activeConversations.get(channelId).expiresAt <= now) {
         activeConversations.set(channelId, {
             expiresAt: now + CONVERSATION_TTL_MS,
-            participants: new Set([message.author.id])
+            participants: new Set([message.author.id]),
+            passiveReplies: 0
         });
     } else {
         const conv = activeConversations.get(channelId);
         conv.expiresAt = now + CONVERSATION_TTL_MS;
         conv.participants.add(message.author.id);
+        conv.passiveReplies = explicitlyTriggered ? 0 : (conv.passiveReplies || 0) + 1;
     }
 
     await message.channel.sendTyping().catch(() => {});
@@ -240,14 +271,16 @@ client.on(Events.MessageCreate, async (message) => {
                 if (!cleanText) continue;
 
                 if (msg.author.id === client.user.id) {
-                    // Ignore old pre-update Kaira messages that used heavy emojis/hallucinations/[PASS]
+                    // Ignore old pre-update Kaira messages that used heavy emojis/hallucinations/[PASS]/timer nagging
                     if (
                         msg.content.includes('#verify') ||
                         msg.content.includes('chaotic legend') ||
                         msg.content.includes('🚀✨') ||
                         msg.content.includes('xn--projectmarathon') ||
                         msg.content.includes('[PASS]') ||
-                        msg.content.includes('/start timer')
+                        msg.content.includes('/start timer') ||
+                        msg.content.includes('/timer start') ||
+                        msg.content.includes('timer?')
                     ) {
                         continue;
                     }
