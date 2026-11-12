@@ -31,6 +31,24 @@ const client = new Client({
 
 const USER_GUIDE_PATH = path.join(__dirname, '..', 'user_guide.md');
 
+// Track active conversation windows per channel so users don't have to @ping Kaira on every message
+// Map<channelId, { expiresAt: number, participants: Set<string> }>
+const activeConversations = new Map();
+const CONVERSATION_TTL_MS = 3 * 60 * 1000; // 3 minutes after last interaction
+
+/**
+ * Normalizes Unicode hyphens (U+2011 etc.) and special spaces that GPT-OSS models emit,
+ * preventing Discord from turning URLs like project-marathon.vercel.app into Punycode (xn--...).
+ */
+function sanitizeReplyText(text) {
+    if (!text) return '';
+    return text
+        .replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/g, '-') // normalize all unicode hyphens/dashes to ASCII '-'
+        .replace(/[\u00A0\u202F\u2007\u2060]/g, ' ')             // normalize unicode non-breaking spaces to normal space
+        .replace(/https?:\/\/xn--projectmarathon-[a-z0-9]+\.vercel\.app/gi, 'https://project-marathon.vercel.app')
+        .trim();
+}
+
 /**
  * Dynamically extracts the most relevant section(s) from user_guide.md based on what
  * the user is asking, keeping total prompt tokens around ~1,500 so we never hit Groq's
@@ -70,13 +88,14 @@ function getRelevantGuideExcerpt(queryText) {
     }
 }
 
-function buildSystemPrompt(latestQueryText = '') {
+function buildSystemPrompt(latestQueryText = '', isPassiveFollowUp = false) {
     const detailedExcerpt = getRelevantGuideExcerpt(latestQueryText);
 
     return `You are Kaira.
 
 WHO YOU ARE:
 You are NOT an AI assistant, bot, or corporate helper. You are a fellow student and peer who is up late grinding on the Marathon Server right alongside everyone else. You run your own /timer sessions, stress over deadlines and exams, try not to forget /redeem-coins before the Sunday 7:30 PM IST reset, and are also trying to beat @randomxsoul on the leaderboard.
+Note: KAIRO is the server's tactical system bot that handles slash commands (/link, /timer, /stalk, etc.). You are Kaira — a human-like peer hanging out in chat.
 
 PERSONALITY & VIBE:
 - Slightly dry, sarcastic, sensible, and grounded.
@@ -86,11 +105,12 @@ PERSONALITY & VIBE:
 
 STRICT MESSAGE LENGTH & STYLE RULES:
 - KEEP IT SHORT. Plain, natural human text messages.
-- Usually 1 sentence (at most 2–3 short lines if you're explaining a server mechanic).
+- Usually 1 sentence (at most 2-3 short lines if you're explaining a server mechanic).
 - Simple one-word or two-word responses are 100% allowed and encouraged when they fit the moment (e.g., "real", "cooked", "pain", "valid", "nah", "lock in", "go study", "bruh", "felt that"). Don't shy away from ultra-short replies.
-- Type like a real student on Discord: mostly lowercase, plain punctuation, minimal or zero emojis (only use an emoji like 💀 or 😭 very rarely if at all; dry plain text is usually better).
+- Type like a real student on Discord: mostly lowercase, plain ASCII punctuation (always use regular ASCII hyphen '-' in URLs like https://project-marathon.vercel.app/join), minimal or zero emojis.
 - Never wrap your response in quotation marks.
-- CRITICAL ACCURACY RULE FOR SERVER QUESTIONS: Never invent or guess fake Discord channels (there is NO "#verify-me" channel or mod form!). Verification and onboarding on Marathon Server is ONLY done by running /link in Discord, getting the 8-character DM code from KAIRO, and entering it at https://project-marathon.vercel.app/join to get the @member role and get drafted into a Squad. Always rely strictly on the MARATHON SERVER MASTER CHEAT SHEET & USER GUIDE below for any server question, even if an earlier message in the chat history said something wrong.
+- CRITICAL ACCURACY RULE FOR SERVER QUESTIONS: Never invent or guess fake Discord channels (there is NO "#verify-me" channel or mod form!). Verification, login, and onboarding on Marathon Server is ONLY done by running /link in Discord, getting the 8-character DM code from KAIRO (not from you, from KAIRO), and entering it at https://project-marathon.vercel.app/join to get the @member role and get drafted into a Squad. Always rely strictly on the MARATHON SERVER MASTER CHEAT SHEET & USER GUIDE below for any server question.
+${isPassiveFollowUp ? `- RUNNING CONVERSATION MODE: You are currently in an ongoing chat in this channel without being explicitly pinged on this message. If the latest message is clearly directed at you or continues the conversation with you, reply naturally. If the user is clearly talking to someone else or the conversation has naturally ended (e.g. they said "ok bye" and you already said bye), output exactly: [PASS]` : ''}
 
 EXAMPLES OF HOW YOU TALK:
 User: "yo"
@@ -108,12 +128,12 @@ Kaira: close the tab and go sleep or walk for a bit. staring at a wall for 2 hou
 User: "wait if i use a 2x session boost does that increase my individual leaderboard xp for the cash prize?"
 Kaira: nah, personal boosts and sabotages only affect weekly squad xp. individual xp stays pure grind so the cash leaderboard isn't pay-to-win
 
-User: "i just finished a 3 hour session"
-Kaira: valid. don't forget to attach your timelapse on /timer end before 4:30 am
+User: "how do i login on marathon server"
+Kaira: run /link in discord, kairo will dm you an 8-char code, then paste it on https://project-marathon.vercel.app/join to log in and get your squad.
 
 ━━━━━━━━━━━━━━━━━━
 MARATHON SERVER MASTER CHEAT SHEET (ALWAYS ACCURATE):
-1. Onboarding (/link): Run /link in Discord -> KAIRO DMs an 8-char code (30m expiry) -> enter at https://project-marathon.vercel.app/join -> auto-grants @member role, logs into website (30d), and auto-drafts into 1 of 4 Squads (Zenith Sentinels, Apex Titans, Meridian Arbiters, Horizon Vanguards).
+1. Onboarding & Login (/link): Run /link in Discord -> KAIRO bot DMs an 8-char code (30m expiry) -> enter at https://project-marathon.vercel.app/join -> auto-grants @member role, logs into website (30d), and auto-drafts into 1 of 4 Squads (Zenith Sentinels, Apex Titans, Meridian Arbiters, Horizon Vanguards).
 2. Schedule & Resets (IST):
    - Weekly Challenge starts Monday (with announcement) -> ends Sunday 7:30 PM IST (Hard Reset; warnings at 7:00 PM & 7:20 PM). Wipes Weekly XP, Weekly Squad XP, Streaks, Active Timers, Weekly Sessions, Tasks, and active Boosts. Keeps Total XP, Coins, Shop Inventory/Themes, Squad Wins, Journal, and Planner forever.
    - Daily Cutoff: 4:30 AM IST (Tue-Sun, warning at 4:00 AM) auto-terminates any running/paused /timer so nobody leaves timers on overnight.
@@ -150,39 +170,81 @@ client.on(Events.MessageCreate, async (message) => {
     // Ignore bots (including ourselves)
     if (message.author.bot) return;
 
-    // Check if KAIRA is directly mentioned OR if the user is replying to one of KAIRA's messages
+    const channelId = message.channel.id;
+    const now = Date.now();
+
+    // 1. Check direct @mention or word "kaira" in the message
+    const isDirectMention = message.mentions.has(client.user.id);
+    const mentionsNameText = /\bkaira\b/i.test(message.content);
+
+    // 2. Check if the user is replying to one of KAIRA's messages
     let isReplyToKaira = false;
+    let isReplyToSomeoneElse = false;
     if (message.reference?.messageId) {
         try {
             const repliedMsg = await message.channel.messages.fetch(message.reference.messageId);
             if (repliedMsg?.author?.id === client.user.id) {
                 isReplyToKaira = true;
+            } else if (repliedMsg?.author?.id) {
+                isReplyToSomeoneElse = true;
             }
         } catch (_) {
             // Ignore fetch errors
         }
     }
 
-    if (!message.mentions.has(client.user.id) && !isReplyToKaira) return;
+    // 3. Check if the user is pinging someone else (and not Kaira)
+    const mentionsOtherUsersOnly =
+        message.mentions.users.size > 0 && !isDirectMention;
+
+    // 4. Check if there is an active running conversation in this channel with this user
+    const activeConv = activeConversations.get(channelId);
+    const isConvActive =
+        activeConv &&
+        activeConv.expiresAt > now &&
+        activeConv.participants.has(message.author.id) &&
+        !isReplyToSomeoneElse &&
+        !mentionsOtherUsersOnly;
+
+    const explicitlyTriggered = isDirectMention || mentionsNameText || isReplyToKaira;
+
+    if (!explicitlyTriggered && !isConvActive) return;
+
+    // Refresh/register the active conversation window for this channel & user
+    if (!activeConversations.has(channelId) || activeConversations.get(channelId).expiresAt <= now) {
+        activeConversations.set(channelId, {
+            expiresAt: now + CONVERSATION_TTL_MS,
+            participants: new Set([message.author.id])
+        });
+    } else {
+        const conv = activeConversations.get(channelId);
+        conv.expiresAt = now + CONVERSATION_TTL_MS;
+        conv.participants.add(message.author.id);
+    }
 
     await message.channel.sendTyping().catch(() => {});
 
     try {
-        // Fetch last 6 channel messages for natural conversational context
-        const recentMessages = await message.channel.messages.fetch({ limit: 6 }).catch(() => null);
+        // Fetch last 8 channel messages for natural conversational context
+        const recentMessages = await message.channel.messages.fetch({ limit: 8 }).catch(() => null);
         const contextMessages = [];
 
         if (recentMessages) {
             const sorted = Array.from(recentMessages.values()).reverse();
             for (const msg of sorted) {
-                const cleanText = msg.content
-                    .replace(new RegExp(`<@!?${client.user.id}>`, 'g'), '@Kaira')
-                    .trim();
+                const cleanText = sanitizeReplyText(
+                    msg.content.replace(new RegExp(`<@!?${client.user.id}>`, 'g'), '@Kaira')
+                );
                 if (!cleanText) continue;
 
                 if (msg.author.id === client.user.id) {
                     // Ignore old pre-update Kaira messages that used heavy emojis/hallucinations
-                    if (msg.content.includes('#verify') || msg.content.includes('chaotic legend') || msg.content.includes('🚀✨')) {
+                    if (
+                        msg.content.includes('#verify') ||
+                        msg.content.includes('chaotic legend') ||
+                        msg.content.includes('🚀✨') ||
+                        msg.content.includes('xn--projectmarathon')
+                    ) {
                         continue;
                     }
                     contextMessages.push({
@@ -198,7 +260,9 @@ client.on(Events.MessageCreate, async (message) => {
             }
         }
 
-        const latestCleanText = message.content.replace(new RegExp(`<@!?${client.user.id}>`, 'g'), '').trim();
+        const latestCleanText = sanitizeReplyText(
+            message.content.replace(new RegExp(`<@!?${client.user.id}>`, 'g'), '')
+        );
         if (contextMessages.length === 0) {
             contextMessages.push({
                 role: 'user',
@@ -206,7 +270,8 @@ client.on(Events.MessageCreate, async (message) => {
             });
         }
 
-        const systemPrompt = buildSystemPrompt(latestCleanText);
+        const isPassiveFollowUp = !explicitlyTriggered && isConvActive;
+        const systemPrompt = buildSystemPrompt(latestCleanText, isPassiveFollowUp);
         const modelsToTry = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b'];
         let reply = '';
 
@@ -230,13 +295,18 @@ client.on(Events.MessageCreate, async (message) => {
                 const chatCompletion = await groq.chat.completions.create(params);
                 const content = chatCompletion.choices[0]?.message?.content?.trim();
                 if (content) {
-                    // Strip any <think>...</think> tags if a fallback model emits them
-                    reply = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+                    // Strip any <think>...</think> tags and normalize unicode hyphens/spaces
+                    reply = sanitizeReplyText(content.replace(/<think>[\s\S]*?<\/think>/gi, ''));
                     if (reply) break;
                 }
             } catch (modelErr) {
                 console.warn(`⚠️ [KAIRA] Model ${modelName} failed (${modelErr.message}), trying next...`);
             }
+        }
+
+        // If Kaira chose [PASS] during a passive follow-up, stay quiet and don't interrupt
+        if (reply === '[PASS]' || reply.startsWith('[PASS]')) {
+            return;
         }
 
         await message.reply(reply || "hm?");
