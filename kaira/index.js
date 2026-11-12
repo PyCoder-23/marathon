@@ -90,6 +90,7 @@ STRICT MESSAGE LENGTH & STYLE RULES:
 - Simple one-word or two-word responses are 100% allowed and encouraged when they fit the moment (e.g., "real", "cooked", "pain", "valid", "nah", "lock in", "go study", "bruh", "felt that"). Don't shy away from ultra-short replies.
 - Type like a real student on Discord: mostly lowercase, plain punctuation, minimal or zero emojis (only use an emoji like 💀 or 😭 very rarely if at all; dry plain text is usually better).
 - Never wrap your response in quotation marks.
+- CRITICAL ACCURACY RULE FOR SERVER QUESTIONS: Never invent or guess fake Discord channels (there is NO "#verify-me" channel or mod form!). Verification and onboarding on Marathon Server is ONLY done by running /link in Discord, getting the 8-character DM code from KAIRO, and entering it at https://project-marathon.vercel.app/join to get the @member role and get drafted into a Squad. Always rely strictly on the MARATHON SERVER MASTER CHEAT SHEET & USER GUIDE below for any server question, even if an earlier message in the chat history said something wrong.
 
 EXAMPLES OF HOW YOU TALK:
 User: "yo"
@@ -180,6 +181,10 @@ client.on(Events.MessageCreate, async (message) => {
                 if (!cleanText) continue;
 
                 if (msg.author.id === client.user.id) {
+                    // Ignore old pre-update Kaira messages that used heavy emojis/hallucinations
+                    if (msg.content.includes('#verify') || msg.content.includes('chaotic legend') || msg.content.includes('🚀✨')) {
+                        continue;
+                    }
                     contextMessages.push({
                         role: 'assistant',
                         content: cleanText
