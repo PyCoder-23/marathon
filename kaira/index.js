@@ -30,6 +30,7 @@ const client = new Client({
 });
 
 const USER_GUIDE_PATH = path.join(__dirname, '..', 'user_guide.md');
+const BOT_START_TIME = Date.now();
 
 // Track active conversation windows per channel so users don't have to @ping Kaira on every message
 // Map<channelId, { expiresAt: number, participants: Set<string>, passiveReplies: number }>
@@ -282,24 +283,18 @@ client.on(Events.MessageCreate, async (message) => {
         if (recentMessages) {
             const sorted = Array.from(recentMessages.values()).reverse();
             for (const msg of sorted) {
+                // Only include messages sent after this bot instance booted so old persona messages never pollute new restarts
+                if (msg.createdTimestamp < BOT_START_TIME && msg.id !== message.id) {
+                    continue;
+                }
+
                 const cleanText = sanitizeReplyText(
                     msg.content.replace(new RegExp(`<@!?${client.user.id}>`, 'g'), '@Kaira')
                 );
                 if (!cleanText) continue;
 
                 if (msg.author.id === client.user.id) {
-                    // Ignore old pre-update Kaira messages that used heavy emojis/hallucinations/[PASS]/timer or grind nagging
-                    if (
-                        msg.content.includes('#verify') ||
-                        msg.content.includes('chaotic legend') ||
-                        msg.content.includes('🚀✨') ||
-                        msg.content.includes('xn--projectmarathon') ||
-                        msg.content.includes('[PASS]') ||
-                        msg.content.includes('/start timer') ||
-                        msg.content.includes('/timer start') ||
-                        msg.content.includes('timer?') ||
-                        /\b(grind|lock in|push through|go study|my dad)\b/i.test(msg.content)
-                    ) {
+                    if (/\b(grind|lock in|push through|go study|dad|father)\b/i.test(msg.content)) {
                         continue;
                     }
                     contextMessages.push({
@@ -307,7 +302,7 @@ client.on(Events.MessageCreate, async (message) => {
                         content: cleanText
                     });
                 } else if (!msg.author.bot) {
-                    if (/\[pass\]/i.test(msg.content)) continue;
+                    if (/\[pass\]|\b(dad|father)\b/i.test(msg.content) && msg.id !== message.id) continue;
                     contextMessages.push({
                         role: 'user',
                         content: `${msg.author.username}: ${cleanText}`
@@ -338,8 +333,8 @@ client.on(Events.MessageCreate, async (message) => {
                         ...contextMessages
                     ],
                     model: modelName,
-                    temperature: 0.75,
-                    max_completion_tokens: 1024,
+                    temperature: 0.85,
+                    max_completion_tokens: 256,
                     top_p: 1,
                     stream: false
                 };
