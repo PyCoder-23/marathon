@@ -266,16 +266,97 @@ client.on(Events.MessageDelete, async (message) => {
 });
 
 // --- 4. DAILY POSITIVITY PROTOCOL HELPERS ---
-async function broadcastPositivityMessage({ text, imageUrl, isTest = false }) {
+const SIDELINE_COLORS = {
+  '1': { name: '🔴 Red', hex: '#FF3B5C' },
+  'red': { name: '🔴 Red', hex: '#FF3B5C' },
+  'crimson': { name: '🔴 Red', hex: '#FF3B5C' },
+  '2': { name: '🟠 Orange', hex: '#FF8C00' },
+  'orange': { name: '🟠 Orange', hex: '#FF8C00' },
+  'amber': { name: '🟠 Orange', hex: '#FF8C00' },
+  '3': { name: '🟡 Gold / Yellow', hex: '#FFD700' },
+  'yellow': { name: '🟡 Gold / Yellow', hex: '#FFD700' },
+  'gold': { name: '🟡 Gold / Yellow', hex: '#FFD700' },
+  '4': { name: '🟢 Green', hex: '#00FF9F' },
+  'green': { name: '🟢 Green', hex: '#00FF9F' },
+  'emerald': { name: '🟢 Green', hex: '#00FF9F' },
+  '5': { name: '🔵 Blue / Cyan', hex: '#00B4D8' },
+  'blue': { name: '🔵 Blue / Cyan', hex: '#00B4D8' },
+  'cyan': { name: '🔵 Blue / Cyan', hex: '#00B4D8' },
+  '6': { name: '🟣 Purple', hex: '#9D4EDD' },
+  'purple': { name: '🟣 Purple', hex: '#9D4EDD' },
+  'violet': { name: '🟣 Purple', hex: '#9D4EDD' },
+  '7': { name: '🌸 Pink', hex: '#FF69B4' },
+  'pink': { name: '🌸 Pink', hex: '#FF69B4' },
+  'rose': { name: '🌸 Pink', hex: '#FF69B4' },
+  '8': { name: '⚪ White', hex: '#FFFFFF' },
+  'white': { name: '⚪ White', hex: '#FFFFFF' },
+  '9': { name: '⚫ Dark / Black', hex: '#2B2D31' },
+  'black': { name: '⚫ Dark / Black', hex: '#2B2D31' },
+  'dark': { name: '⚫ Dark / Black', hex: '#2B2D31' },
+};
+
+const COLOR_MENU_TEXT =
+  '🎨 **Choose a Sideline Colour for the Post:**\n' +
+  '`1` 🔴 **Red**  •  `2` 🟠 **Orange**  •  `3` 🟡 **Gold / Yellow**\n' +
+  '`4` 🟢 **Green**  •  `5` 🔵 **Blue / Cyan**  •  `6` 🟣 **Purple**\n' +
+  '`7` 🌸 **Pink**  •  `8` ⚪ **White**  •  `9` ⚫ **Dark / Black**\n\n' +
+  '*(Reply with the number `1-9`, the colour name like `purple`, or any custom hex like `#ff0055`!)*';
+
+function parseSidelineColor(input) {
+  const clean = (input || '').trim().toLowerCase();
+  if (!clean) return null;
+  if (SIDELINE_COLORS[clean]) return SIDELINE_COLORS[clean];
+
+  const hexMatch = clean.match(/^#?([0-9a-f]{6})$/i);
+  if (hexMatch) {
+    const hex = `#${hexMatch[1].toUpperCase()}`;
+    return { name: `🎨 Custom (${hex})`, hex };
+  }
+  return null;
+}
+
+/**
+ * Resolves :emoji_name: shortcodes sent in DMs into actual server emojis <:name:id> or <a:name:id>
+ */
+async function resolveServerEmojis(text) {
+  if (!text) return '';
+  try {
+    const guild = client.guilds.cache.get('1420751012276469795') || client.guilds.cache.first();
+    if (!guild) return text;
+
+    if (guild.emojis.cache.size === 0) {
+      await guild.emojis.fetch().catch(() => {});
+    }
+
+    // Replace :shortcode: that is NOT already inside <:shortcode:12345> or <a:shortcode:12345>
+    return text.replace(/(?<![<a]):([a-zA-Z0-9_]{2,32}):(?!\d+>)/g, (fullMatch, emojiName) => {
+      const found =
+        guild.emojis.cache.find(e => e.name === emojiName) ||
+        guild.emojis.cache.find(e => e.name?.toLowerCase() === emojiName.toLowerCase());
+
+      if (found) {
+        return `<${found.animated ? 'a' : ''}:${found.name}:${found.id}>`;
+      }
+      return fullMatch;
+    });
+  } catch (err) {
+    console.error('[Emoji Resolver Error]:', err);
+    return text;
+  }
+}
+
+async function broadcastPositivityMessage({ text, imageUrl, color = '#FFD700', isTest = false }) {
   const channel = await client.channels.fetch(POSITIVITY_CHANNEL_ID);
   if (!channel) {
     throw new Error('Could not find the #positivity channel.');
   }
 
+  const resolvedText = await resolveServerEmojis(text || 'Wishing everyone a positive, peaceful, and fulfilling day ahead! ✨');
+
   const embed = new EmbedBuilder()
     .setTitle(isTest ? '☀️ DAILY POSITIVITY (TEST)' : '☀️ DAILY POSITIVITY')
-    .setDescription(text || 'Wishing everyone a positive, peaceful, and fulfilling day ahead! ✨')
-    .setColor('#00ff9f')
+    .setDescription(resolvedText)
+    .setColor(color || '#FFD700')
     .setTimestamp()
     .setFooter({ text: 'Marathon System • Daily Positivity' });
 
@@ -298,6 +379,8 @@ async function handleHeadAdminPositivityDM(message) {
       mode: 'scheduled',
       pendingText: '',
       pendingImageUrl: '',
+      pendingColor: '',
+      awaitingColor: false,
       requestedAt: Date.now()
     };
 
@@ -305,12 +388,22 @@ async function handleHeadAdminPositivityDM(message) {
     const attachment = message.attachments?.first();
     let incomingImageUrl = attachment ? attachment.url : '';
 
-    // Allow cancelling a scheduled or pending post before 6:45 AM IST by sending "cancel post"
+    // detect image URL pasted in text
+    const urlMatch = rawText.match(/https?:\/\/\S+\.(?:png|jpe?g|gif|webp)(?:\?\S*)?/i);
+    let cleanedText = rawText;
+    if (!incomingImageUrl && urlMatch) {
+      incomingImageUrl = urlMatch[0];
+      cleanedText = rawText.replace(urlMatch[0], '').trim();
+    }
+
+    // 1. CANCEL POST COMMAND ("cancel post" or "cancel")
     if (/^cancel(\s+post)?$/i.test(rawText) && !incomingImageUrl) {
       const resetState = {
         mode: 'scheduled',
         pendingText: '',
         pendingImageUrl: '',
+        pendingColor: '',
+        awaitingColor: false,
         requestedAt: Date.now()
       };
       client.positivityPromptState = resetState;
@@ -325,43 +418,176 @@ async function handleHeadAdminPositivityDM(message) {
       await message.reply(
         deleted.deletedCount > 0
           ? '🚫 **Post Cancelled!** Your scheduled positive message for **6:45 AM IST** has been cancelled. (You can send a new message and image anytime before 6:45 AM, otherwise I will send a random positive message at 6:45 AM!)'
-          : '🚫 **Cancelled!** Cleared any pending positive message draft. (If nothing new is sent before 6:45 AM IST, I will send a random positive message.)'
+          : '🚫 **Cancelled!** Cleared your current draft. (If nothing new is scheduled before 6:45 AM IST, I will send a random positive message.)'
       );
       console.log('🚫 [Positivity] Head Admin cancelled the scheduled positivity post.');
       return;
     }
 
-    // Also detect if an image URL was pasted directly in the text
-    const urlMatch = rawText.match(/https?:\/\/\S+\.(?:png|jpe?g|gif|webp)(?:\?\S*)?/i);
-    let cleanedText = rawText;
-    if (!incomingImageUrl && urlMatch) {
-      incomingImageUrl = urlMatch[0];
-      cleanedText = rawText.replace(urlMatch[0], '').trim();
+    // 2. TEXT-BASED EDIT COMMANDS FOR ALREADY-SCHEDULED POST (OR ACTIVE DRAFT)
+    //    - "edit message <new text>" / "edit text <new text>"
+    //    - "edit color <color>" / "edit colour <color>"
+    //    - "edit image" (with attached image or URL)
+    //    - "edit post" (restart full flow)
+    const editMsgMatch = rawText.match(/^edit\s+(?:message|text)\s+([\s\S]+)$/i);
+    if (editMsgMatch) {
+      const newResolvedText = await resolveServerEmojis(editMsgMatch[1].trim());
+      const savedDoc = await GlobalConfig.findOne({ key: 'next_positivity_payload' });
+
+      if (savedDoc?.value) {
+        const updatedValue = {
+          ...savedDoc.value,
+          text: newResolvedText,
+          savedAt: new Date().toISOString()
+        };
+        await GlobalConfig.findOneAndUpdate(
+          { key: 'next_positivity_payload' },
+          { value: updatedValue, updatedAt: new Date() },
+          { upsert: true }
+        );
+        await message.reply(`✏️ **Message Updated!** Your scheduled 6:45 AM post text is now:\n>>> ${newResolvedText}`);
+        return;
+      } else if (state.pendingText) {
+        state.pendingText = newResolvedText;
+        client.positivityPromptState = state;
+        await GlobalConfig.findOneAndUpdate(
+          { key: 'positivity_prompt_state' },
+          { value: state, updatedAt: new Date() },
+          { upsert: true }
+        );
+        await message.reply(`✏️ **Draft Message Updated!**\n>>> ${newResolvedText}`);
+        return;
+      }
     }
 
-    const skipImage = /^(no image|skip|none)$/i.test(cleanedText);
-
-    if (!skipImage && cleanedText) {
-      state.pendingText = cleanedText;
+    const editColorMatch = rawText.match(/^edit\s+colou?r(?:\s+(.+))?$/i);
+    if (editColorMatch) {
+      const colorArg = (editColorMatch[1] || '').trim();
+      if (!colorArg) {
+        state.awaitingColorEdit = true;
+        client.positivityPromptState = state;
+        await GlobalConfig.findOneAndUpdate(
+          { key: 'positivity_prompt_state' },
+          { value: state, updatedAt: new Date() },
+          { upsert: true }
+        );
+        await message.reply(COLOR_MENU_TEXT);
+        return;
+      }
+      const parsedColor = parseSidelineColor(colorArg);
+      if (!parsedColor) {
+        await message.reply(`⚠️ Invalid colour \`${colorArg}\`.\n\n${COLOR_MENU_TEXT}`);
+        return;
+      }
+      const savedDoc = await GlobalConfig.findOne({ key: 'next_positivity_payload' });
+      if (savedDoc?.value) {
+        const updatedValue = {
+          ...savedDoc.value,
+          color: parsedColor.hex,
+          colorName: parsedColor.name,
+          savedAt: new Date().toISOString()
+        };
+        await GlobalConfig.findOneAndUpdate(
+          { key: 'next_positivity_payload' },
+          { value: updatedValue, updatedAt: new Date() },
+          { upsert: true }
+        );
+        await message.reply(`🎨 **Sideline Colour Updated!** Changed to **${parsedColor.name}** (\`${parsedColor.hex}\`).`);
+        return;
+      }
     }
-    if (incomingImageUrl) {
-      state.pendingImageUrl = incomingImageUrl;
+
+    if (/^edit\s+image$/i.test(cleanedText) && incomingImageUrl) {
+      const savedDoc = await GlobalConfig.findOne({ key: 'next_positivity_payload' });
+      if (savedDoc?.value) {
+        const updatedValue = {
+          ...savedDoc.value,
+          imageUrl: incomingImageUrl,
+          savedAt: new Date().toISOString()
+        };
+        await GlobalConfig.findOneAndUpdate(
+          { key: 'next_positivity_payload' },
+          { value: updatedValue, updatedAt: new Date() },
+          { upsert: true }
+        );
+        await message.reply('🖼️ **Image Updated!** Your scheduled 6:45 AM post now uses the new image.');
+        return;
+      }
     }
 
-    const hasText = Boolean(state.pendingText);
-    const hasImage = Boolean(state.pendingImageUrl);
+    if (/^edit(\s+post)?$/i.test(rawText) && !incomingImageUrl) {
+      const freshState = {
+        mode: 'scheduled',
+        pendingText: '',
+        pendingImageUrl: '',
+        pendingColor: '',
+        awaitingColor: false,
+        requestedAt: Date.now()
+      };
+      client.positivityPromptState = freshState;
+      await GlobalConfig.findOneAndUpdate(
+        { key: 'positivity_prompt_state' },
+        { value: freshState, updatedAt: new Date() },
+        { upsert: true }
+      );
+      await message.reply(
+        '✏️ **Editing Scheduled Post:** Send me the new **positive message** and **image** (together or one after the other), and then we\'ll pick the sideline colour!'
+      );
+      return;
+    }
 
-    // If both message text and image (or explicit 'no image') are ready:
-    if (hasText && (hasImage || skipImage)) {
-      const finalText = state.pendingText;
-      const finalImageUrl = skipImage ? '' : state.pendingImageUrl;
+    // Handle awaiting colour edit for an already-scheduled post
+    if (state.awaitingColorEdit) {
+      const parsedColor = parseSidelineColor(rawText);
+      if (!parsedColor) {
+        await message.reply(`⚠️ Please pick a valid colour option:\n\n${COLOR_MENU_TEXT}`);
+        return;
+      }
+      state.awaitingColorEdit = false;
+      client.positivityPromptState = state;
+      await GlobalConfig.findOneAndUpdate(
+        { key: 'positivity_prompt_state' },
+        { value: state, updatedAt: new Date() },
+        { upsert: true }
+      );
+      const savedDoc = await GlobalConfig.findOne({ key: 'next_positivity_payload' });
+      if (savedDoc?.value) {
+        await GlobalConfig.findOneAndUpdate(
+          { key: 'next_positivity_payload' },
+          {
+            value: {
+              ...savedDoc.value,
+              color: parsedColor.hex,
+              colorName: parsedColor.name,
+              savedAt: new Date().toISOString()
+            },
+            updatedAt: new Date()
+          },
+          { upsert: true }
+        );
+        await message.reply(`🎨 **Sideline Colour Updated!** Changed to **${parsedColor.name}** (\`${parsedColor.hex}\`).`);
+        return;
+      }
+    }
+
+    // 3. IF WE ARE CURRENTLY WAITING FOR THE SIDELINE COLOUR CHOICE
+    if (state.awaitingColor && state.pendingText) {
+      const parsedColor = parseSidelineColor(rawText);
+      if (!parsedColor) {
+        await message.reply(`⚠️ I didn't recognize that colour. Please reply with a number \`1-9\`, a colour name, or a \`#hex\` code:\n\n${COLOR_MENU_TEXT}`);
+        return;
+      }
+
+      const finalText = await resolveServerEmojis(state.pendingText);
+      const finalImageUrl = state.pendingImageUrl === 'NONE' ? '' : state.pendingImageUrl;
       const currentMode = state.mode || 'scheduled';
 
-      // Reset pending state back to scheduled for future messages
       const resetState = {
         mode: 'scheduled',
         pendingText: '',
         pendingImageUrl: '',
+        pendingColor: '',
+        awaitingColor: false,
         requestedAt: Date.now()
       };
       client.positivityPromptState = resetState;
@@ -375,12 +601,15 @@ async function handleHeadAdminPositivityDM(message) {
         await broadcastPositivityMessage({
           text: finalText,
           imageUrl: finalImageUrl,
+          color: parsedColor.hex,
           isTest: true
         });
         await message.reply(
-          `✅ **Noted & Sent!** Your positive message${finalImageUrl ? ' and image' : ''} have just been broadcasted to <#${POSITIVITY_CHANNEL_ID}>!`
+          `✅ **Noted & Broadcasted!**\n` +
+          `• **Sideline Colour:** ${parsedColor.name} (\`${parsedColor.hex}\`)\n` +
+          `• Sent immediately to <#${POSITIVITY_CHANNEL_ID}>!`
         );
-        console.log('☀️ [Positivity Test] Broadcasted DM payload immediately.');
+        console.log(`☀️ [Positivity Test] Broadcasted DM payload with color ${parsedColor.hex}.`);
         return;
       }
 
@@ -391,6 +620,8 @@ async function handleHeadAdminPositivityDM(message) {
           value: {
             text: finalText,
             imageUrl: finalImageUrl,
+            color: parsedColor.hex,
+            colorName: parsedColor.name,
             savedAt: new Date().toISOString()
           },
           updatedAt: new Date()
@@ -399,9 +630,49 @@ async function handleHeadAdminPositivityDM(message) {
       );
 
       await message.reply(
-        `✨ **Noted!** Your positive message${finalImageUrl ? ' and image' : ''} have been saved and locked in. I will send them to <#${POSITIVITY_CHANNEL_ID}> and ping <@&${POSITIVITY_ROLE_ID}> at **6:45 AM IST**!\n*(Reply \`cancel post\` anytime before 6:45 AM if you want to cancel it.)*`
+        `✨ **Noted & Scheduled for 6:45 AM IST!**\n` +
+        `• **Sideline Colour:** ${parsedColor.name} (\`${parsedColor.hex}\`)\n` +
+        `• **Target:** <#${POSITIVITY_CHANNEL_ID}> (pinging <@&${POSITIVITY_ROLE_ID}>)\n\n` +
+        `**Want to edit or cancel before 6:45 AM?** Just reply here with:\n` +
+        `• \`edit message <new text>\` — edit the text\n` +
+        `• \`edit color <color>\` — change the sideline colour\n` +
+        `• \`edit image\` (with a new image attached) — swap the image\n` +
+        `• \`edit post\` — replace the entire post\n` +
+        `• \`cancel post\` — cancel the scheduled post`
       );
-      console.log('☀️ [Positivity Scheduled] Locked in DM payload for 6:45 AM IST.');
+      console.log(`☀️ [Positivity Scheduled] Locked in DM payload for 6:45 AM IST with color ${parsedColor.hex}.`);
+      return;
+    }
+
+    // 4. COLLECTING MESSAGE TEXT & IMAGE
+    const skipImage = /^(no image|skip|none)$/i.test(cleanedText);
+
+    if (!skipImage && cleanedText) {
+      state.pendingText = await resolveServerEmojis(cleanedText);
+    }
+    if (incomingImageUrl) {
+      state.pendingImageUrl = incomingImageUrl;
+    } else if (skipImage) {
+      state.pendingImageUrl = 'NONE';
+    }
+
+    const hasText = Boolean(state.pendingText);
+    const hasImage = Boolean(state.pendingImageUrl);
+
+    // Once we have both text and image, prompt for the Sideline Colour!
+    if (hasText && hasImage) {
+      state.awaitingColor = true;
+      client.positivityPromptState = state;
+      await GlobalConfig.findOneAndUpdate(
+        { key: 'positivity_prompt_state' },
+        { value: state, updatedAt: new Date() },
+        { upsert: true }
+      );
+
+      await message.reply(
+        `✅ **Message${state.pendingImageUrl !== 'NONE' ? ' and image' : ''} noted!**\n\n` +
+        COLOR_MENU_TEXT
+      );
       return;
     }
 
@@ -903,6 +1174,7 @@ cron.schedule('45 6 * * *', async () => {
       await broadcastPositivityMessage({
         text: savedDoc.value.text,
         imageUrl: savedDoc.value.imageUrl || '',
+        color: savedDoc.value.color || '#FFD700',
         isTest: false
       });
       await GlobalConfig.deleteOne({ key: 'next_positivity_payload' });

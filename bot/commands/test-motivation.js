@@ -22,9 +22,12 @@ module.exports = {
       await connectDB();
 
       const stateValue = {
-        mode: 'test', // 'test' sends immediately upon receiving DM; 'scheduled' saves for 6:45 AM IST
+        mode: 'test', // 'test' sends immediately upon receiving DM + color; 'scheduled' saves for 6:45 AM IST
         pendingText: '',
         pendingImageUrl: '',
+        pendingColor: '',
+        awaitingColor: false,
+        awaitingColorEdit: false,
         requestedAt: Date.now()
       };
 
