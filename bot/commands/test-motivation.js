@@ -1,50 +1,52 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const quotes = require('../quotes.js');
+const { SlashCommandBuilder } = require('discord.js');
+const { connectDB, GlobalConfig } = require('../../database.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('test-motivation')
-    .setDescription('ADMIN COMMAND: Test the daily motivation message.'),
+    .setDescription('ADMIN COMMAND: Trigger the Daily Positivity DM prompt and broadcast immediately.'),
 
   async execute(interaction) {
-    // Only allow head admin
     const HEAD_ADMIN_ID = '857145663947014164';
     if (interaction.user.id !== HEAD_ADMIN_ID) {
-      return interaction.reply({ content: '🚫 **ACCESS DENIED:** Only the Head Admin can trigger system tests.', ephemeral: true });
+      return interaction.reply({
+        content: '🚫 **ACCESS DENIED:** Only the Head Admin can trigger positivity broadcasts.',
+        ephemeral: true
+      });
     }
 
-    const MOTIVATION_CHANNEL_ID = '1501403557897703574';
-    const MOTIVATION_ROLE_ID = '1501403253043368066';
+    const POSITIVITY_CHANNEL_ID = '1501403557897703574';
 
     try {
       await interaction.deferReply({ ephemeral: true });
+      await connectDB();
 
-      const now = new Date();
-      const start = new Date(now.getFullYear(), 0, 0);
-      const diff = now - start;
-      const oneDay = 1000 * 60 * 60 * 24;
-      const dayOfYear = Math.floor(diff / oneDay);
-      
-      const quote = quotes[dayOfYear % quotes.length];
-      
-      const embed = new EmbedBuilder()
-        .setTitle('🌅 DAILY_MOTIVATION_PROTOCOL (TEST)')
-        .setDescription(`*"${quote.text}"*`)
-        .addFields({ name: '— Author', value: `**${quote.author}**` })
-        .setColor('#ff0055')
-        .setTimestamp()
-        .setFooter({ text: 'Marathon System: Momentum' });
+      const stateValue = {
+        mode: 'test', // 'test' sends immediately upon receiving DM; 'scheduled' saves for 6:45 AM IST
+        pendingText: '',
+        pendingImageUrl: '',
+        requestedAt: Date.now()
+      };
 
-      const channel = await interaction.client.channels.fetch(MOTIVATION_CHANNEL_ID);
-      if (channel) {
-        await channel.send({ 
-          content: `<@&${MOTIVATION_ROLE_ID}> **| SET THE TONE FOR THE DAY**`, 
-          embeds: [embed] 
-        });
-        return interaction.editReply({ content: '✅ **TEST_SUCCESS:** Motivation message sent to the channel.' });
-      } else {
-        return interaction.editReply({ content: '❌ **TEST_FAILURE:** Could not find the motivation channel.' });
+      await GlobalConfig.findOneAndUpdate(
+        { key: 'positivity_prompt_state' },
+        { value: stateValue, updatedAt: new Date() },
+        { upsert: true, new: true }
+      );
+
+      if (interaction.client) {
+        interaction.client.positivityPromptState = stateValue;
       }
+
+      await interaction.user.send(
+        '☀️ **POSITIVITY PROTOCOL — TEST MODE**\n\n' +
+        `Please reply here in DMs with the **positive message** and **image** you want me to send to <#${POSITIVITY_CHANNEL_ID}>.\n` +
+        '*(You can attach the image and text in the same message, or send them one right after the other!)*'
+      );
+
+      return interaction.editReply({
+        content: `📩 **DM SENT:** Check your DMs! As soon as you send me the positive message and image there, I will broadcast it to <#${POSITIVITY_CHANNEL_ID}>.`
+      });
     } catch (error) {
       console.error('[Test-Motivation Error]', error);
       return interaction.editReply({ content: `❌ **SYSTEM_ERROR:** ${error.message}` });

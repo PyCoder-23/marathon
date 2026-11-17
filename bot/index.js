@@ -11,7 +11,7 @@ app.listen(port, () => {
 });
 
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, Events, Partials, EmbedBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Events, Partials, EmbedBuilder, MessageType } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const cron = require('node-cron');
@@ -23,8 +23,10 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.DirectMessages,
+    GatewayIntentBits.MessageContent,
   ],
-  partials: [Partials.Message, Partials.Reaction, Partials.User],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User],
   allowedMentions: { parse: ['users', 'roles'], repliedUser: false },
 });
 
@@ -87,15 +89,344 @@ client.on(Events.InteractionCreate, async interaction => {
   }
 });
 
-const { connectDB, User, Session, Task, ActiveSession } = require('../database.js');
+const { connectDB, User, Session, Task, ActiveSession, GlobalConfig, BoardPost } = require('../database.js');
 
-// --- HONEYPOT CHANNEL ANTI-SPAM PROTOCOL ---
+// --- CHANNEL & ROLE CONSTANTS ---
+const HEAD_ADMIN_ID = '857145663947014164';
 const HONEYPOT_CHANNEL_ID = '1570490244392943717';
+const AIRPORT_CHANNEL_ID = '1420751016063799309';
+const LINK_COMMAND_CHANNEL_ID = '1489536657701994496';
+const STARBOARD_CHANNEL_ID = '1572333945088118927';
+const SKULLBOARD_CHANNEL_ID = '1572333797469327502';
+const ANTI_GHOST_PING_CHANNEL_ID = '1572338261957939251';
+const POSITIVITY_CHANNEL_ID = '1501403557897703574';
+const POSITIVITY_ROLE_ID = '1501403253043368066';
+const BOARD_REACTION_THRESHOLD = 5;
 
+// --- 1. AIRPORT WELCOME PROTOCOL ---
+const recentlyWelcomedUsers = new Set();
+
+async function sendAirportWelcome(userObj) {
+  if (!userObj || userObj.bot) return;
+  if (recentlyWelcomedUsers.has(userObj.id)) return;
+
+  recentlyWelcomedUsers.add(userObj.id);
+  setTimeout(() => recentlyWelcomedUsers.delete(userObj.id), 5 * 60 * 1000);
+
+  try {
+    const channel = await client.channels.fetch(AIRPORT_CHANNEL_ID);
+    if (!channel) return;
+
+    const avatarUrl = typeof userObj.displayAvatarURL === 'function'
+      ? userObj.displayAvatarURL({ extension: 'png', size: 256 })
+      : null;
+
+    const embed = new EmbedBuilder()
+      .setTitle('🌅 WELCOME TO PROJECT MARATHON')
+      .setDescription(
+        `Welcome aboard, <@${userObj.id}>! We are genuinely glad to have you here.\n\n` +
+        `Greatness isn't built in a single burst of effort — it's forged through quiet, relentless daily consistency. Every focused session you put in here brings you one step closer to the person you are trying to become.\n\n` +
+        `**🚀 How to Get Verified & Start Your Journey:**\n` +
+        `1. Head over to <#${LINK_COMMAND_CHANNEL_ID}> and run \`/link\`.\n` +
+        `2. Check your DMs for your unique 8-character code.\n` +
+        `3. Enter the code at **https://project-marathon.vercel.app/join** to claim your **@member** role and get drafted into your Squad!\n\n` +
+        `*It's not about the sprint; it's about the marathon. Let's build something extraordinary together!*`
+      )
+      .setColor('#00ff9f')
+      .setTimestamp()
+      .setFooter({ text: 'Marathon System • Discipline & Consistency' });
+
+    if (avatarUrl) {
+      embed.setThumbnail(avatarUrl);
+    }
+
+    await channel.send({
+      content: `👋 Everyone welcome <@${userObj.id}> to **Marathon Server**!`,
+      embeds: [embed]
+    });
+    console.log(`🛬 [Airport] Welcomed new member ${userObj.tag || userObj.username} (${userObj.id})`);
+  } catch (err) {
+    console.error('❌ [Airport Welcome Error]:', err);
+  }
+}
+
+client.on(Events.GuildMemberAdd, async (member) => {
+  await sendAirportWelcome(member.user);
+});
+
+// --- 3. ANTI-GHOST-PING CACHE & DETECTOR ---
+// Map<messageId, { authorId, authorTag, authorAvatar, channelId, content, humanMentions, roleMentions, mentionsEveryone, createdAt }>
+const recentPingMessages = new Map();
+
+function cacheMessageIfPing(message) {
+  if (!message.guild || message.author?.bot) return;
+  if (message.channelId === HONEYPOT_CHANNEL_ID) return;
+
+  const humanMentions = Array.from(message.mentions?.users?.values() || [])
+    .filter(u => !u.bot && u.id !== message.author.id)
+    .map(u => u.id);
+
+  const roleMentions = Array.from(message.mentions?.roles?.values() || [])
+    .map(r => r.id);
+
+  const mentionsEveryone = Boolean(message.mentions?.everyone);
+
+  if (humanMentions.length === 0 && roleMentions.length === 0 && !mentionsEveryone) {
+    return;
+  }
+
+  recentPingMessages.set(message.id, {
+    authorId: message.author.id,
+    authorTag: message.author.tag || message.author.username,
+    authorAvatar: typeof message.author.displayAvatarURL === 'function'
+      ? message.author.displayAvatarURL({ extension: 'png' })
+      : null,
+    channelId: message.channelId,
+    content: message.content || '',
+    humanMentions,
+    roleMentions,
+    mentionsEveryone,
+    createdAt: message.createdTimestamp || Date.now()
+  });
+
+  // Prune entries older than 24 hours to keep memory bounded
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  for (const [msgId, data] of recentPingMessages.entries()) {
+    if (data.createdAt < cutoff) {
+      recentPingMessages.delete(msgId);
+    }
+  }
+}
+
+client.on(Events.MessageDelete, async (message) => {
+  try {
+    if (message.channelId === HONEYPOT_CHANNEL_ID) return;
+
+    const cached = recentPingMessages.get(message.id);
+    recentPingMessages.delete(message.id);
+
+    let authorId = cached?.authorId || message.author?.id;
+    let authorTag = cached?.authorTag || message.author?.tag || message.author?.username || 'Unknown User';
+    let authorAvatar = cached?.authorAvatar || (typeof message.author?.displayAvatarURL === 'function' ? message.author.displayAvatarURL({ extension: 'png' }) : null);
+    let channelId = cached?.channelId || message.channelId;
+    let content = cached ? cached.content : (message.content || '');
+
+    if (!cached && message.author?.bot) return;
+
+    const humanMentions = cached
+      ? cached.humanMentions
+      : Array.from(message.mentions?.users?.values() || [])
+          .filter(u => !u.bot && u.id !== authorId)
+          .map(u => u.id);
+
+    const roleMentions = cached
+      ? cached.roleMentions
+      : Array.from(message.mentions?.roles?.values() || []).map(r => r.id);
+
+    const mentionsEveryone = cached ? cached.mentionsEveryone : Boolean(message.mentions?.everyone);
+
+    if (!authorId || (humanMentions.length === 0 && roleMentions.length === 0 && !mentionsEveryone)) {
+      return;
+    }
+
+    const targetParts = [
+      ...humanMentions.map(id => `<@${id}>`),
+      ...roleMentions.map(id => `<@&${id}>`),
+      ...(mentionsEveryone ? ['@everyone / @here'] : [])
+    ];
+
+    const logChannel = await client.channels.fetch(ANTI_GHOST_PING_CHANNEL_ID).catch(() => null);
+    if (!logChannel) return;
+
+    const embed = new EmbedBuilder()
+      .setTitle('🕵️ GHOST PING DETECTED')
+      .setDescription(`A message containing a mention was deleted in <#${channelId}>!`)
+      .addFields(
+        { name: '👤 Ghost Pinger', value: `<@${authorId}> (\`${authorTag}\`)`, inline: true },
+        { name: '🎯 Pinged', value: targetParts.join(', ').slice(0, 1024), inline: true },
+        { name: '📍 Channel', value: `<#${channelId}>`, inline: true },
+        { name: '💬 Deleted Message', value: content ? content.slice(0, 1024) : '*[Attachment / No text content]*', inline: false }
+      )
+      .setColor('#ff0055')
+      .setTimestamp()
+      .setFooter({ text: 'Marathon Security • Anti-Ghost-Ping Protocol' });
+
+    if (authorAvatar) {
+      embed.setThumbnail(authorAvatar);
+    }
+
+    await logChannel.send({
+      content: `🚨 **Ghost Ping Alert!** <@${authorId}> ghost-pinged ${targetParts.join(', ')} in <#${channelId}>.`,
+      embeds: [embed]
+    });
+    console.log(`🕵️ [Anti-Ghost-Ping] Logged ghost ping by ${authorTag} in #${channelId}`);
+  } catch (err) {
+    console.error('❌ [Anti-Ghost-Ping Error]:', err);
+  }
+});
+
+// --- 4. DAILY POSITIVITY PROTOCOL HELPERS ---
+async function broadcastPositivityMessage({ text, imageUrl, isTest = false }) {
+  const channel = await client.channels.fetch(POSITIVITY_CHANNEL_ID);
+  if (!channel) {
+    throw new Error('Could not find the #positivity channel.');
+  }
+
+  const embed = new EmbedBuilder()
+    .setTitle(isTest ? '☀️ DAILY POSITIVITY (TEST)' : '☀️ DAILY POSITIVITY')
+    .setDescription(text || 'Wishing everyone a positive, peaceful, and fulfilling day ahead! ✨')
+    .setColor('#00ff9f')
+    .setTimestamp()
+    .setFooter({ text: 'Marathon System • Daily Positivity' });
+
+  if (imageUrl) {
+    embed.setImage(imageUrl);
+  }
+
+  await channel.send({
+    content: `<@&${POSITIVITY_ROLE_ID}> **| DAILY DOSE OF POSITIVITY** ✨`,
+    embeds: [embed]
+  });
+}
+
+async function handleHeadAdminPositivityDM(message) {
+  try {
+    await connectDB();
+
+    let stateDoc = await GlobalConfig.findOne({ key: 'positivity_prompt_state' });
+    let state = client.positivityPromptState || stateDoc?.value || {
+      mode: 'scheduled',
+      pendingText: '',
+      pendingImageUrl: '',
+      requestedAt: Date.now()
+    };
+
+    const rawText = (message.content || '').trim();
+    const attachment = message.attachments?.first();
+    let incomingImageUrl = attachment ? attachment.url : '';
+
+    // Also detect if an image URL was pasted directly in the text
+    const urlMatch = rawText.match(/https?:\/\/\S+\.(?:png|jpe?g|gif|webp)(?:\?\S*)?/i);
+    let cleanedText = rawText;
+    if (!incomingImageUrl && urlMatch) {
+      incomingImageUrl = urlMatch[0];
+      cleanedText = rawText.replace(urlMatch[0], '').trim();
+    }
+
+    const skipImage = /^(no image|skip|none)$/i.test(cleanedText);
+
+    if (!skipImage && cleanedText) {
+      state.pendingText = cleanedText;
+    }
+    if (incomingImageUrl) {
+      state.pendingImageUrl = incomingImageUrl;
+    }
+
+    const hasText = Boolean(state.pendingText);
+    const hasImage = Boolean(state.pendingImageUrl);
+
+    // If both message text and image (or explicit 'no image') are ready:
+    if (hasText && (hasImage || skipImage)) {
+      const finalText = state.pendingText;
+      const finalImageUrl = skipImage ? '' : state.pendingImageUrl;
+      const currentMode = state.mode || 'scheduled';
+
+      // Reset pending state back to scheduled for future messages
+      const resetState = {
+        mode: 'scheduled',
+        pendingText: '',
+        pendingImageUrl: '',
+        requestedAt: Date.now()
+      };
+      client.positivityPromptState = resetState;
+      await GlobalConfig.findOneAndUpdate(
+        { key: 'positivity_prompt_state' },
+        { value: resetState, updatedAt: new Date() },
+        { upsert: true }
+      );
+
+      if (currentMode === 'test') {
+        await broadcastPositivityMessage({
+          text: finalText,
+          imageUrl: finalImageUrl,
+          isTest: true
+        });
+        await message.reply(
+          `✅ **Noted & Sent!** Your positive message${finalImageUrl ? ' and image' : ''} have just been broadcasted to <#${POSITIVITY_CHANNEL_ID}>!`
+        );
+        console.log('☀️ [Positivity Test] Broadcasted DM payload immediately.');
+        return;
+      }
+
+      // Scheduled mode: store for 6:45 AM IST
+      await GlobalConfig.findOneAndUpdate(
+        { key: 'next_positivity_payload' },
+        {
+          value: {
+            text: finalText,
+            imageUrl: finalImageUrl,
+            savedAt: new Date().toISOString()
+          },
+          updatedAt: new Date()
+        },
+        { upsert: true }
+      );
+
+      await message.reply(
+        `✨ **Noted!** Your positive message${finalImageUrl ? ' and image' : ''} have been saved and locked in. I will send them to <#${POSITIVITY_CHANNEL_ID}> and ping <@&${POSITIVITY_ROLE_ID}> at **6:45 AM IST**!`
+      );
+      console.log('☀️ [Positivity Scheduled] Locked in DM payload for 6:45 AM IST.');
+      return;
+    }
+
+    // Save partial state if the user sent text first or image first
+    client.positivityPromptState = state;
+    await GlobalConfig.findOneAndUpdate(
+      { key: 'positivity_prompt_state' },
+      { value: state, updatedAt: new Date() },
+      { upsert: true }
+    );
+
+    if (hasText && !hasImage) {
+      await message.reply(
+        '📝 **Message noted!** Now send me the **image** to attach with it (or reply `no image` if you want to send it without an image).'
+      );
+    } else if (!hasText && hasImage) {
+      await message.reply(
+        '🖼️ **Image noted!** Now send me the **positive message** text to go with it.'
+      );
+    }
+  } catch (err) {
+    console.error('❌ [Positivity DM Handler Error]:', err);
+    await message.reply(`⚠️ Something went wrong while saving your positivity message: ${err.message}`).catch(() => {});
+  }
+}
+
+// --- MESSAGE CREATE HANDLER (DMs, Airport Fallback, Ghost Ping Cache, Honeypot) ---
 client.on(Events.MessageCreate, async (message) => {
-  if (message.author.bot) return;
-  if (message.channelId !== HONEYPOT_CHANNEL_ID) return;
+  // Handle Discord system join message in #airport as a backup to GuildMemberAdd
+  if (message.channelId === AIRPORT_CHANNEL_ID && message.type === MessageType.UserJoin && message.author) {
+    await sendAirportWelcome(message.author);
+    return;
+  }
 
+  if (message.author.bot) return;
+
+  // Handle Head Admin DMs for the Positivity Protocol
+  if (!message.guild) {
+    if (message.author.id === HEAD_ADMIN_ID) {
+      await handleHeadAdminPositivityDM(message);
+    }
+    return;
+  }
+
+  // Cache any message containing mentions for Anti-Ghost-Ping tracking
+  if (message.channelId !== HONEYPOT_CHANNEL_ID) {
+    cacheMessageIfPing(message);
+    return;
+  }
+
+  // --- HONEYPOT CHANNEL ANTI-SPAM PROTOCOL ---
   console.log(`🍯 [Honeypot] Triggered by ${message.author.tag} (${message.author.id}) in channel ${HONEYPOT_CHANNEL_ID}`);
 
   // 1. Always delete the offending message immediately
@@ -144,10 +475,6 @@ client.on(Events.MessageCreate, async (message) => {
   }
 });
 
-// HEAD_ADMIN_ID: 857145663947014164
-
-// Note: Multi-cycle automated wipes have been disabled in favor of the manual /hard-reset admin command.
-
 // Keep bot alive — never let an unhandled rejection crash the process
 process.on('unhandledRejection', (error) => {
   console.error('[Unhandled Rejection]', error);
@@ -155,6 +482,105 @@ process.on('unhandledRejection', (error) => {
 process.on('uncaughtException', (error) => {
   console.error('[Uncaught Exception]', error);
 });
+
+
+// --- 2. STARBOARD & SKULLBOARD LOGIC ---
+const processingBoardLocks = new Set();
+
+async function handleBoardReaction(reaction, boardType) {
+  const msg = reaction.message;
+  if (!msg || !msg.guild) return;
+
+  // Never repost messages from the boards themselves or the honeypot channel
+  if ([STARBOARD_CHANNEL_ID, SKULLBOARD_CHANNEL_ID, HONEYPOT_CHANNEL_ID].includes(msg.channelId)) {
+    return;
+  }
+
+  const count = reaction.count || 0;
+  if (count < BOARD_REACTION_THRESHOLD) return;
+
+  const lockKey = `${boardType}:${msg.id}`;
+  if (processingBoardLocks.has(lockKey)) return;
+  processingBoardLocks.add(lockKey);
+
+  try {
+    await connectDB();
+
+    const targetChannelId = boardType === 'star' ? STARBOARD_CHANNEL_ID : SKULLBOARD_CHANNEL_ID;
+    const badgeEmoji = boardType === 'star' ? '⭐' : '💀';
+    const embedColor = boardType === 'star' ? '#FFD700' : '#ff0055';
+    const boardChannel = await client.channels.fetch(targetChannelId).catch(() => null);
+    if (!boardChannel) return;
+
+    const authorTag = msg.author?.tag || msg.author?.username || 'Unknown User';
+    const authorAvatar = typeof msg.author?.displayAvatarURL === 'function'
+      ? msg.author.displayAvatarURL({ extension: 'png' })
+      : null;
+
+    const descriptionParts = [];
+    if (msg.content) {
+      descriptionParts.push(msg.content);
+    }
+    descriptionParts.push(`\n🔗 **[Jump to Message](${msg.url})**`);
+
+    const embed = new EmbedBuilder()
+      .setAuthor({ name: authorTag, iconURL: authorAvatar || undefined })
+      .setDescription(descriptionParts.join('\n').slice(0, 4096))
+      .setColor(embedColor)
+      .setTimestamp(msg.createdAt || new Date())
+      .setFooter({ text: `Message ID: ${msg.id}` });
+
+    // Attach image if the message has an image attachment or embed image
+    const firstAttachment = msg.attachments?.find(att =>
+      att.contentType?.startsWith('image/') || /\.(png|jpe?g|gif|webp)(\?.*)?$/i.test(att.url || '')
+    ) || msg.attachments?.first();
+
+    if (firstAttachment?.url) {
+      embed.setImage(firstAttachment.url);
+    } else if (msg.embeds?.[0]?.image?.url) {
+      embed.setImage(msg.embeds[0].image.url);
+    } else if (msg.embeds?.[0]?.thumbnail?.url) {
+      embed.setImage(msg.embeds[0].thumbnail.url);
+    }
+
+    const headerContent = `${badgeEmoji} **${count}** | <#${msg.channelId}>`;
+
+    const existingRecord = await BoardPost.findOne({
+      originalMessageId: msg.id,
+      boardType
+    });
+
+    if (existingRecord) {
+      // Update existing board message with the new reaction count
+      const existingBoardMsg = await boardChannel.messages.fetch(existingRecord.boardMessageId).catch(() => null);
+      if (existingBoardMsg) {
+        await existingBoardMsg.edit({ content: headerContent, embeds: [embed] });
+      }
+      return;
+    }
+
+    const sentMsg = await boardChannel.send({
+      content: headerContent,
+      embeds: [embed]
+    });
+
+    await BoardPost.create({
+      originalMessageId: msg.id,
+      boardType,
+      boardMessageId: sentMsg.id,
+      sourceChannelId: msg.channelId
+    });
+
+    console.log(`${badgeEmoji} [${boardType.toUpperCase()}BOARD] Posted message ${msg.id} (${count} reactions)`);
+  } catch (err) {
+    // Ignore duplicate key race errors if already created
+    if (err.code !== 11000) {
+      console.error(`❌ [${boardType}board Error]:`, err);
+    }
+  } finally {
+    processingBoardLocks.delete(lockKey);
+  }
+}
 
 
 // --- REACTION ROLE LOGIC ---
@@ -186,8 +612,8 @@ const REACTION_ROLES_CONFIG = {
   '1501402879942983740': {
     '💯': {
       roleId: '1501403253043368066',
-      dmMessage: "💯 **MOTIVATION_SYNCED:** You are now enrolled in the daily motivational protocol. Get ready to crush your goals!",
-      unreactDmMessage: "💯 **MOTIVATION_UNSYNCED:** You have opted out of the daily motivation protocol. We'll be here when you're ready to sync back up!"
+      dmMessage: "💯 **POSITIVITY_SYNCED:** You are now enrolled in the daily positivity protocol. Wishing you bright energy every morning!",
+      unreactDmMessage: "💯 **POSITIVITY_UNSYNCED:** You have opted out of the daily positivity protocol. We'll be here whenever you're ready to sync back up!"
     }
   }
 };
@@ -216,12 +642,18 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 
   const emojiName = reaction.emoji.name;
   const emojiHex = emojiName ? Buffer.from(emojiName).toString('hex') : 'null';
-  console.log(`🔍 Reaction: "${emojiName}" | Hex: ${emojiHex} | ID: ${reaction.emoji.id} | Msg: ${reaction.message.id}`);
+  console.log(`🔍 Reaction: "${emojiName}" | Hex: ${emojiHex} | ID: ${reaction.emoji.id} | Msg: ${reaction.message.id} | Count: ${reaction.count}`);
 
-  // Check if we are monitoring this specific message
+  // Check Starboard (⭐) & Skullboard (💀) triggers
+  if (emojiName === '⭐' || emojiName === '🌟') {
+    await handleBoardReaction(reaction, 'star');
+  } else if (emojiName === '💀' || emojiName === '☠️') {
+    await handleBoardReaction(reaction, 'skull');
+  }
+
+  // Check if we are monitoring this specific message for Reaction Roles
   const messageConfig = REACTION_ROLES_CONFIG[reaction.message.id];
   if (!messageConfig) {
-    console.log(`ℹ️ Message ${reaction.message.id} not in config. Registered: ${Object.keys(REACTION_ROLES_CONFIG).join(', ')}`);
     return;
   }
 
@@ -393,40 +825,78 @@ cron.schedule('20 19 * * 0', () => {
 });
 
 /**
- * Daily Motivation: Send a unique quote to the motivation channel every day at 8:00 AM IST
+ * Daily Positivity Check-In: Every day at 8:00 PM IST, DM the Head Admin asking for
+ * tomorrow's positive message and image.
  */
-cron.schedule('0 8 * * *', async () => {
-  console.log('⏰ [Scheduled Task] Daily Motivation triggered at 8:00 AM IST');
-  const MOTIVATION_CHANNEL_ID = '1501403557897703574';
-  const MOTIVATION_ROLE_ID = '1501403253043368066';
-  
+cron.schedule('0 20 * * *', async () => {
+  console.log('🌙 [Scheduled Task] 8:00 PM IST — Prompting Head Admin for tomorrow\'s positivity message...');
   try {
-    const channel = await client.channels.fetch(MOTIVATION_CHANNEL_ID);
-    if (channel) {
-      // Pick a quote based on the day of the year to ensure uniqueness
-      const now = new Date();
-      const start = new Date(now.getFullYear(), 0, 0);
-      const diff = now - start;
-      const oneDay = 1000 * 60 * 60 * 24;
-      const dayOfYear = Math.floor(diff / oneDay);
-      
-      const quote = quotes[dayOfYear % quotes.length];
-      
-      const embed = new EmbedBuilder()
-        .setTitle('🌅 DAILY_MOTIVATION_PROTOCOL')
-        .setDescription(`*"${quote.text}"*`)
-        .addFields({ name: '— Author', value: `**${quote.author}**` })
-        .setColor('#ff0055')
-        .setTimestamp()
-        .setFooter({ text: 'Marathon System: Momentum' });
+    await connectDB();
+    const stateValue = {
+      mode: 'scheduled',
+      pendingText: '',
+      pendingImageUrl: '',
+      requestedAt: Date.now()
+    };
+    client.positivityPromptState = stateValue;
 
-      await channel.send({ 
-        content: `<@&${MOTIVATION_ROLE_ID}> **| SET THE TONE FOR THE DAY**`, 
-        embeds: [embed] 
-      });
+    await GlobalConfig.findOneAndUpdate(
+      { key: 'positivity_prompt_state' },
+      { value: stateValue, updatedAt: new Date() },
+      { upsert: true }
+    );
+
+    const adminUser = await client.users.fetch(HEAD_ADMIN_ID);
+    if (adminUser) {
+      await adminUser.send(
+        '🌙 **DAILY POSITIVITY CHECK-IN (8:00 PM IST)**\n\n' +
+        `Hey! Please send me tomorrow's **positive message** and **image** for <#${POSITIVITY_CHANNEL_ID}>.\n` +
+        '*(You can send the message and image together, or one right after the other — I will broadcast it tomorrow at **6:45 AM IST**!)*'
+      );
+      console.log('✅ [Scheduled Task] Sent 8:00 PM positivity prompt DM to Head Admin.');
     }
   } catch (error) {
-    console.error('❌ [Scheduled Task Error] Failed to send daily motivation:', error);
+    console.error('❌ [Scheduled Task Error] Failed to DM Head Admin at 8:00 PM IST:', error);
+  }
+}, {
+  scheduled: true,
+  timezone: "Asia/Kolkata"
+});
+
+/**
+ * Daily Positivity Broadcast: Every day at 6:45 AM IST, send the Head Admin's queued
+ * positive message and image to the #positivity channel and ping the positivity role.
+ */
+cron.schedule('45 6 * * *', async () => {
+  console.log('☀️ [Scheduled Task] 6:45 AM IST — Sending Daily Positivity broadcast...');
+  try {
+    await connectDB();
+    const savedDoc = await GlobalConfig.findOne({ key: 'next_positivity_payload' });
+
+    if (savedDoc?.value?.text) {
+      await broadcastPositivityMessage({
+        text: savedDoc.value.text,
+        imageUrl: savedDoc.value.imageUrl || '',
+        isTest: false
+      });
+      await GlobalConfig.deleteOne({ key: 'next_positivity_payload' });
+      console.log('✅ [Scheduled Task] Sent custom Daily Positivity message & cleared queue.');
+    } else {
+      // Fallback if no custom message was submitted the night before
+      const now = new Date();
+      const start = new Date(now.getFullYear(), 0, 0);
+      const dayOfYear = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+      const quote = quotes[dayOfYear % quotes.length];
+
+      await broadcastPositivityMessage({
+        text: `*"${quote.text}"*\n— **${quote.author}**`,
+        imageUrl: '',
+        isTest: false
+      });
+      console.log('ℹ️ [Scheduled Task] No custom DM message queued; sent fallback positivity quote.');
+    }
+  } catch (error) {
+    console.error('❌ [Scheduled Task Error] Failed to send 6:45 AM positivity message:', error);
   }
 }, {
   scheduled: true,

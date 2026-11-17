@@ -171,6 +171,15 @@ const exchangeCooldownSchema = new mongoose.Schema({
 });
 exchangeCooldownSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
+const boardPostSchema = new mongoose.Schema({
+  originalMessageId: { type: String, required: true },
+  boardType: { type: String, enum: ['star', 'skull'], required: true },
+  boardMessageId: { type: String, required: true },
+  sourceChannelId: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+boardPostSchema.index({ originalMessageId: 1, boardType: 1 }, { unique: true });
+
 // Models (Singleton check for Next.js fast-refresh)
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 const AuthCode = mongoose.models.AuthCode || mongoose.model('AuthCode', authCodeSchema);
@@ -183,5 +192,6 @@ const GlobalConfig = mongoose.models.GlobalConfig || mongoose.model('GlobalConfi
 const SquadHistory = mongoose.models.SquadHistory || mongoose.model('SquadHistory', squadHistorySchema);
 const TeamExchangeRequest = mongoose.models.TeamExchangeRequest || mongoose.model('TeamExchangeRequest', teamExchangeRequestSchema);
 const ExchangeCooldown = mongoose.models.ExchangeCooldown || mongoose.model('ExchangeCooldown', exchangeCooldownSchema);
+const BoardPost = mongoose.models.BoardPost || mongoose.model('BoardPost', boardPostSchema);
 
-module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, CalendarEvent, ActiveSession, GlobalConfig, SquadHistory, TeamExchangeRequest, ExchangeCooldown };
+module.exports = { connectDB, User, AuthCode, Task, JournalEntry, Session, CalendarEvent, ActiveSession, GlobalConfig, SquadHistory, TeamExchangeRequest, ExchangeCooldown, BoardPost };
