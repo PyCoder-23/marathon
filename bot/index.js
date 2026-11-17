@@ -305,6 +305,32 @@ async function handleHeadAdminPositivityDM(message) {
     const attachment = message.attachments?.first();
     let incomingImageUrl = attachment ? attachment.url : '';
 
+    // Allow cancelling a scheduled or pending post before 6:45 AM IST by sending "cancel post"
+    if (/^cancel(\s+post)?$/i.test(rawText) && !incomingImageUrl) {
+      const resetState = {
+        mode: 'scheduled',
+        pendingText: '',
+        pendingImageUrl: '',
+        requestedAt: Date.now()
+      };
+      client.positivityPromptState = resetState;
+
+      await GlobalConfig.findOneAndUpdate(
+        { key: 'positivity_prompt_state' },
+        { value: resetState, updatedAt: new Date() },
+        { upsert: true }
+      );
+      const deleted = await GlobalConfig.deleteOne({ key: 'next_positivity_payload' });
+
+      await message.reply(
+        deleted.deletedCount > 0
+          ? '🚫 **Post Cancelled!** Your scheduled positive message for **6:45 AM IST** has been cancelled. (You can send a new message and image anytime before 6:45 AM, otherwise I will send a random positive message at 6:45 AM!)'
+          : '🚫 **Cancelled!** Cleared any pending positive message draft. (If nothing new is sent before 6:45 AM IST, I will send a random positive message.)'
+      );
+      console.log('🚫 [Positivity] Head Admin cancelled the scheduled positivity post.');
+      return;
+    }
+
     // Also detect if an image URL was pasted directly in the text
     const urlMatch = rawText.match(/https?:\/\/\S+\.(?:png|jpe?g|gif|webp)(?:\?\S*)?/i);
     let cleanedText = rawText;
@@ -373,7 +399,7 @@ async function handleHeadAdminPositivityDM(message) {
       );
 
       await message.reply(
-        `✨ **Noted!** Your positive message${finalImageUrl ? ' and image' : ''} have been saved and locked in. I will send them to <#${POSITIVITY_CHANNEL_ID}> and ping <@&${POSITIVITY_ROLE_ID}> at **6:45 AM IST**!`
+        `✨ **Noted!** Your positive message${finalImageUrl ? ' and image' : ''} have been saved and locked in. I will send them to <#${POSITIVITY_CHANNEL_ID}> and ping <@&${POSITIVITY_ROLE_ID}> at **6:45 AM IST**!\n*(Reply \`cancel post\` anytime before 6:45 AM if you want to cancel it.)*`
       );
       console.log('☀️ [Positivity Scheduled] Locked in DM payload for 6:45 AM IST.');
       return;
@@ -882,18 +908,15 @@ cron.schedule('45 6 * * *', async () => {
       await GlobalConfig.deleteOne({ key: 'next_positivity_payload' });
       console.log('✅ [Scheduled Task] Sent custom Daily Positivity message & cleared queue.');
     } else {
-      // Fallback if no custom message was submitted the night before
-      const now = new Date();
-      const start = new Date(now.getFullYear(), 0, 0);
-      const dayOfYear = Math.floor((now - start) / (1000 * 60 * 60 * 24));
-      const quote = quotes[dayOfYear % quotes.length];
+      // Fallback if no custom message was submitted before 6:45 AM (or if it was cancelled)
+      const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
 
       await broadcastPositivityMessage({
-        text: `*"${quote.text}"*\n— **${quote.author}**`,
+        text: `*"${randomQuote.text}"*\n— **${randomQuote.author}**`,
         imageUrl: '',
         isTest: false
       });
-      console.log('ℹ️ [Scheduled Task] No custom DM message queued; sent fallback positivity quote.');
+      console.log('ℹ️ [Scheduled Task] No custom DM message queued; sent random positive message.');
     }
   } catch (error) {
     console.error('❌ [Scheduled Task Error] Failed to send 6:45 AM positivity message:', error);
