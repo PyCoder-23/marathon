@@ -396,6 +396,47 @@ async function handleHeadAdminPositivityDM(message) {
       cleanedText = rawText.replace(urlMatch[0], '').trim();
     }
 
+    // 0. PREVIEW COMMAND ("preview")
+    if (/^preview(\s+post)?$/i.test(rawText) && !incomingImageUrl) {
+      const savedDoc = await GlobalConfig.findOne({ key: 'next_positivity_payload' });
+
+      if (!savedDoc?.value?.text) {
+        if (state.pendingText || state.pendingImageUrl) {
+          await message.reply(
+            'ℹ️ **No finalized message is scheduled yet!** You currently have an unfinished draft in progress — finish picking the image/sideline colour to lock it in (or send `cancel post` to clear it).'
+          );
+        } else {
+          await message.reply(
+            'ℹ️ **No positive message is currently scheduled** for 6:45 AM IST. Send me a message and an image anytime to schedule one!'
+          );
+        }
+        return;
+      }
+
+      const { text, imageUrl, color, colorName } = savedDoc.value;
+      const resolvedText = await resolveServerEmojis(text);
+
+      const previewEmbed = new EmbedBuilder()
+        .setTitle('☀️ DAILY POSITIVITY')
+        .setDescription(resolvedText)
+        .setColor(color || '#FFD700')
+        .setTimestamp()
+        .setFooter({ text: 'Marathon System • Daily Positivity' });
+
+      if (imageUrl) {
+        previewEmbed.setImage(imageUrl);
+      }
+
+      await message.reply({
+        content:
+          `👁️ **PREVIEW — Scheduled for 6:45 AM IST in <#${POSITIVITY_CHANNEL_ID}>** (Sideline: **${colorName || color || '#FFD700'}**)\n` +
+          `──────────────────────────\n` +
+          `<@&${POSITIVITY_ROLE_ID}> **| DAILY DOSE OF POSITIVITY** ✨`,
+        embeds: [previewEmbed]
+      });
+      return;
+    }
+
     // 1. CANCEL POST COMMAND ("cancel post" or "cancel")
     if (/^cancel(\s+post)?$/i.test(rawText) && !incomingImageUrl) {
       const resetState = {
@@ -633,7 +674,8 @@ async function handleHeadAdminPositivityDM(message) {
         `✨ **Noted & Scheduled for 6:45 AM IST!**\n` +
         `• **Sideline Colour:** ${parsedColor.name} (\`${parsedColor.hex}\`)\n` +
         `• **Target:** <#${POSITIVITY_CHANNEL_ID}> (pinging <@&${POSITIVITY_ROLE_ID}>)\n\n` +
-        `**Want to edit or cancel before 6:45 AM?** Just reply here with:\n` +
+        `**Want to preview, edit, or cancel before 6:45 AM?** Just reply here with:\n` +
+        `• \`preview\` — see a full preview of the scheduled post\n` +
         `• \`edit message <new text>\` — edit the text\n` +
         `• \`edit color <color>\` — change the sideline colour\n` +
         `• \`edit image\` (with a new image attached) — swap the image\n` +
