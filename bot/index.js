@@ -101,7 +101,109 @@ const SKULLBOARD_CHANNEL_ID = '1572333797469327502';
 const ANTI_GHOST_PING_CHANNEL_ID = '1572338261957939251';
 const POSITIVITY_CHANNEL_ID = '1501403557897703574';
 const POSITIVITY_ROLE_ID = '1501403253043368066';
+const E_CHANNEL_ID = '1442071717748150373';
 const BOARD_REACTION_THRESHOLD = 5;
+
+// --- #e CHANNEL PROTOCOL (ONLY 'e', NO DOUBLE-POSTING) ---
+let lastEChannelAuthorId = null;
+
+const SILLY_NON_E_MESSAGES = [
+  "brotato why did u send that, we gotta send `e` 🥔",
+  "bro had ONE job and it was literally just the 5th letter of the alphabet 😭",
+  "sir this is an `#e` only establishment, put the rest of the keyboard back in the bag 🚓",
+  "what part of <#1442071717748150373> looked like 'type whatever you want' to you broski 💀",
+  "illegal letters detected in <#1442071717748150373>!! the council of `e` has revoked your message 📜",
+  "my brother in christ the only legal character in <#1442071717748150373> is a single lowercase `e` 🫡",
+  "uh oh non-`e` contraband spotted!! only `e` survives in <#1442071717748150373> 🧹",
+  "brotato chip thought he could sneak non-`e` propaganda into <#1442071717748150373> 😭"
+];
+
+const SILLY_DOUBLE_E_MESSAGES = [
+  "woah slow down e-goblin, you can't send `e` twice in a row!! wait for someone else to say `e` first 🛑",
+  "no double-dipping in the <#1442071717748150373> jar brotato!! let someone else drop an `e` first 🍪",
+  "greedy with the `e`'s today aren't we?? one `e` per turn, pass the baton 🏃‍♂️",
+  "bro is trying to monopolize the `e` economy 💀 wait for another human to say `e` before you go again!",
+  "patience young grasshopper, you already said your `e` — let someone else have a turn in <#1442071717748150373> 🦗",
+  "caught you farming `e`'s back-to-back!! wait for a teammate to say `e` first 🚓",
+  "one `e` at a time chief, you can't hog the whole <#1442071717748150373> channel to yourself 😭"
+];
+
+async function handleEChannelMessage(message) {
+  // Initialize lastEChannelAuthorId from channel history if not yet loaded
+  if (!lastEChannelAuthorId) {
+    try {
+      const recent = await message.channel.messages.fetch({ limit: 10 });
+      const prevValid = recent.find(
+        m => m.id !== message.id && !m.author?.bot && m.content === 'e' && m.attachments.size === 0 && m.stickers.size === 0
+      );
+      if (prevValid) {
+        lastEChannelAuthorId = prevValid.author.id;
+      }
+    } catch (_) {
+      // Ignore fetch errors
+    }
+  }
+
+  const isExactE =
+    message.content === 'e' &&
+    message.attachments.size === 0 &&
+    message.stickers.size === 0;
+
+  // Rule 1: Must be strictly 'e' and nothing else
+  if (!isExactE) {
+    try {
+      await message.delete();
+    } catch (err) {
+      console.error('❌ [#e] Failed to delete non-e message:', err.message);
+    }
+
+    const sillyMsg = SILLY_NON_E_MESSAGES[Math.floor(Math.random() * SILLY_NON_E_MESSAGES.length)];
+    try {
+      await message.author.send(sillyMsg);
+    } catch (_) {
+      // If user has DMs closed, send a 4-second self-deleting notice in #e
+      const temp = await message.channel.send(`<@${message.author.id}> ${sillyMsg}`).catch(() => null);
+      if (temp) setTimeout(() => temp.delete().catch(() => {}), 4000);
+    }
+    return;
+  }
+
+  // Rule 2: Cannot send 'e' twice in a row
+  if (lastEChannelAuthorId === message.author.id) {
+    try {
+      await message.delete();
+    } catch (err) {
+      console.error('❌ [#e] Failed to delete consecutive e message:', err.message);
+    }
+
+    const sillyDoubleMsg = SILLY_DOUBLE_E_MESSAGES[Math.floor(Math.random() * SILLY_DOUBLE_E_MESSAGES.length)];
+    try {
+      await message.author.send(sillyDoubleMsg);
+    } catch (_) {
+      const temp = await message.channel.send(`<@${message.author.id}> ${sillyDoubleMsg}`).catch(() => null);
+      if (temp) setTimeout(() => temp.delete().catch(() => {}), 4000);
+    }
+    return;
+  }
+
+  // Valid 'e' from a new person! Record them as the last author
+  lastEChannelAuthorId = message.author.id;
+}
+
+// Prevent users from editing a valid 'e' in #e into something else
+client.on(Events.MessageUpdate, async (_oldMsg, newMsg) => {
+  try {
+    if (newMsg.channelId !== E_CHANNEL_ID) return;
+    if (newMsg.partial) await newMsg.fetch().catch(() => {});
+    if (newMsg.author?.bot) return;
+
+    if (newMsg.content !== 'e' || newMsg.attachments?.size > 0 || newMsg.stickers?.size > 0) {
+      await newMsg.delete().catch(() => {});
+      const sillyMsg = SILLY_NON_E_MESSAGES[Math.floor(Math.random() * SILLY_NON_E_MESSAGES.length)];
+      await newMsg.author?.send(sillyMsg).catch(() => {});
+    }
+  } catch (_) {}
+});
 
 // --- 1. AIRPORT WELCOME PROTOCOL ---
 const recentlyWelcomedUsers = new Set();
@@ -756,6 +858,12 @@ client.on(Events.MessageCreate, async (message) => {
     if (message.author.id === HEAD_ADMIN_ID) {
       await handleHeadAdminPositivityDM(message);
     }
+    return;
+  }
+
+  // Handle #e channel rules (only 'e' allowed, no double-posting in a row)
+  if (message.channelId === E_CHANNEL_ID) {
+    await handleEChannelMessage(message);
     return;
   }
 
