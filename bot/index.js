@@ -447,29 +447,112 @@ async function resolveServerEmojis(text) {
   }
 }
 
+/**
+ * Splits long markdown text on newline boundaries so each embed description stays <= maxLen
+ * without breaking bold (**abc**), headings, or custom emoji tags (<:name:id>).
+ */
+function splitMarkdownChunks(text, maxLen = 3900) {
+  const normalized = (text || '').replace(/\r\n/g, '\n').trim();
+  if (!normalized) return ['Wishing everyone a positive, peaceful, and fulfilling day ahead! ✨'];
+  if (normalized.length <= maxLen) return [normalized];
+
+  const chunks = [];
+  let remaining = normalized;
+
+  while (remaining.length > maxLen) {
+    let splitIdx = remaining.lastIndexOf('\n\n', maxLen);
+    if (splitIdx < maxLen * 0.4) {
+      splitIdx = remaining.lastIndexOf('\n', maxLen);
+    }
+    if (splitIdx < maxLen * 0.4) {
+      splitIdx = remaining.lastIndexOf(' ', maxLen);
+    }
+    if (splitIdx <= 0) {
+      splitIdx = maxLen;
+    }
+
+    chunks.push(remaining.slice(0, splitIdx).trim());
+    remaining = remaining.slice(splitIdx).trim();
+  }
+
+  if (remaining) {
+    chunks.push(remaining);
+  }
+  return chunks;
+}
+
+async function buildPositivityEmbeds({ text, imageUrl, color = '#FFD700', isTest = false }) {
+  const resolvedText = await resolveServerEmojis(
+    text || 'Wishing everyone a positive, peaceful, and fulfilling day ahead! ✨'
+  );
+  const chunks = splitMarkdownChunks(resolvedText, 3900);
+
+  return chunks.map((chunk, idx) => {
+    const isFirst = idx === 0;
+    const isLast = idx === chunks.length - 1;
+
+    const embed = new EmbedBuilder()
+      .setDescription(chunk)
+      .setColor(color || '#FFD700');
+
+    if (isFirst) {
+      embed.setTitle(isTest ? '☀️ DAILY POSITIVITY (TEST)' : '☀️ DAILY POSITIVITY');
+    }
+    if (isLast) {
+      embed.setTimestamp().setFooter({ text: 'Marathon System • Daily Positivity' });
+      if (imageUrl) {
+        embed.setImage(imageUrl);
+      }
+    }
+    return embed;
+  });
+}
+
+async function sendEmbedsInBatches(targetChannelOrUser, headerContent, embeds, isReply = false, replyMessage = null) {
+  // Discord allows at most 6000 total characters across all embeds in a single message
+  const batches = [];
+  let currentBatch = [];
+  let currentChars = 0;
+
+  for (const emb of embeds) {
+    const len = (emb.data.title?.length || 0) + (emb.data.description?.length || 0) + (emb.data.footer?.text?.length || 0);
+    if (currentBatch.length > 0 && (currentChars + len > 5500 || currentBatch.length >= 10)) {
+      batches.push(currentBatch);
+      currentBatch = [];
+      currentChars = 0;
+    }
+    currentBatch.push(emb);
+    currentChars += len;
+  }
+  if (currentBatch.length > 0) {
+    batches.push(currentBatch);
+  }
+
+  for (let i = 0; i < batches.length; i++) {
+    const payload = {
+      ...(i === 0 && headerContent ? { content: headerContent } : {}),
+      embeds: batches[i]
+    };
+    if (i === 0 && isReply && replyMessage) {
+      await replyMessage.reply(payload);
+    } else {
+      await targetChannelOrUser.send(payload);
+    }
+  }
+}
+
 async function broadcastPositivityMessage({ text, imageUrl, color = '#FFD700', isTest = false }) {
   const channel = await client.channels.fetch(POSITIVITY_CHANNEL_ID);
   if (!channel) {
     throw new Error('Could not find the #positivity channel.');
   }
 
-  const resolvedText = await resolveServerEmojis(text || 'Wishing everyone a positive, peaceful, and fulfilling day ahead! ✨');
-
-  const embed = new EmbedBuilder()
-    .setTitle(isTest ? '☀️ DAILY POSITIVITY (TEST)' : '☀️ DAILY POSITIVITY')
-    .setDescription(resolvedText)
-    .setColor(color || '#FFD700')
-    .setTimestamp()
-    .setFooter({ text: 'Marathon System • Daily Positivity' });
-
-  if (imageUrl) {
-    embed.setImage(imageUrl);
-  }
-
-  await channel.send({
-    content: `<@&${POSITIVITY_ROLE_ID}> **| DAILY DOSE OF POSITIVITY** ✨`,
-    embeds: [embed]
-  });
+  const embeds = await buildPositivityEmbeds({ text, imageUrl, color, isTest });
+  await sendEmbedsInBatches(
+    channel,
+    `<@&${POSITIVITY_ROLE_ID}> **| DAILY DOSE OF POSITIVITY** ✨`,
+    embeds
+  );
 }
 
 async function handleHeadAdminPositivityDM(message) {
@@ -487,8 +570,31 @@ async function handleHeadAdminPositivityDM(message) {
     };
 
     const rawText = (message.content || '').trim();
-    const attachment = message.attachments?.first();
-    let incomingImageUrl = attachment ? attachment.url : '';
+
+    // Separate .txt file attachments from image attachments
+    const attachments = Array.from(message.attachments?.values() || []);
+    const txtAttachment = attachments.find(a =>
+      a.name?.toLowerCase().endsWith('.txt') || a.contentType?.toLowerCase().startsWith('text/plain')
+    );
+    const imgAttachment = attachments.find(a =>
+      a.id !== txtAttachment?.id &&
+      (a.contentType?.toLowerCase().startsWith('image/') ||
+       /\.(png|jpe?g|gif|webp)(\?.*)?$/i.test(a.name || a.url || ''))
+    );
+
+    let txtFileContent = '';
+    if (txtAttachment?.url) {
+      try {
+        const res = await fetch(txtAttachment.url);
+        if (res.ok) {
+          txtFileContent = (await res.text()).replace(/\r\n/g, '\n').trim();
+        }
+      } catch (fetchErr) {
+        console.error('❌ [Positivity .txt Fetch Error]:', fetchErr);
+      }
+    }
+
+    let incomingImageUrl = imgAttachment ? imgAttachment.url : '';
 
     // detect image URL pasted in text
     const urlMatch = rawText.match(/https?:\/\/\S+\.(?:png|jpe?g|gif|webp)(?:\?\S*)?/i);
@@ -499,7 +605,7 @@ async function handleHeadAdminPositivityDM(message) {
     }
 
     // 0. PREVIEW COMMAND ("preview")
-    if (/^preview(\s+post)?$/i.test(rawText) && !incomingImageUrl) {
+    if (/^preview(\s+post)?$/i.test(rawText) && !incomingImageUrl && !txtFileContent) {
       const savedDoc = await GlobalConfig.findOne({ key: 'next_positivity_payload' });
 
       if (!savedDoc?.value?.text) {
@@ -509,38 +615,34 @@ async function handleHeadAdminPositivityDM(message) {
           );
         } else {
           await message.reply(
-            'ℹ️ **No positive message is currently scheduled** for 6:45 AM IST. Send me a message and an image anytime to schedule one!'
+            'ℹ️ **No positive message is currently scheduled** for 6:45 AM IST. Send me a message (or `.txt` file) and an image anytime to schedule one!'
           );
         }
         return;
       }
 
       const { text, imageUrl, color, colorName } = savedDoc.value;
-      const resolvedText = await resolveServerEmojis(text);
-
-      const previewEmbed = new EmbedBuilder()
-        .setTitle('☀️ DAILY POSITIVITY')
-        .setDescription(resolvedText)
-        .setColor(color || '#FFD700')
-        .setTimestamp()
-        .setFooter({ text: 'Marathon System • Daily Positivity' });
-
-      if (imageUrl) {
-        previewEmbed.setImage(imageUrl);
-      }
-
-      await message.reply({
-        content:
-          `👁️ **PREVIEW — Scheduled for 6:45 AM IST in <#${POSITIVITY_CHANNEL_ID}>** (Sideline: **${colorName || color || '#FFD700'}**)\n` +
-          `──────────────────────────\n` +
-          `<@&${POSITIVITY_ROLE_ID}> **| DAILY DOSE OF POSITIVITY** ✨`,
-        embeds: [previewEmbed]
+      const previewEmbeds = await buildPositivityEmbeds({
+        text,
+        imageUrl,
+        color: color || '#FFD700',
+        isTest: false
       });
+
+      await sendEmbedsInBatches(
+        message.channel,
+        `👁️ **PREVIEW — Scheduled for 6:45 AM IST in <#${POSITIVITY_CHANNEL_ID}>** (Sideline: **${colorName || color || '#FFD700'}**)\n` +
+        `──────────────────────────\n` +
+        `<@&${POSITIVITY_ROLE_ID}> **| DAILY DOSE OF POSITIVITY** ✨`,
+        previewEmbeds,
+        true,
+        message
+      );
       return;
     }
 
     // 1. CANCEL POST COMMAND ("cancel post" or "cancel")
-    if (/^cancel(\s+post)?$/i.test(rawText) && !incomingImageUrl) {
+    if (/^cancel(\s+post)?$/i.test(rawText) && !incomingImageUrl && !txtFileContent) {
       const resetState = {
         mode: 'scheduled',
         pendingText: '',
@@ -568,13 +670,16 @@ async function handleHeadAdminPositivityDM(message) {
     }
 
     // 2. TEXT-BASED EDIT COMMANDS FOR ALREADY-SCHEDULED POST (OR ACTIVE DRAFT)
-    //    - "edit message <new text>" / "edit text <new text>"
+    //    - "edit message <new text>" OR "edit message" with a .txt file attached
     //    - "edit color <color>" / "edit colour <color>"
     //    - "edit image" (with attached image or URL)
     //    - "edit post" (restart full flow)
-    const editMsgMatch = rawText.match(/^edit\s+(?:message|text)\s+([\s\S]+)$/i);
-    if (editMsgMatch) {
-      const newResolvedText = await resolveServerEmojis(editMsgMatch[1].trim());
+    const editMsgMatch = rawText.match(/^edit\s+(?:message|text)(?:\s+([\s\S]+))?$/i);
+    if (editMsgMatch && (editMsgMatch[1]?.trim() || txtFileContent)) {
+      const rawUpdatedText = txtFileContent
+        ? (editMsgMatch[1]?.trim() ? `${editMsgMatch[1].trim()}\n\n${txtFileContent}` : txtFileContent)
+        : editMsgMatch[1].trim();
+      const newResolvedText = await resolveServerEmojis(rawUpdatedText);
       const savedDoc = await GlobalConfig.findOne({ key: 'next_positivity_payload' });
 
       if (savedDoc?.value) {
@@ -588,7 +693,10 @@ async function handleHeadAdminPositivityDM(message) {
           { value: updatedValue, updatedAt: new Date() },
           { upsert: true }
         );
-        await message.reply(`✏️ **Message Updated!** Your scheduled 6:45 AM post text is now:\n>>> ${newResolvedText}`);
+        const previewSnippet = newResolvedText.length > 1500
+          ? `${newResolvedText.slice(0, 1500)}...\n*(Full text saved — type \`preview\` to view the complete rendered post!)*`
+          : newResolvedText;
+        await message.reply(`✏️ **Message Updated!** Your scheduled 6:45 AM post text is now:\n>>> ${previewSnippet}`);
         return;
       } else if (state.pendingText) {
         state.pendingText = newResolvedText;
@@ -598,7 +706,10 @@ async function handleHeadAdminPositivityDM(message) {
           { value: state, updatedAt: new Date() },
           { upsert: true }
         );
-        await message.reply(`✏️ **Draft Message Updated!**\n>>> ${newResolvedText}`);
+        const previewSnippet = newResolvedText.length > 1500
+          ? `${newResolvedText.slice(0, 1500)}...\n*(Full text saved in draft!)*`
+          : newResolvedText;
+        await message.reply(`✏️ **Draft Message Updated!**\n>>> ${previewSnippet}`);
         return;
       }
     }
@@ -788,11 +899,14 @@ async function handleHeadAdminPositivityDM(message) {
       return;
     }
 
-    // 4. COLLECTING MESSAGE TEXT & IMAGE
-    const skipImage = /^(no image|skip|none)$/i.test(cleanedText);
+    // 4. COLLECTING MESSAGE TEXT (DIRECT OR .TXT FILE) & IMAGE
+    const skipImage = /^(no image|skip|none)$/i.test(cleanedText) && !txtFileContent;
+    const combinedIncomingText = txtFileContent
+      ? (cleanedText ? `${cleanedText}\n\n${txtFileContent}` : txtFileContent)
+      : cleanedText;
 
-    if (!skipImage && cleanedText) {
-      state.pendingText = await resolveServerEmojis(cleanedText);
+    if (!skipImage && combinedIncomingText) {
+      state.pendingText = await resolveServerEmojis(combinedIncomingText);
     }
     if (incomingImageUrl) {
       state.pendingImageUrl = incomingImageUrl;
